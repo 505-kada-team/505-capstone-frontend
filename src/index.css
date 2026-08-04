@@ -1,0 +1,207 @@
+/* ============================================================
+   Fonts — DESIGN_v1.md Section 3
+   Heading: Epilogue | Body: Work Sans | Numbers: JetBrains Mono
+   ============================================================ */
+@import "@fontsource-variable/epilogue";
+@import "@fontsource/work-sans/400.css";
+@import "@fontsource/work-sans/500.css";
+@import "@fontsource/work-sans/600.css";
+@import "@fontsource/jetbrains-mono/400.css";
+@import "@fontsource/jetbrains-mono/500.css";
+
+/* ============================================================
+   Tailwind v4 + shadcn Base UI
+   ============================================================ */
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+
+@custom-variant dark (&:is(.dark *));
+
+/* ============================================================
+   Design Tokens — DESIGN_v1.md Section 2–4
+   Semua warna mengacu ke palet brand Artisan Brew.
+   ============================================================ */
+@theme inline {
+  /* Fonts */
+  --font-heading: 'Epilogue Variable', 'Epilogue', sans-serif;
+  --font-sans:    'Work Sans', sans-serif;
+  --font-mono:    'JetBrains Mono', monospace;
+
+  /* shadcn color token remapping ke CSS variables */
+  --color-background:          var(--background);
+  --color-foreground:          var(--foreground);
+  --color-card:                var(--card);
+  --color-card-foreground:     var(--card-foreground);
+  --color-popover:             var(--popover);
+  --color-popover-foreground:  var(--popover-foreground);
+  --color-primary:             var(--primary);
+  --color-primary-foreground:  var(--primary-foreground);
+  --color-secondary:           var(--secondary);
+  --color-secondary-foreground:var(--secondary-foreground);
+  --color-muted:               var(--muted);
+  --color-muted-foreground:    var(--muted-foreground);
+  --color-accent:              var(--accent);
+  --color-accent-foreground:   var(--accent-foreground);
+  --color-destructive:         var(--destructive);
+  --color-border:              var(--border);
+  --color-input:               var(--input);
+  --color-ring:                var(--ring);
+  --color-sidebar:             var(--sidebar);
+  --color-sidebar-foreground:  var(--sidebar-foreground);
+  --color-sidebar-border:      var(--sidebar-border);
+  --color-sidebar-primary:     var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent:      var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-ring:        var(--sidebar-ring);
+
+  /* Chart tokens (tetap) */
+  --color-chart-1:  var(--chart-1);
+  --color-chart-2:  var(--chart-2);
+  --color-chart-3:  var(--chart-3);
+  --color-chart-4:  var(--chart-4);
+  --color-chart-5:  var(--chart-5);
+
+  /* Radius tokens */
+  --radius-sm:  calc(var(--radius) * 0.6);
+  --radius-md:  calc(var(--radius) * 0.8);
+  --radius-lg:  var(--radius);
+  --radius-xl:  calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+}
+
+/* ============================================================
+   Light Mode — DESIGN_v1.md brand colors
+   ============================================================ */
+:root {
+  /* Base */
+  --background:         oklch(0.990 0.005 60);   /* #FDFBF9 warm white */
+  --foreground:         oklch(0.210 0.023 47);   /* #2D241E dark brown */
+
+  /* Cards & Popovers */
+  --card:               oklch(0.990 0.005 60);
+  --card-foreground:    oklch(0.210 0.023 47);
+  --popover:            oklch(0.990 0.005 60);
+  --popover-foreground: oklch(0.210 0.023 47);
+
+  /* Primary = dark brown di light mode */
+  --primary:            oklch(0.210 0.023 47);   /* #2D241E */
+  --primary-foreground: oklch(1.000 0.000 0);    /* white */
+
+  /* Secondary = cream */
+  --secondary:          oklch(0.860 0.030 64);   /* #E6D5C3 */
+  --secondary-foreground: oklch(0.210 0.023 47);
+
+  /* Muted */
+  --muted:              oklch(0.940 0.010 60);
+  --muted-foreground:   oklch(0.520 0.015 50);
+
+  /* Accent = oranye (brand highlight, bukan status) */
+  --accent:             oklch(0.700 0.191 47);   /* #F97316 */
+  --accent-foreground:  oklch(1.000 0.000 0);
+
+  /* Destructive = merah expired */
+  --destructive:        oklch(0.500 0.175 35);   /* #C4441F */
+
+  /* Border & Input */
+  --border:             oklch(0.880 0.015 60);
+  --input:              oklch(0.880 0.015 60);
+  --ring:               oklch(0.700 0.191 47);   /* oranye focus ring */
+
+  /* Radius */
+  --radius:             0.5rem;
+
+  /* Charts */
+  --chart-1: oklch(0.700 0.191 47);
+  --chart-2: oklch(0.430 0.085 140);
+  --chart-3: oklch(0.500 0.120 55);
+  --chart-4: oklch(0.520 0.037 62);
+  --chart-5: oklch(0.500 0.175 35);
+
+  /* Sidebar (light) */
+  --sidebar:                      oklch(0.970 0.008 60);
+  --sidebar-foreground:           oklch(0.210 0.023 47);
+  --sidebar-primary:              oklch(0.210 0.023 47);
+  --sidebar-primary-foreground:   oklch(1.000 0.000 0);
+  --sidebar-accent:               oklch(0.940 0.010 60);
+  --sidebar-accent-foreground:    oklch(0.210 0.023 47);
+  --sidebar-border:               oklch(0.880 0.015 60);
+  --sidebar-ring:                 oklch(0.700 0.191 47);
+}
+
+/* ============================================================
+   Dark Mode — DESIGN_v1.md brand colors
+   Primary swap: brown → orange (karena brown nyatu background)
+   ============================================================ */
+.dark {
+  /* Base */
+  --background:         oklch(0.100 0.000 0);    /* #121212 Neutral */
+  --foreground:         oklch(0.860 0.030 64);   /* #E6D5C3 cream */
+
+  /* Cards & Popovers — sedikit lebih terang dari background */
+  --card:               oklch(0.140 0.005 50);
+  --card-foreground:    oklch(0.860 0.030 64);
+  --popover:            oklch(0.160 0.008 50);
+  --popover-foreground: oklch(0.860 0.030 64);
+
+  /* Primary = ORANGE di dark mode (brown nyatu, orange ambil alih) */
+  --primary:            oklch(0.700 0.191 47);   /* #F97316 */
+  --primary-foreground: oklch(0.100 0.000 0);    /* near black */
+
+  /* Secondary = dark brown */
+  --secondary:          oklch(0.210 0.023 47);   /* #2D241E */
+  --secondary-foreground: oklch(0.860 0.030 64);
+
+  /* Muted */
+  --muted:              oklch(0.180 0.008 50);
+  --muted-foreground:   oklch(0.560 0.015 60);
+
+  /* Accent = oranye tetap */
+  --accent:             oklch(0.700 0.191 47);   /* #F97316 */
+  --accent-foreground:  oklch(0.100 0.000 0);
+
+  /* Destructive */
+  --destructive:        oklch(0.550 0.200 35);   /* sedikit lebih cerah di dark */
+
+  /* Border & Input */
+  --border:             oklch(1.000 0.000 0 / 12%);
+  --input:              oklch(1.000 0.000 0 / 15%);
+  --ring:               oklch(0.700 0.191 47);   /* oranye focus ring */
+
+  /* Charts */
+  --chart-1: oklch(0.700 0.191 47);
+  --chart-2: oklch(0.430 0.085 140);
+  --chart-3: oklch(0.500 0.120 55);
+  --chart-4: oklch(0.520 0.037 62);
+  --chart-5: oklch(0.550 0.200 35);
+
+  /* Sidebar (dark) — sedikit berbeda dari background utama */
+  --sidebar:                      oklch(0.120 0.005 50);
+  --sidebar-foreground:           oklch(0.860 0.030 64);
+  --sidebar-primary:              oklch(0.700 0.191 47);
+  --sidebar-primary-foreground:   oklch(0.100 0.000 0);
+  --sidebar-accent:               oklch(0.180 0.008 50);
+  --sidebar-accent-foreground:    oklch(0.860 0.030 64);
+  --sidebar-border:               oklch(1.000 0.000 0 / 10%);
+  --sidebar-ring:                 oklch(0.700 0.191 47);
+}
+
+/* ============================================================
+   Base Layer — Reset & Global Defaults
+   ============================================================ */
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground font-sans;
+  }
+  html {
+    @apply font-sans;
+    font-size: 16px;
+  }
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-heading;
+  }
+}
