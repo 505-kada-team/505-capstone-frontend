@@ -10,5 +10,8 @@ export default defineConfig({
     alias: {
       '@': fileURLToPath(new URL('./src', import.meta.url)),
     },
+    // Force single React instance — mencegah "Invalid hook call" dari @base-ui/react
+    // yang terjadi saat Base UI memuat copy React-nya sendiri terpisah dari app
+    dedupe: ['react', 'react-dom'],
   },
 })

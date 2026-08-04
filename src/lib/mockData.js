@@ -73,6 +73,17 @@ export const mockInventoryList = {
       lastCostBatch: 3000,
       totalSubInventory: 1,
     },
+    {
+      _id: '60c1a2r3d4e3f6a7b8c9d0e8',
+      nameInventory: 'Sirup Vanilla',
+      category: 'ingredients',
+      unit: 'ml',
+      description: 'Sirup untuk vanilla latte',
+      status: 'active',
+      quantityTotal: 200,
+      lastCostBatch: 5000,
+      totalSubInventory: 2,
+    },
   ],
   pagination: { totalData: 42, totalPage: 5, currentPage: 1, limit: 10 },
 };

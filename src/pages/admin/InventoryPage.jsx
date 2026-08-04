@@ -13,6 +13,10 @@
  *   - quantityTotal: null  → tampilkan "—" (inventory baru tanpa batch)
  *   - quantityTotal: 0     → tampilkan "0 unit" (pernah ada stok, sekarang habis)
  *   - category badge       → ingredients=oranye, packaging=abu
+ *
+ * Komponen UI: SEMUA pakai shadcn — tidak ada native <select> HTML.
+ *   Filter bar : shadcn Select (Select + SelectTrigger + SelectContent + SelectItem)
+ *   Form dialog: FormSelect shared component (wrapper shadcn Select + Label + error)
  */
 
 import { useState, useEffect, useCallback } from 'react';
@@ -22,22 +26,31 @@ import {
   Wheat,
   Package,
   Archive,
-  ChevronDown,
   TriangleAlert,
 } from 'lucide-react';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 
-import PageHeader      from '@/components/shared/PageHeader';
-import DataTable       from '@/components/shared/DataTable';
-import StatusBadge     from '@/components/shared/StatusBadge';
-import Pagination      from '@/components/shared/Pagination';
-import SearchInput     from '@/components/shared/SearchInput';
-import ConfirmDialog   from '@/components/shared/ConfirmDialog';
+// Shared components
+import PageHeader    from '@/components/shared/PageHeader';
+import DataTable     from '@/components/shared/DataTable';
+import StatusBadge   from '@/components/shared/StatusBadge';
+import Pagination    from '@/components/shared/Pagination';
+import SearchInput   from '@/components/shared/SearchInput';
+import ConfirmDialog from '@/components/shared/ConfirmDialog';
+import FormSelect    from '@/components/shared/FormSelect';
 
-import { Button }       from '@/components/ui/button';
-import { Input }        from '@/components/ui/input';
-import { Label }        from '@/components/ui/label';
+// shadcn UI
+import { Button } from '@/components/ui/button';
+import { Input }  from '@/components/ui/input';
+import { Label }  from '@/components/ui/label';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import {
   Dialog,
   DialogContent,
@@ -47,12 +60,43 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 
+// Services & schemas
 import {
   getInventoryList,
   createInventory,
   archiveInventory,
 } from '@/services/api';
 import { createInventorySchema } from '@/schemas/inventorySchema';
+
+// ============================================================
+// Constants — opsi filter dan form
+// ============================================================
+const LIMIT = 10;
+
+const CATEGORY_FILTER_OPTIONS = [
+  { value: 'all',         label: 'All Categories' },
+  { value: 'ingredients', label: 'Ingredients' },
+  { value: 'packaging',   label: 'Packaging' },
+];
+
+const SORT_OPTIONS = [
+  { value: 'latest', label: 'Sort: Latest' },
+  { value: 'oldest', label: 'Sort: Oldest' },
+  { value: 'name',   label: 'Sort: Name A–Z' },
+  { value: 'stock',  label: 'Sort: Stok ↓' },
+];
+
+// Opsi khusus untuk FORM (tanpa "all" karena harus memilih satu)
+const CATEGORY_FORM_OPTIONS = [
+  { value: 'ingredients', label: 'Ingredients' },
+  { value: 'packaging',   label: 'Packaging' },
+];
+
+const UNIT_OPTIONS = [
+  { value: 'gr',  label: 'gr (gram)' },
+  { value: 'ml',  label: 'ml (mililiter)' },
+  { value: 'pcs', label: 'pcs (pieces)' },
+];
 
 // ============================================================
 // Helper functions
@@ -69,14 +113,13 @@ const formatCurrency = (amount) => {
 };
 
 /**
- * Format quantity + konversi unit:
+ * Format quantity + konversi unit otomatis:
  *   gr ≥ 1000  → Kg
  *   ml ≥ 1000  → Ltr
- *   quantityTotal: null → "—" (inventory baru, belum ada batch)
+ *   null       → "—" (inventory baru, belum ada batch)
  */
 const formatQuantity = (quantity, unit) => {
   if (quantity === null || quantity === undefined) return '—';
-  const uMap = { gr: 'gr', ml: 'ml', pcs: 'Pcs' };
   if (unit === 'gr' && quantity >= 1000) {
     const val = (quantity / 1000).toLocaleString('id-ID', { maximumFractionDigits: 2 });
     return `${val} Kg`;
@@ -85,10 +128,11 @@ const formatQuantity = (quantity, unit) => {
     const val = (quantity / 1000).toLocaleString('id-ID', { maximumFractionDigits: 2 });
     return `${val} Ltr`;
   }
+  const uMap = { gr: 'gr', ml: 'ml', pcs: 'Pcs' };
   return `${quantity.toLocaleString('id-ID')} ${uMap[unit] ?? unit}`;
 };
 
-/** Icon per kategori (lucide, 16px sesuai DESIGN_v1.md) */
+/** Icon per kategori — lucide, 32px wrapper */
 const CategoryIcon = ({ category }) => {
   if (category === 'ingredients') {
     return (
@@ -106,7 +150,9 @@ const CategoryIcon = ({ category }) => {
 
 // ============================================================
 // Sub-komponen: Form Tambah Inventory
-// Dipisah supaya form state tidak bercampur dengan halaman
+// Dipisah agar form state tidak bercampur dengan page state.
+// Semua input pakai shadcn — Input (teks), FormSelect (dropdown),
+// dan textarea (belum ada komponen shadcn, styling manual konsisten).
 // ============================================================
 function AddInventoryDialog({ open, onClose, onSuccess }) {
   const [submitting, setSubmitting] = useState(false);
@@ -116,7 +162,6 @@ function AddInventoryDialog({ open, onClose, onSuccess }) {
     register,
     handleSubmit,
     control,
-    watch,
     reset,
     formState: { errors },
   } = useForm({
@@ -124,9 +169,7 @@ function AddInventoryDialog({ open, onClose, onSuccess }) {
     defaultValues: { nameInventory: '', category: '', unit: '', description: '' },
   });
 
-  const selectedCategory = watch('category');
-
-  // Reset form & error saat dialog dibuka/ditutup
+  // Reset form & error saat dialog ditutup
   useEffect(() => {
     if (!open) {
       reset();
@@ -160,7 +203,7 @@ function AddInventoryDialog({ open, onClose, onSuccess }) {
         </DialogHeader>
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-          {/* nameInventory */}
+          {/* nameInventory — shadcn Input */}
           <div className="space-y-1.5">
             <Label htmlFor="inv-name" className="text-sm font-medium">
               Nama Item <span className="text-destructive">*</span>
@@ -176,69 +219,48 @@ function AddInventoryDialog({ open, onClose, onSuccess }) {
             )}
           </div>
 
-          {/* category */}
-          <div className="space-y-1.5">
-            <Label htmlFor="inv-category" className="text-sm font-medium">
-              Kategori <span className="text-destructive">*</span>
-            </Label>
-            <div className="relative">
-              <Controller
-                name="category"
-                control={control}
-                render={({ field }) => (
-                  <select
-                    id="inv-category"
-                    {...field}
-                    aria-invalid={!!errors.category}
-                    className="w-full h-8 appearance-none rounded-lg border border-input bg-transparent px-2.5 py-1 text-sm text-foreground outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 transition-colors disabled:opacity-50 cursor-pointer dark:bg-input/30"
-                  >
-                    <option value="" disabled>Pilih kategori</option>
-                    <option value="ingredients">Ingredients</option>
-                    <option value="packaging">Packaging</option>
-                  </select>
-                )}
+          {/* category — FormSelect (shadcn Select + Label + error, 1 komponen) */}
+          <Controller
+            name="category"
+            control={control}
+            render={({ field }) => (
+              <FormSelect
+                id="inv-category"
+                label="Kategori"
+                required
+                placeholder="Pilih kategori"
+                value={field.value}
+                onValueChange={field.onChange}
+                options={CATEGORY_FORM_OPTIONS}
+                error={errors.category?.message}
               />
-              <ChevronDown size={14} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" />
-            </div>
-            {errors.category && (
-              <p className="text-xs text-destructive">{errors.category.message}</p>
             )}
-          </div>
+          />
 
-          {/* unit */}
-          <div className="space-y-1.5">
-            <Label htmlFor="inv-unit" className="text-sm font-medium">
-              Satuan Unit <span className="text-destructive">*</span>
-            </Label>
-            <div className="relative">
-              <Controller
-                name="unit"
-                control={control}
-                render={({ field }) => (
-                  <select
-                    id="inv-unit"
-                    {...field}
-                    aria-invalid={!!errors.unit}
-                    className="w-full h-8 appearance-none rounded-lg border border-input bg-transparent px-2.5 py-1 text-sm text-foreground outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 transition-colors disabled:opacity-50 cursor-pointer dark:bg-input/30"
-                  >
-                    <option value="" disabled>Pilih satuan</option>
-                    <option value="gr">gr (gram)</option>
-                    <option value="ml">ml (mililiter)</option>
-                    <option value="pcs">pcs (pieces)</option>
-                  </select>
-                )}
+          {/* unit — FormSelect */}
+          <Controller
+            name="unit"
+            control={control}
+            render={({ field }) => (
+              <FormSelect
+                id="inv-unit"
+                label="Satuan Unit"
+                required
+                placeholder="Pilih satuan"
+                value={field.value}
+                onValueChange={field.onChange}
+                options={UNIT_OPTIONS}
+                error={errors.unit?.message}
               />
-              <ChevronDown size={14} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" />
-            </div>
-            {errors.unit && (
-              <p className="text-xs text-destructive">{errors.unit.message}</p>
             )}
-          </div>
+          />
 
-          {/* description */}
+          {/* description — textarea (shadcn belum punya Textarea di stack ini,
+              styling manual diselaraskan ke token yang sama dengan Input) */}
           <div className="space-y-1.5">
             <Label htmlFor="inv-description" className="text-sm font-medium">
-              Deskripsi <span className="text-muted-foreground font-normal">(opsional)</span>
+              Deskripsi{' '}
+              <span className="text-muted-foreground font-normal">(opsional)</span>
             </Label>
             <textarea
               id="inv-description"
@@ -249,7 +271,7 @@ function AddInventoryDialog({ open, onClose, onSuccess }) {
             />
           </div>
 
-          {/* Server error — inline global (tidak terikat 1 field, lihat DESIGN_v1.md 5b) */}
+          {/* Server error — global inline, terikat ke seluruh form bukan 1 field */}
           {serverError && (
             <div className="flex items-center gap-2 rounded-md bg-destructive/10 border border-destructive/30 p-3">
               <TriangleAlert size={15} className="text-destructive shrink-0" />
@@ -282,30 +304,17 @@ function AddInventoryDialog({ open, onClose, onSuccess }) {
 }
 
 // ============================================================
-// Main page component
+// Main Page Component
 // ============================================================
-const LIMIT = 10;
-
-const CATEGORY_OPTIONS = [
-  { value: 'all',          label: 'All Categories' },
-  { value: 'ingredients',  label: 'Ingredients' },
-  { value: 'packaging',    label: 'Packaging' },
-];
-
-const SORT_OPTIONS = [
-  { value: 'latest',  label: 'Sort: Latest' },
-  { value: 'oldest',  label: 'Sort: Oldest' },
-  { value: 'name',    label: 'Sort: Name A–Z' },
-  { value: 'stock',   label: 'Sort: Stok ↓' },
-];
-
 export default function InventoryPage() {
   const navigate = useNavigate();
 
   // ── Data state ────────────────────────────────────────────
   const [inventoryList, setInventoryList] = useState([]);
   const [loading,       setLoading]       = useState(true);
-  const [pagination,    setPagination]    = useState({ totalData: 0, totalPage: 1, currentPage: 1, limit: LIMIT });
+  const [pagination,    setPagination]    = useState({
+    totalData: 0, totalPage: 1, currentPage: 1, limit: LIMIT,
+  });
 
   // ── Filter state ──────────────────────────────────────────
   const [search,   setSearch]   = useState('');
@@ -314,9 +323,9 @@ export default function InventoryPage() {
   const [page,     setPage]     = useState(1);
 
   // ── Dialog state ──────────────────────────────────────────
-  const [showAddDialog,     setShowAddDialog]     = useState(false);
-  const [archiveTarget,     setArchiveTarget]     = useState(null);  // row yang akan diarsip
-  const [archiveLoading,    setArchiveLoading]    = useState(false);
+  const [showAddDialog,  setShowAddDialog]  = useState(false);
+  const [archiveTarget,  setArchiveTarget]  = useState(null);
+  const [archiveLoading, setArchiveLoading] = useState(false);
 
   // ── Fetch data ────────────────────────────────────────────
   const fetchInventory = useCallback(async () => {
@@ -325,9 +334,9 @@ export default function InventoryPage() {
       const params = {
         page,
         limit: LIMIT,
-        ...(search   && { search }),
+        ...(search            && { search }),
         ...(category !== 'all' && { category }),
-        ...(sort     && { sort }),
+        ...(sort              && { sort }),
       };
       const res = await getInventoryList(params);
       setInventoryList(res.data.data ?? []);
@@ -341,7 +350,7 @@ export default function InventoryPage() {
 
   useEffect(() => { fetchInventory(); }, [fetchInventory]);
 
-  // Reset ke page 1 saat filter berubah
+  // Reset page ke 1 setiap kali filter berubah
   const handleSearch   = (val) => { setSearch(val);   setPage(1); };
   const handleCategory = (val) => { setCategory(val); setPage(1); };
   const handleSort     = (val) => { setSort(val);     setPage(1); };
@@ -361,7 +370,7 @@ export default function InventoryPage() {
     }
   };
 
-  // ── Table columns definition ──────────────────────────────
+  // ── Table column definitions ──────────────────────────────
   const columns = [
     {
       key: 'nameInventory',
@@ -378,9 +387,9 @@ export default function InventoryPage() {
       key: 'quantityTotal',
       header: 'Jumlah',
       headerClass: 'w-[15%]',
+      // Angka pakai font-mono (Geist Mono Variable)
       cellClass: 'font-mono text-sm',
       render: (row) => (
-        // quantityTotal: null = belum ada batch, tampilkan "—" (em-dash), warna muted
         <span className={row.quantityTotal === null ? 'text-muted-foreground' : ''}>
           {formatQuantity(row.quantityTotal, row.unit)}
         </span>
@@ -453,8 +462,9 @@ export default function InventoryPage() {
         }
       />
 
-      {/* Filter Bar */}
-      <div className="flex items-center gap-3 mb-5 flex-wrap">
+      {/* Filter Bar — semua shadcn Select, tidak ada native <select> */}
+      <div className="flex items-center gap-2 mb-5 flex-wrap">
+        {/* Search */}
         <SearchInput
           id="inventory-search"
           placeholder="Search by item name..."
@@ -463,39 +473,43 @@ export default function InventoryPage() {
           className="w-64"
         />
 
-        {/* Category filter */}
-        <div className="relative">
-          <select
+        {/* Category filter — shadcn Select */}
+        <Select value={category} onValueChange={handleCategory}>
+          <SelectTrigger
             id="inventory-category-filter"
-            value={category}
-            onChange={(e) => handleCategory(e.target.value)}
-            className="h-9 appearance-none pl-3 pr-8 rounded-lg border border-input bg-transparent text-sm text-foreground outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 transition-colors cursor-pointer dark:bg-input/30"
+            className="w-auto gap-2 h-9"
           >
-            {CATEGORY_OPTIONS.map((opt) => (
-              <option key={opt.value} value={opt.value}>{opt.label}</option>
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {CATEGORY_FILTER_OPTIONS.map((opt) => (
+              <SelectItem key={opt.value} value={opt.value}>
+                {opt.label}
+              </SelectItem>
             ))}
-          </select>
-          <ChevronDown size={13} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" />
-        </div>
+          </SelectContent>
+        </Select>
 
-        {/* Sort */}
-        <div className="relative">
-          <select
+        {/* Sort filter — shadcn Select */}
+        <Select value={sort} onValueChange={handleSort}>
+          <SelectTrigger
             id="inventory-sort-filter"
-            value={sort}
-            onChange={(e) => handleSort(e.target.value)}
-            className="h-9 appearance-none pl-3 pr-8 rounded-lg border border-input bg-transparent text-sm text-foreground outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 transition-colors cursor-pointer dark:bg-input/30"
+            className="w-auto gap-2 h-9"
           >
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
             {SORT_OPTIONS.map((opt) => (
-              <option key={opt.value} value={opt.value}>{opt.label}</option>
+              <SelectItem key={opt.value} value={opt.value}>
+                {opt.label}
+              </SelectItem>
             ))}
-          </select>
-          <ChevronDown size={13} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" />
-        </div>
+          </SelectContent>
+        </Select>
       </div>
 
       {/* Table */}
-      <div className="rounded-lg border border-border overflow-hidden">
+      <div className="rounded-lg border border-border bg-card shadow-sm overflow-hidden">
         <DataTable
           columns={columns}
           data={inventoryList}
@@ -513,7 +527,7 @@ export default function InventoryPage() {
         onPageChange={setPage}
       />
 
-      {/* ── Dialogs ─────────────────────────────────────── */}
+      {/* ── Dialogs ──────────────────────────────────────── */}
 
       {/* Add Inventory */}
       <AddInventoryDialog
