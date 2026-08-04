@@ -606,3 +606,352 @@ export const mockHistoryUsage = {
   ],
   pagination: { totalData: 5, totalPage: 1, currentPage: 1, limit: 10 },
 };
+
+// ==================================Authentification Mock Data==================================
+/**
+ * mockData.js — Modul Authentication
+ *
+ * Bentuk data harus mengikuti API contract authentication.
+ * Dipakai oleh services/api.js saat USE_MOCK = true.
+ * Response sukses dan error penting dari setiap endpoint
+ * direpresentasikan di file ini.
+ *
+ * Alur authentication:
+ * 1. Register
+ * 2. Login
+ * 3. Verify Email
+ * 4. Resend Verification Code
+ * 5. Forgot Password
+ * 6. Verify Reset Code
+ * 7. Reset Password
+ * 8. Logout
+ */
+
+// =============================================================================
+// INTERNAL MOCK DATA
+// Data ini digunakan oleh mock service untuk simulasi database.
+// Tidak dikembalikan langsung sebagai response API.
+// =============================================================================
+
+export const initialMockAuthUsers = [
+  {
+    id: "admin-001",
+    name: "Admin Utama",
+    email: "admin123@gmail.com",
+    role: "admin",
+    isEmailVerified: true,
+    createdAt: "2026-08-03T08:00:00.000Z",
+    updatedAt: "2026-08-03T08:00:00.000Z",
+  },
+  {
+    id: "kasir-001",
+    name: "Kasir Utama",
+    email: "kasir123@gmail.com",
+    role: "kasir",
+    isEmailVerified: true,
+    createdAt: "2026-08-03T08:00:00.000Z",
+    updatedAt: "2026-08-03T08:00:00.000Z",
+  },
+]
+
+export const initialMockAuthCredentials = [
+  {
+    userId: "admin-001",
+    email: "admin123@gmail.com",
+    password: "password123",
+  },
+  {
+    userId: "kasir-001",
+    email: "kasir123@gmail.com",
+    password: "password123",
+  },
+]
+
+export const mockAuthCodes = {
+  verificationCode: "123456",
+  resetCode: "654321",
+}
+
+// =============================================================================
+// ENDPOINT 1 — POST /api/auth/register
+// Mendaftarkan akun pengguna baru
+// =============================================================================
+
+/** Endpoint 1 → 201 Created: registrasi berhasil */
+export const mockRegisterSuccess = {
+  success: true,
+  message: "Registrasi berhasil",
+  data: {
+    user: {
+      id: "user-001",
+      name: "Pengguna Baru",
+      email: "user@gmail.com",
+      role: "kasir",
+      isEmailVerified: false,
+      createdAt: "2026-08-04T03:00:00.000Z",
+      updatedAt: "2026-08-04T03:00:00.000Z",
+    },
+  },
+}
+
+/** Endpoint 1 → 409 Conflict: email sudah digunakan */
+export const mockRegisterEmailConflict = {
+  success: false,
+  message: "Email sudah terdaftar",
+  errors: [
+    {
+      field: "email",
+      message: "Gunakan alamat email lain",
+    },
+  ],
+}
+
+/** Endpoint 1 → 422 Unprocessable Entity: data registrasi tidak valid */
+export const mockRegisterValidationError = {
+  success: false,
+  message: "Data registrasi tidak valid",
+  errors: [
+    {
+      field: "email",
+      message: "Format email tidak valid",
+    },
+    {
+      field: "password",
+      message: "Password minimal 8 karakter",
+    },
+  ],
+}
+
+// =============================================================================
+// ENDPOINT 2 — POST /api/auth/login
+// Masuk menggunakan email dan password
+// =============================================================================
+
+/** Endpoint 2 → 200 OK: login berhasil */
+export const mockLoginSuccess = {
+  success: true,
+  message: "Login berhasil",
+  data: {
+    token: "mock-access-token",
+    user: {
+      id: "kasir-001",
+      name: "Kasir Utama",
+      email: "kasir123@gmail.com",
+      role: "kasir",
+      isEmailVerified: true,
+      createdAt: "2026-08-03T08:00:00.000Z",
+      updatedAt: "2026-08-03T08:00:00.000Z",
+    },
+  },
+}
+
+/** Endpoint 2 → 401 Unauthorized: email atau password salah */
+export const mockLoginInvalidCredentials = {
+  success: false,
+  message: "Email atau password salah",
+  errors: [],
+}
+
+/** Endpoint 2 → 403 Forbidden: email belum diverifikasi */
+export const mockLoginEmailNotVerified = {
+  success: false,
+  message: "Email belum diverifikasi",
+  errors: [
+    {
+      field: "email",
+      message: "Verifikasi email sebelum melakukan login",
+    },
+  ],
+}
+
+// =============================================================================
+// ENDPOINT 3 — POST /api/auth/verify-email
+// Memverifikasi email menggunakan kode verifikasi
+// =============================================================================
+
+/** Endpoint 3 → 200 OK: email berhasil diverifikasi */
+export const mockVerifyEmailSuccess = {
+  success: true,
+  message: "Email berhasil diverifikasi",
+  data: {
+    email: "user@gmail.com",
+    isEmailVerified: true,
+  },
+}
+
+/** Endpoint 3 → 400 Bad Request: kode verifikasi salah */
+export const mockVerifyEmailInvalidCode = {
+  success: false,
+  message: "Kode verifikasi tidak valid",
+  errors: [
+    {
+      field: "code",
+      message: "Kode verifikasi yang dimasukkan salah",
+    },
+  ],
+}
+
+/** Endpoint 3 → 410 Gone: kode verifikasi kedaluwarsa */
+export const mockVerifyEmailExpiredCode = {
+  success: false,
+  message: "Kode verifikasi telah kedaluwarsa",
+  errors: [
+    {
+      field: "code",
+      message: "Kirim ulang kode verifikasi untuk mendapatkan kode baru",
+    },
+  ],
+}
+
+// =============================================================================
+// ENDPOINT 4 — POST /api/auth/resend-verification
+// Mengirim ulang kode verifikasi email
+// =============================================================================
+
+/** Endpoint 4 → 200 OK: kode verifikasi berhasil dikirim ulang */
+export const mockResendVerificationSuccess = {
+  success: true,
+  message: "Kode verifikasi telah dikirim ke email kamu",
+  data: {
+    email: "user@gmail.com",
+  },
+}
+
+/** Endpoint 4 → 404 Not Found: email tidak ditemukan */
+export const mockResendVerificationEmailNotFound = {
+  success: false,
+  message: "Email tidak ditemukan",
+  errors: [
+    {
+      field: "email",
+      message: "Tidak ada akun yang terdaftar dengan email tersebut",
+    },
+  ],
+}
+
+/** Endpoint 4 → 409 Conflict: email sudah diverifikasi */
+export const mockResendVerificationAlreadyVerified = {
+  success: false,
+  message: "Email sudah diverifikasi",
+  errors: [
+    {
+      field: "email",
+      message: "Silakan masuk menggunakan akun tersebut",
+    },
+  ],
+}
+
+// =============================================================================
+// ENDPOINT 5 — POST /api/auth/forgot-password
+// Mengirim kode reset password
+// =============================================================================
+
+/** Endpoint 5 → 200 OK: permintaan reset password diterima */
+export const mockForgotPasswordSuccess = {
+  success: true,
+  message: "Jika email terdaftar, kode reset password telah dikirim",
+  data: null,
+}
+
+/**
+ * Untuk keamanan, email yang tidak terdaftar dapat tetap menggunakan response
+ * yang sama agar keberadaan akun tidak dapat ditebak dari response API.
+ */
+export const mockForgotPasswordUnknownEmail = {
+  success: true,
+  message: "Jika email terdaftar, kode reset password telah dikirim",
+  data: null,
+}
+
+// =============================================================================
+// ENDPOINT 6 — POST /api/auth/verify-reset-code
+// Memverifikasi kode reset password
+// =============================================================================
+
+/** Endpoint 6 → 200 OK: kode reset password valid */
+export const mockVerifyResetCodeSuccess = {
+  success: true,
+  message: "Kode terverifikasi",
+  data: {
+    resetToken: "mock-reset-password-token",
+  },
+}
+
+/** Endpoint 6 → 400 Bad Request: kode reset salah */
+export const mockVerifyResetCodeInvalid = {
+  success: false,
+  message: "Kode reset password tidak valid",
+  errors: [
+    {
+      field: "code",
+      message: "Kode reset password yang dimasukkan salah",
+    },
+  ],
+}
+
+/** Endpoint 6 → 410 Gone: kode reset kedaluwarsa */
+export const mockVerifyResetCodeExpired = {
+  success: false,
+  message: "Kode reset password telah kedaluwarsa",
+  errors: [
+    {
+      field: "code",
+      message: "Ajukan ulang permintaan reset password",
+    },
+  ],
+}
+
+// =============================================================================
+// ENDPOINT 7 — POST /api/auth/reset-password
+// Mengubah password menggunakan reset token
+// =============================================================================
+
+/** Endpoint 7 → 200 OK: password berhasil diubah */
+export const mockResetPasswordSuccess = {
+  success: true,
+  message: "Password berhasil direset, silakan login ulang",
+  data: null,
+}
+
+/** Endpoint 7 → 401 Unauthorized: reset token tidak valid */
+export const mockResetPasswordInvalidToken = {
+  success: false,
+  message: "Sesi reset password tidak valid",
+  errors: [
+    {
+      field: "resetToken",
+      message: "Verifikasi kembali kode reset password",
+    },
+  ],
+}
+
+/** Endpoint 7 → 422 Unprocessable Entity: password baru tidak valid */
+export const mockResetPasswordValidationError = {
+  success: false,
+  message: "Password baru tidak valid",
+  errors: [
+    {
+      field: "password",
+      message: "Password minimal 8 karakter",
+    },
+  ],
+}
+
+// =============================================================================
+// ENDPOINT 8 — POST /api/auth/logout
+// Mengakhiri sesi pengguna
+// =============================================================================
+
+/** Endpoint 8 → 200 OK: logout berhasil */
+export const mockLogoutSuccess = {
+  success: true,
+  message: "Logout berhasil",
+  data: null,
+}
+
+/** Endpoint 8 → 401 Unauthorized: pengguna tidak memiliki sesi aktif */
+export const mockLogoutUnauthorized = {
+  success: false,
+  message: "Sesi pengguna tidak valid atau telah berakhir",
+  errors: [],
+}
