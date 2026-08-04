@@ -79,12 +79,12 @@ export default function AdminLayout() {
         id="admin-sidebar"
         className="w-64 min-h-screen bg-sidebar border-r border-sidebar-border flex flex-col fixed top-0 left-0 z-40"
       >
-        {/* Brand */}
-        <div className="px-5 py-6 border-b border-sidebar-border">
-          <h2 className="text-base font-bold font-heading text-sidebar-foreground leading-tight">
+        {/* Brand — dark brown header, kontras dengan sidebar cream di light mode */}
+        <div className="px-5 py-6 border-b border-sidebar-border bg-[#2D241E]">  
+          <h2 className="text-base font-bold font-heading text-[#E6D5C3] leading-tight">
             Artisan Brew
           </h2>
-          <p className="text-xs text-muted-foreground mt-0.5">Inventory Manager</p>
+          <p className="text-xs text-[#E6D5C3]/60 mt-0.5">Inventory Manager</p>
         </div>
 
         {/* Navigation */}
