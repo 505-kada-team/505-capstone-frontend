@@ -44,36 +44,255 @@ import {
   mockDeductReverse,
   // Endpoint 14 — GET /api/history-usage
   mockHistoryUsage,
-  //=====================AUTHENTIFICATION========================//
-  // Endpoint 1 — POST /api/auth/register
-  mockRegisterSuccess,
-  // Endpoint 2 — POST /api/auth/login
-  mockLoginSuccess,
-  // Endpoint 3 — POST /api/auth/verify-email
-  mockVerifyEmailSuccess,
-  // Endpoint 4 — POST /api/auth/resend-verification
-  mockResendVerificationSuccess,
-  // Endpoint 5 — POST /api/auth/forgot-password
-  mockForgotPasswordSuccess,
-  // Endpoint 6 — POST /api/auth/verify-reset-code
-  mockVerifyResetCodeSuccess,
-  // Endpoint 7 — POST /api/auth/reset-password
-  mockResetPasswordSuccess,
-  // Endpoint 8 — POST /api/auth/logout
-  mockLogoutSuccess,
-  
-} from '../lib/mockData';
 
-// ---------------------------------------------------------------------------
-// Setup axios instance
-// baseURL dibaca dari .env — JANGAN hardcode URL di sini
-// ---------------------------------------------------------------------------
-const api = axios.create({ baseURL: import.meta.env.VITE_API_URL });
+} from '../lib/mockData';
 
 // ---------------------------------------------------------------------------
 // Flag mock global — ubah ke false saat backend sudah siap
 // ---------------------------------------------------------------------------
 const USE_MOCK = true;
+
+
+export const DEFAULT_AUTH_ROLE =
+  import.meta.env.VITE_DEFAULT_AUTH_ROLE || "admin";
+
+/* ==========================================================================
+ * AXIOS INSTANCE
+ * ========================================================================== */
+
+/**
+ * VITE_API_URL berasal dari file .env.
+ *
+ * Contoh:
+ * VITE_API_URL=https://backend-example.com
+ *
+ * Jangan menyimpan URL backend secara hardcode di file ini.
+ */
+const api = axios.create({
+  baseURL: import.meta.env.VITE_API_URL,
+  withCredentials: true,
+  headers: {
+    'Content-Type': 'application/json',
+    'x-platform': 'web',
+  },
+});
+
+/* ==========================================================================
+ * ACCESS TOKEN MANAGEMENT
+ * ========================================================================== */
+
+/**
+ * Access token disimpan di memory.
+ *
+ * Refresh token diasumsikan disimpan oleh backend dalam cookie HTTP-only.
+ */
+let accessToken = null;
+
+export const setAccessToken = (token) => {
+  accessToken = token;
+};
+
+export const getAccessToken = () => accessToken;
+
+export const clearAccessToken = () => {
+  accessToken = null;
+};
+
+/* ==========================================================================
+ * AUTH CALLBACK HANDLERS
+ * ========================================================================== */
+
+/**
+ * Callback ini diisi dari AuthProvider.
+ *
+ * onRefreshed:
+ * Dipanggil ketika access token berhasil diperbarui.
+ *
+ * onExpired:
+ * Dipanggil ketika refresh token gagal sehingga sesi berakhir.
+ */
+let onTokenRefreshed = null;
+let onSessionExpired = null;
+
+export const setAuthHandlers = ({
+  onRefreshed,
+  onExpired,
+}) => {
+  onTokenRefreshed = onRefreshed;
+  onSessionExpired = onExpired;
+};
+
+/* ==========================================================================
+ * REQUEST INTERCEPTOR
+ * ========================================================================== */
+
+/**
+ * Menambahkan access token ke setiap request yang membutuhkan autentikasi.
+ */
+api.interceptors.request.use(
+  (config) => {
+    if (accessToken) {
+      config.headers.Authorization =
+        `Bearer ${accessToken}`;
+    }
+
+    return config;
+  },
+  (error) => Promise.reject(error),
+);
+
+/* ==========================================================================
+ * RESPONSE INTERCEPTOR
+ * ========================================================================== */
+
+/**
+ * Endpoint berikut tidak boleh memicu refresh token otomatis.
+ *
+ * Hal ini mencegah infinite loop ketika login, register,
+ * atau refresh token sendiri mengembalikan status 401.
+ */
+const EXCLUDE_REFRESH = [
+  '/auth/login',
+  '/auth/register',
+  '/auth/refresh',
+  '/auth/logout',
+  '/auth/forgot-password',
+  '/auth/reset-password',
+  '/auth/verify-email',
+];
+
+let isRefreshing = false;
+let refreshQueue = [];
+
+/**
+ * Menjalankan kembali request yang sebelumnya menunggu refresh token.
+ */
+const resolveRefreshQueue = (newToken) => {
+  refreshQueue.forEach(
+    ({ resolve, originalRequest }) => {
+      originalRequest.headers =
+        originalRequest.headers ?? {};
+
+      originalRequest.headers.Authorization =
+        `Bearer ${newToken}`;
+
+      resolve(api(originalRequest));
+    },
+  );
+
+  refreshQueue = [];
+};
+
+/**
+ * Menolak semua request yang menunggu jika refresh token gagal.
+ */
+const rejectRefreshQueue = (error) => {
+  refreshQueue.forEach(({ reject }) => {
+    reject(error);
+  });
+
+  refreshQueue = [];
+};
+
+api.interceptors.response.use(
+  (response) => response,
+
+  async (error) => {
+    const originalRequest = error.config;
+
+    /**
+     * Jika error tidak mempunyai konfigurasi request,
+     * request tidak dapat dicoba ulang.
+     */
+    if (!originalRequest) {
+      return Promise.reject(error);
+    }
+
+    const isExcluded = EXCLUDE_REFRESH.some((path) =>
+      originalRequest.url?.includes(path),
+    );
+
+    const shouldRefresh =
+      error.response?.status === 401 &&
+      !originalRequest._retry &&
+      !isExcluded;
+
+    if (!shouldRefresh) {
+      return Promise.reject(error);
+    }
+
+    originalRequest._retry = true;
+
+    /**
+     * Jika proses refresh sedang berjalan, simpan request
+     * berikutnya ke dalam antrean.
+     */
+    if (isRefreshing) {
+      return new Promise((resolve, reject) => {
+        refreshQueue.push({
+          resolve,
+          reject,
+          originalRequest,
+        });
+      });
+    }
+
+    isRefreshing = true;
+
+    try {
+      /**
+       * Refresh token berada dalam cookie HTTP-only.
+       *
+       * withCredentials: true pada Axios instance memastikan
+       * cookie ikut terkirim ke backend.
+       *
+       * Request ini tetap diletakkan di service layer dan tidak
+       * dipanggil dari komponen.
+       */
+      const response = await api.post('/auth/refresh');
+
+      const refreshResult =
+        response.data?.data ?? response.data;
+
+      const newToken =
+        refreshResult?.accessToken ??
+        refreshResult?.token;
+
+      if (!newToken) {
+        throw new Error(
+          'Backend tidak mengembalikan access token saat refresh.',
+        );
+      }
+
+      setAccessToken(newToken);
+
+      onTokenRefreshed?.(newToken);
+
+      /**
+       * Jalankan semua request yang sebelumnya menunggu.
+       */
+      resolveRefreshQueue(newToken);
+
+      originalRequest.headers =
+        originalRequest.headers ?? {};
+
+      originalRequest.headers.Authorization =
+        `Bearer ${newToken}`;
+
+      return api(originalRequest);
+    } catch (refreshError) {
+      rejectRefreshQueue(refreshError);
+
+      clearAccessToken();
+
+      onSessionExpired?.();
+
+      return Promise.reject(refreshError);
+    } finally {
+      isRefreshing = false;
+    }
+  },
+);
 
 // =============================================================================
 // ENDPOINT 1 — POST /api/inventory
@@ -221,132 +440,7 @@ export const getHistoryUsage = (params) =>
   USE_MOCK
     ? Promise.resolve({ data: mockHistoryUsage })
     : api.get('/api/history-usage', { params });
+    
 
+export default api;
 
-
-//==============================================================================
-//=============================AUTHENTIFICATION=================================
-//==============================================================================
-/**
- * services/api.js — Modul Authentication
- *
- * ATURAN (dari CONVENTIONS.md):
- * - Semua pemanggilan API WAJIB melalui file ini.
- * - Halaman dan komponen tidak boleh mengimpor Axios secara langsung.
- * - Nama fungsi mengikuti pola [verb][Resource], berdasarkan resource,
- *   bukan berdasarkan role pengguna.
- * - File ini digunakan bersama oleh Admin dan Kasir.
- *
- * MODE MOCK:
- * - Set USE_MOCK = true selama backend authentication belum tersedia.
- * - Set USE_MOCK = false setelah backend siap digunakan.
- * - Komponen tidak perlu diubah ketika berpindah dari mock ke backend.
- * - Bentuk data di lib/mockData.js WAJIB identik dengan response API asli.
- *
- * CATATAN:
- * - Pengguna tidak memilih role saat login.
- * - Role dikembalikan oleh backend melalui response login.
- * - Endpoint dan payload harus disesuaikan dengan API contract final.
- */
-
-// ---------------------------------------------------------------------------
-// Axios interceptor
-// Menambahkan access token pada request yang membutuhkan authentication
-// ---------------------------------------------------------------------------
-api.interceptors.request.use(
-  (config) => {
-    const token = localStorage.getItem("accessToken")
-
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`
-    }
-
-    return config
-  },
-  (error) => Promise.reject(error),
-)
-
-// =============================================================================
-// ENDPOINT 1 — POST /api/auth/register
-// Mendaftarkan pengguna baru
-// Payload: { name, email, password }
-// Role tidak dikirim dari frontend karena ditentukan oleh backend
-// =============================================================================
-export const register = (payload) =>
-  USE_MOCK
-    ? Promise.resolve({ data: mockRegisterSuccess })
-    : api.post("/api/auth/register", payload)
-
-// =============================================================================
-// ENDPOINT 2 — POST /api/auth/login
-// Login menggunakan email dan password
-// Payload: { email, password }
-// Response: access token, data user, dan role
-// =============================================================================
-export const login = (payload) =>
-  USE_MOCK
-    ? Promise.resolve({ data: mockLoginSuccess })
-    : api.post("/api/auth/login", payload)
-
-// =============================================================================
-// ENDPOINT 3 — POST /api/auth/verify-email
-// Memverifikasi email menggunakan kode verifikasi
-// Payload: { email, code }
-// =============================================================================
-export const verifyEmail = (payload) =>
-  USE_MOCK
-    ? Promise.resolve({ data: mockVerifyEmailSuccess })
-    : api.post("/api/auth/verify-email", payload)
-
-// =============================================================================
-// ENDPOINT 4 — POST /api/auth/resend-verification
-// Mengirim ulang kode verifikasi email
-// Payload: { email }
-// =============================================================================
-export const resendVerification = (payload) =>
-  USE_MOCK
-    ? Promise.resolve({ data: mockResendVerificationSuccess })
-    : api.post("/api/auth/resend-verification", payload)
-
-// =============================================================================
-// ENDPOINT 5 — POST /api/auth/forgot-password
-// Mengirim kode reset password
-// Payload: { email }
-// =============================================================================
-export const forgotPassword = (payload) =>
-  USE_MOCK
-    ? Promise.resolve({ data: mockForgotPasswordSuccess })
-    : api.post("/api/auth/forgot-password", payload)
-
-// =============================================================================
-// ENDPOINT 6 — POST /api/auth/verify-reset-code
-// Memverifikasi kode reset password
-// Payload: { email, code }
-// =============================================================================
-export const verifyResetCode = (payload) =>
-  USE_MOCK
-    ? Promise.resolve({ data: mockVerifyResetCodeSuccess })
-    : api.post("/api/auth/verify-reset-code", payload)
-
-// =============================================================================
-// ENDPOINT 7 — POST /api/auth/reset-password
-// Mengubah password setelah kode reset berhasil diverifikasi
-// Payload: { resetToken, password }
-// confirmPassword hanya digunakan untuk validasi form dan tidak dikirim
-// =============================================================================
-export const resetPassword = (payload) =>
-  USE_MOCK
-    ? Promise.resolve({ data: mockResetPasswordSuccess })
-    : api.post("/api/auth/reset-password", payload)
-
-// =============================================================================
-// ENDPOINT 8 — POST /api/auth/logout
-// Mengakhiri sesi pengguna
-// Tidak membutuhkan payload
-// =============================================================================
-export const logout = () =>
-  USE_MOCK
-    ? Promise.resolve({ data: mockLogoutSuccess })
-    : api.post("/api/auth/logout")
-
-export default api

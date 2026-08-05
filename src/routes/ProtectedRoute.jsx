@@ -1,22 +1,47 @@
-import { Navigate, Outlet, useLocation } from "react-router-dom"
-import { useAuth } from "@/context/AuthContext"
+import {Navigate, Outlet,} from 'react-router-dom';
 
-export default function ProtectedRoute({ allowedRoles }) {
-  const { user, isAuthenticated, isLoading } = useAuth()
-  const location = useLocation()
+import { useAuth } from '@/context/AuthContext';
 
-  if (isLoading) {
-    return null
+export default function ProtectedRoute({allowedRoles,}) {
+  const {
+    isAuthenticated,
+    isAuthLoading,
+    role,
+  } = useAuth();
+
+  if (isAuthLoading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        Memuat sesi...
+      </div>
+    );
   }
 
   if (!isAuthenticated) {
-    return <Navigate to="/login" replace state={{ from: location }} />
+    return (
+      <Navigate
+        to="/login"
+        replace
+      />
+    );
   }
 
-  if (!allowedRoles.includes(user.role)) {
-    const redirectPath = user.role === "admin" ? "/admin" : "/kasir"
-    return <Navigate to={redirectPath} replace />
+  if (
+    allowedRoles?.length &&
+    !allowedRoles.includes(role)
+  ) {
+    const target =
+      role === 'admin'
+        ? '/admin'
+        : '/kasir';
+
+    return (
+      <Navigate
+        to={target}
+        replace
+      />
+    );
   }
 
-  return <Outlet />
+  return <Outlet />;
 }
