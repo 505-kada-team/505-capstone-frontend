@@ -1,5 +1,5 @@
 /**
- * services/api.js — Modul Inventory + Menu/Resep
+ * services/api.js — Modul Inventory + Menu/Resep + Production Plan
  *
  * ATURAN (dari CONVENTIONS.md):
  * - Semua pemanggilan API WAJIB lewat file ini. Jangan import axios langsung di komponen.
@@ -12,8 +12,9 @@
  * - Bentuk data mock di lib/mockData.js WAJIB identik dengan response API asli.
  *
  * Referensi endpoint:
- *   - 505_Database Schema_inventory.md (14 endpoint, section 5)
- *   - 505_Database Schema_resep.md    (6 endpoint, section 5)
+ *   - 505_Database Schema_inventory.md      (14 endpoint)
+ *   - 505_Database Schema_resep.md          (6 endpoint)
+ *   - 505_Database Schema_producitonplan.md (10 endpoint)
  */
 
 import axios from 'axios';
@@ -60,6 +61,27 @@ import {
   mockDeleteMenu,
   // Endpoint 6 — GET /api/menu/dropdown
   mockMenuDropdown,
+  // ── Production Plan (Endpoint A1–A10) ───────────────────────────────────
+  // Endpoint A1 — POST /api/plan
+  mockCreatePlan,
+  // Endpoint A2 — GET /api/plan
+  mockPlanList,
+  // Endpoint A3 — GET /api/plan/:id
+  mockPlanDetailDraft, // bisa diganti ke mockPlanDetailActive/Stale untuk testing UI
+  // Endpoint A4 — PUT /api/plan/:id
+  mockUpdatePlan,
+  // Endpoint A5 — POST /api/plan/:id/check-availability
+  mockCheckAvailabilityPlan,
+  // Endpoint A6 — POST /api/plan/:id/approve
+  mockApprovePlan,
+  // Endpoint A7 — POST /api/plan/:id/stop
+  mockStopPlan,
+  // Endpoint A8 — DELETE /api/plan/:id
+  mockCancelPlan,
+  // Endpoint A9 — PUT /api/plan/:id/menus/:menuId/discount
+  mockSetDiscount,
+  // Endpoint A10 — DELETE /api/plan/:id/menus/:menuId/discount
+  mockDeleteDiscount,
 } from '../lib/mockData';
 
 // ---------------------------------------------------------------------------
@@ -305,3 +327,105 @@ export const getMenuDropdown = (params) =>
   USE_MOCK
     ? Promise.resolve({ data: mockMenuDropdown })
     : api.get('/api/menu/dropdown', { params });
+
+// =============================================================================
+// MODUL PRODUCTION PLAN — 505_Database Schema_producitonplan.md
+// =============================================================================
+
+// =============================================================================
+// ENDPOINT A1 — POST /api/plan
+// Buat plan baru (draft)
+// Payload: { name, tags?, startDate, duration, menus: [{ menuId, quantityPlanned }] }
+// =============================================================================
+export const createPlan = (payload) =>
+  USE_MOCK
+    ? Promise.resolve({ data: mockCreatePlan })
+    : api.post('/api/plan', payload);
+
+// =============================================================================
+// ENDPOINT A2 — GET /api/plan
+// List semua plan (filter status)
+// Params opsional: { status, search, tags, page, limit }
+// =============================================================================
+export const getPlanList = (params) =>
+  USE_MOCK
+    ? Promise.resolve({ data: mockPlanList })
+    : api.get('/api/plan', { params });
+
+// =============================================================================
+// ENDPOINT A3 — GET /api/plan/:id
+// Detail plan + checkResult/committed + diskon
+// =============================================================================
+export const getPlanDetail = (id) =>
+  USE_MOCK
+    // TODO: Ganti ke mockPlanDetailActive kalau ingin test UI state active
+    ? Promise.resolve({ data: mockPlanDetailDraft })
+    : api.get(`/api/plan/${id}`);
+
+// =============================================================================
+// ENDPOINT A4 — PUT /api/plan/:id
+// Edit plan (hanya saat draft)
+// Payload: { startDate?, duration?, menus? }
+// =============================================================================
+export const updatePlan = (id, payload) =>
+  USE_MOCK
+    ? Promise.resolve({ data: mockUpdatePlan })
+    : api.put(`/api/plan/${id}`, payload);
+
+// =============================================================================
+// ENDPOINT A5 — POST /api/plan/:id/check-availability
+// Refresh simulasi ketersediaan bahan (hanya saat draft)
+// Tidak ada payload
+// =============================================================================
+export const checkAvailabilityPlan = (id) =>
+  USE_MOCK
+    ? Promise.resolve({ data: mockCheckAvailabilityPlan })
+    : api.post(`/api/plan/${id}/check-availability`);
+
+// =============================================================================
+// ENDPOINT A6 — POST /api/plan/:id/approve
+// Setujui plan → deduct Inventory, bekukan frozenSellingPrice, draft → active
+// Tidak ada payload
+// =============================================================================
+export const approvePlan = (id) =>
+  USE_MOCK
+    ? Promise.resolve({ data: mockApprovePlan })
+    : api.post(`/api/plan/${id}/approve`);
+
+// =============================================================================
+// ENDPOINT A7 — POST /api/plan/:id/stop
+// Hentikan paksa, active → stopped
+// Payload opsional: { reason, stoppedBy }
+// =============================================================================
+export const stopPlan = (id, payload) =>
+  USE_MOCK
+    ? Promise.resolve({ data: mockStopPlan })
+    : api.post(`/api/plan/${id}/stop`, payload);
+
+// =============================================================================
+// ENDPOINT A8 — DELETE /api/plan/:id
+// Batalkan draft (hanya saat draft)
+// =============================================================================
+export const cancelPlan = (id) =>
+  USE_MOCK
+    ? Promise.resolve({ data: mockCancelPlan })
+    : api.delete(`/api/plan/${id}`);
+
+// =============================================================================
+// ENDPOINT A9 — PUT /api/plan/:id/menus/:menuId/discount
+// Set/ganti slot diskon untuk satu menu
+// Payload: { discountPercentage, startDate, endDate, reason }
+// =============================================================================
+export const setMenuDiscount = (id, menuId, payload) =>
+  USE_MOCK
+    ? Promise.resolve({ data: mockSetDiscount })
+    : api.put(`/api/plan/${id}/menus/${menuId}/discount`, payload);
+
+// =============================================================================
+// ENDPOINT A10 — DELETE /api/plan/:id/menus/:menuId/discount
+// Hapus slot diskon untuk satu menu
+// =============================================================================
+export const deleteMenuDiscount = (id, menuId) =>
+  USE_MOCK
+    ? Promise.resolve({ data: mockDeleteDiscount })
+    : api.delete(`/api/plan/${id}/menus/${menuId}/discount`);
