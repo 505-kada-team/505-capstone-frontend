@@ -617,3 +617,455 @@ export const mockHistoryUsage = {
   ],
   pagination: { totalData: 5, totalPage: 1, currentPage: 1, limit: 10 },
 };
+
+// =============================================================================
+// MODUL MENU / RESEP — 505_Database Schema_resep.md
+// 6 endpoint: POST, GET list, GET :id, PUT :id, DELETE :id, GET dropdown
+//
+// Koreksi typo OCR dari contract PDF:
+//   "inventoryld"    → inventoryId    (huruf 'l' terbaca sebagai 'I')
+//   "totallngredients" → totalIngredients (huruf 'I' terbaca sebagai 'l')
+//
+// Inventory IDs yang dipakai konsisten dengan mockInventoryList di atas:
+//   66c1a2b3d4e5f6a7b8c9d0e1 → Bubuk Kopi Arabica (ingredients, gr)
+//   66c1a2b3d4e5f6a7b8c9d0e2 → Kardus Box Kecil    (packaging,  pcs)
+//   60c1a2r3d4e3f6a7b8c9d0e8 → Sirup Vanilla       (ingredients, ml)
+//   66c1a2b3d4e5f6a7b8c9d0e9 → [SUDAH DIARSIPKAN]  — dipakai di mockMenuDetailIncomplete
+// =============================================================================
+
+// =============================================================================
+// ENDPOINT 1 — POST /api/menu
+// Buat menu baru
+// =============================================================================
+
+/**
+ * Endpoint 1 → 201 Created: menu berhasil dibuat.
+ * Ingredient field yang dikembalikan: inventoryId, nameInventory, category, unit,
+ * quantityNeeded, currentCostPerUnit, subtotalCost.
+ * TIDAK ada inventoryStatus — field itu hanya muncul di GET /:id (detail).
+ *
+ * Verifikasi math:
+ *   Ingredient A: 200gr × Rp15/gr = Rp3.000
+ *   Ingredient B: 1pcs × Rp1.500/pcs = Rp1.500
+ *   currentCostEstimate = 3000 + 1500 = 4.500
+ *   marginEstimate      = 25.000 - 4.500 = 20.500
+ *   marginPercentage    = round(20500/25000 × 100) = 82
+ */
+export const mockMenuCreated = {
+  success: true,
+  message: 'Menu berhasil dibuat',
+  data: {
+    _id: 'menu_003',
+    name: 'Iced Americano',
+    description: 'Espresso dengan air dingin dan es batu',
+    image: 'https://cdn.example.com/menu/nasi-goreng.jpg',
+    sellingPrice: 25000,
+    status: 'active',
+    ingredients: [
+      {
+        inventoryId: '66c1a2b3d4e5f6a7b8c9d0e1',
+        nameInventory: 'Bubuk Kopi Arabica',
+        category: 'ingredients',
+        unit: 'gr',
+        // inventoryStatus TIDAK ADA di response POST — hanya muncul di GET /:id
+        quantityNeeded: 200,
+        currentCostPerUnit: 15,    // = lastCostBatch dari Inventory (diambil live)
+        subtotalCost: 3000,        // 200 × 15
+      },
+      {
+        inventoryId: '66c1a2b3d4e5f6a7b8c9d0e2',
+        nameInventory: 'Kardus Box Kecil',
+        category: 'packaging',
+        unit: 'pcs',
+        quantityNeeded: 1,
+        currentCostPerUnit: 1500,
+        subtotalCost: 1500,        // 1 × 1500
+      },
+    ],
+    currentCostEstimate: 4500,     // 3000 + 1500
+    marginEstimate: 20500,         // 25000 - 4500
+    marginPercentage: 82,          // round(20500/25000 × 100)
+    costComplete: true,
+    createdAt: '2026-07-31T03:00:00.000Z',
+    updatedAt: '2026-07-31T03:00:00.000Z',
+  },
+};
+
+/**
+ * Endpoint 1 → 400 Bad Request: salah satu inventoryId tidak ditemukan atau sudah deleted.
+ * errors adalah array (sesuai format error contract section 2).
+ */
+export const mockMenuCreatedInvalidIngredient = {
+  success: false,
+  message: 'Validation error: ada ingredient yang inventoryId-nya tidak valid',
+  errors: [
+    {
+      field: 'ingredients[1].inventoryId',
+      message: 'Inventory tidak ditemukan atau berstatus deleted',
+    },
+  ],
+};
+
+/**
+ * Endpoint 1 → 400 Bad Request: ada inventoryId yang muncul lebih dari satu kali
+ * dalam satu payload (duplikat ingredient).
+ */
+export const mockMenuCreatedDuplicateIngredient = {
+  success: false,
+  message: 'Validation error: terdapat inventoryId yang sama lebih dari satu kali',
+  errors: [
+    {
+      field: 'ingredients',
+      message: "inventoryId '66c1a2b3d4e5f6a7b8c9d0e1' muncul lebih dari sekali",
+    },
+  ],
+};
+
+// =============================================================================
+// ENDPOINT 2 — GET /api/menu
+// List semua menu (paginated). Field lebih ringkas dari GET /:id (tanpa ingredients[]).
+// =============================================================================
+
+/**
+ * Endpoint 2 → 200 OK: list menu berisi data.
+ * Field per item: _id, image, name, sellingPrice, status,
+ *   totalIngredients, currentCostEstimate, marginEstimate, marginPercentage, costComplete.
+ * Sengaja dibuat 4 item:
+ *   - 3 item costComplete: true  (tampilkan angka cost/margin)
+ *   - 1 item costComplete: false (tampilkan null + highlight UI berbeda)
+ *
+ * Verifikasi math tiap item:
+ *   menu_001 Es Kopi Susu: cost=4300, sell=18000 → margin=13700, pct=round(13700/18000×100)=76
+ *   menu_003 Iced Americano : cost=4500, sell=25000 → margin=20500, pct=82
+ *   menu_004 Es Teh Manis: cost=1200, sell=8000  → margin=6800,  pct=round(6800/8000×100)=85
+ *   menu_002 Matcha Latte: semua null (costComplete: false)
+ */
+export const mockMenuList = {
+  success: true,
+  data: [
+    {
+      _id: 'menu_001',
+      image: 'https://cdn.example.com/menu/es-kopi-susu.jpg',
+      name: 'Es Kopi Susu',
+      sellingPrice: 18000,
+      status: 'active',
+      totalIngredients: 3,       // 3 bahan: kopi, sirup, kardus
+      currentCostEstimate: 4300,
+      marginEstimate: 13700,
+      marginPercentage: 76,
+      costComplete: true,
+    },
+    {
+      _id: 'menu_002',
+      image: 'https://cdn.example.com/menu/matcha-latte.jpg',
+      name: 'Matcha Latte',
+      sellingPrice: 22000,
+      status: 'active',
+      totalIngredients: 2,
+      // Semua null karena ada ingredient dengan inventory deleted
+      currentCostEstimate: null,
+      marginEstimate: null,
+      marginPercentage: null,
+      costComplete: false,
+    },
+    {
+      _id: 'menu_003',
+      image: 'https://cdn.example.com/menu/nasi-goreng.jpg',
+      name: 'Iced Americano',
+      sellingPrice: 25000,
+      status: 'active',
+      totalIngredients: 2,
+      currentCostEstimate: 4500,
+      marginEstimate: 20500,
+      marginPercentage: 82,
+      costComplete: true,
+    },
+    {
+      _id: 'menu_004',
+      image: 'https://cdn.example.com/menu/es-teh.jpg',
+      name: 'Es Teh Manis',
+      sellingPrice: 8000,
+      status: 'active',
+      totalIngredients: 2,
+      currentCostEstimate: 1200,
+      marginEstimate: 6800,
+      marginPercentage: 85,
+      costComplete: true,
+    },
+  ],
+  pagination: { totalData: 12, totalPage: 2, currentPage: 1, limit: 10 },
+};
+
+/**
+ * Endpoint 2 → 200 OK (empty state): tidak ada menu yang cocok dengan filter/search.
+ * Dipakai untuk render empty state di UI.
+ */
+export const mockMenuListEmpty = {
+  success: true,
+  data: [],
+  pagination: { totalData: 0, totalPage: 0, currentPage: 1, limit: 10 },
+};
+
+// =============================================================================
+// ENDPOINT 3 — GET /api/menu/:id
+// Detail menu + breakdown cost & margin per ingredient (diambil live dari Inventory).
+// Field tambahan vs list: ingredients[] full, description, createdAt, updatedAt.
+// Field tambahan vs POST response: inventoryStatus per ingredient.
+// =============================================================================
+
+/**
+ * Endpoint 3 → 200 OK — kondisi NORMAL (costComplete: true).
+ * Semua ingredient aktif, semua cost tersedia, estimasi dapat dihitung penuh.
+ *
+ * Verifikasi math:
+ *   Kopi Arabica : 15gr  × Rp120/gr   = Rp1.800
+ *   Sirup Vanilla: 20ml  × Rp50/ml    = Rp1.000
+ *   Kardus Box   : 1pcs  × Rp1.500/pcs = Rp1.500
+ *   currentCostEstimate  = 4.300
+ *   marginEstimate       = 18.000 - 4.300 = 13.700
+ *   marginPercentage     = round(13700/18000 × 100) = 76
+ */
+export const mockMenuDetail = {
+  success: true,
+  data: {
+    _id: 'menu_001',
+    image: 'https://cdn.example.com/menu/es-kopi-susu.jpg',
+    name: 'Es Kopi Susu',
+    description: 'Kopi susu premium dengan sirup vanilla, disajikan dingin',
+    sellingPrice: 18000,
+    status: 'active',
+    ingredients: [
+      {
+        inventoryId: '66c1a2b3d4e5f6a7b8c9d0e1',
+        nameInventory: 'Bubuk Kopi Arabica',
+        category: 'ingredients',
+        unit: 'gr',
+        inventoryStatus: 'active',  // field live dari Inventory — HANYA ada di endpoint detail
+        quantityNeeded: 15,
+        currentCostPerUnit: 120,   // = lastCostBatch dari Inventory (Rp120/gr)
+        subtotalCost: 1800,        // 15 × 120
+      },
+      {
+        inventoryId: '60c1a2r3d4e3f6a7b8c9d0e8',
+        nameInventory: 'Sirup Vanilla',
+        category: 'ingredients',
+        unit: 'ml',
+        inventoryStatus: 'active',
+        quantityNeeded: 20,
+        currentCostPerUnit: 50,    // = lastCostBatch Sirup Vanilla (Rp50/ml)
+        subtotalCost: 1000,        // 20 × 50
+      },
+      {
+        inventoryId: '66c1a2b3d4e5f6a7b8c9d0e2',
+        nameInventory: 'Kardus Box Kecil',
+        category: 'packaging',
+        unit: 'pcs',
+        inventoryStatus: 'active',
+        quantityNeeded: 1,
+        currentCostPerUnit: 1500,
+        subtotalCost: 1500,        // 1 × 1500
+      },
+    ],
+    currentCostEstimate: 4300,     // 1800 + 1000 + 1500
+    marginEstimate: 13700,         // 18000 - 4300
+    marginPercentage: 76,          // round(13700/18000 × 100) = 76.1 → 76
+    costComplete: true,
+    // 'warning' TIDAK ADA saat costComplete: true
+    createdAt: '2026-07-30T03:00:00.000Z',
+    updatedAt: '2026-07-30T03:00:00.000Z',
+  },
+};
+
+/**
+ * Endpoint 3 → 200 OK — kondisi COST TIDAK LENGKAP (costComplete: false).
+ * Terjadi saat ≥ 1 ingredient:
+ *   (a) inventoryStatus: "deleted"  → inventory sudah diarsipkan, OR
+ *   (b) lastCostBatch masih null    → inventory baru, belum pernah ada batch.
+ *
+ * Skenario ini: Matcha Latte dengan 1 ingredient inventoryStatus: "deleted".
+ * Konsekuensi: seluruh top-level cost (currentCostEstimate, marginEstimate, marginPercentage)
+ * menjadi null — tidak dihitung parsial karena contract melarang kalkulasi tidak lengkap.
+ * Field "warning" muncul HANYA saat costComplete: false.
+ *
+ * Catatan: ingredient Sirup Vanilla tetap aktif dan punya subtotalCost,
+ * tapi karena ada 1 ingredient null, seluruh estimasi menu = null.
+ */
+export const mockMenuDetailIncomplete = {
+  success: true,
+  data: {
+    _id: 'menu_002',
+    image: 'https://cdn.example.com/menu/matcha-latte.jpg',
+    name: 'Matcha Latte',
+    description: 'Minuman matcha segar dengan susu dan sirup vanilla',
+    sellingPrice: 22000,
+    status: 'active',
+    ingredients: [
+      {
+        inventoryId: '66c1a2b3d4e5f6a7b8c9d0e9',
+        nameInventory: 'Bubuk Matcha Premium',
+        category: 'ingredients',
+        unit: 'gr',
+        inventoryStatus: 'deleted',  // ← inventory sudah diarsipkan
+        quantityNeeded: 20,
+        currentCostPerUnit: null,    // tidak bisa diambil dari inventory deleted
+        subtotalCost: null,          // null karena currentCostPerUnit null
+      },
+      {
+        inventoryId: '60c1a2r3d4e3f6a7b8c9d0e8',
+        nameInventory: 'Sirup Vanilla',
+        category: 'ingredients',
+        unit: 'ml',
+        inventoryStatus: 'active',
+        quantityNeeded: 15,
+        currentCostPerUnit: 50,
+        subtotalCost: 750,           // 15 × 50 (dihitung, tapi bukan penentu estimasi total)
+      },
+    ],
+    // Semua top-level cost null karena costComplete: false
+    currentCostEstimate: null,
+    marginEstimate: null,
+    marginPercentage: null,
+    costComplete: false,
+    warning: 'Terdapat ingredient yang inventory-nya sudah diarsipkan atau belum pernah punya batch, estimasi cost tidak dapat dihitung penuh',
+    createdAt: '2026-07-28T03:00:00.000Z',
+    updatedAt: '2026-07-28T03:00:00.000Z',
+  },
+};
+
+/** Endpoint 3 → 404 Not Found: menu tidak ditemukan (termasuk menu status: deleted) */
+export const mockMenuNotFound = {
+  success: false,
+  message: 'Menu tidak ditemukan',
+};
+
+// =============================================================================
+// ENDPOINT 4 — PUT /api/menu/:id
+// Edit menu (name, description, image, sellingPrice, ingredients).
+// Field baru v2: affectedDraftPlans — daftar draft Plan yang perlu di-refresh.
+// =============================================================================
+
+/**
+ * Endpoint 4 → 200 OK: edit berhasil, perubahan menyentuh ingredients/sellingPrice.
+ * affectedDraftPlans berisi _id draft Plan yang ditandai checkResultStale: true.
+ * Response data hanya mengembalikan field yang diubah + _id + updatedAt (bukan full object).
+ */
+export const mockEditMenu = {
+  success: true,
+  message: 'Menu berhasil diperbarui',
+  data: {
+    _id: 'menu_001',
+    name: 'Es Kopi Susu Special',
+    sellingPrice: 20000,
+    updatedAt: '2026-07-31T04:00:00.000Z',
+  },
+  // ada 1 draft plan yang referensi menu ini → ditandai stale
+  affectedDraftPlans: ['plan_002'],
+};
+
+/**
+ * Endpoint 4 → 200 OK: edit berhasil, perubahan HANYA menyentuh name/description/image.
+ * affectedDraftPlans kosong — kedua field ini tidak memicu efek samping ke draft Plan.
+ */
+export const mockEditMenuNoEffect = {
+  success: true,
+  message: 'Menu berhasil diperbarui',
+  data: {
+    _id: 'menu_001',
+    name: 'Es Kopi Susu Artisan',
+    sellingPrice: 18000,
+    updatedAt: '2026-07-31T04:30:00.000Z',
+  },
+  affectedDraftPlans: [], // kosong karena hanya name yang berubah
+};
+
+/**
+ * Endpoint 4 → 400 Bad Request: validasi ingredient gagal (sama seperti endpoint 1).
+ */
+export const mockEditMenuInvalidIngredient = {
+  success: false,
+  message: 'Validation error: ada ingredient yang inventoryId-nya tidak valid',
+  errors: [
+    {
+      field: 'ingredients[1].inventoryId',
+      message: 'Inventory tidak ditemukan atau berstatus deleted',
+    },
+  ],
+};
+
+// =============================================================================
+// ENDPOINT 5 — DELETE /api/menu/:id
+// Arsipkan menu (soft-delete). Tidak diblokir kondisi apapun.
+// Efek samping: draft Plan yang mereferensikan menu ini ditandai checkResultStale: true.
+// =============================================================================
+
+/**
+ * Endpoint 5 → 200 OK: menu berhasil diarsipkan.
+ * affectedDraftPlans berisi draft Plan yang ditandai staleReason: "menu_archived".
+ */
+export const mockDeleteMenu = {
+  success: true,
+  message: 'Menu berhasil diarsipkan',
+  data: {
+    _id: 'menu_001',
+    status: 'deleted',
+    deletedAt: '2026-07-31T05:00:00.000Z',
+  },
+  affectedDraftPlans: ['plan_003'], // 1 draft plan perlu di-refresh setelah arsip
+};
+
+/**
+ * Endpoint 5 → 200 OK: menu berhasil diarsipkan, tidak ada draft Plan yang terdampak.
+ */
+export const mockDeleteMenuNoEffect = {
+  success: true,
+  message: 'Menu berhasil diarsipkan',
+  data: {
+    _id: 'menu_004',
+    status: 'deleted',
+    deletedAt: '2026-07-31T05:30:00.000Z',
+  },
+  affectedDraftPlans: [], // tidak ada draft yang mereferensikan menu ini
+};
+
+/** Endpoint 5 → 404: menu tidak ditemukan atau sudah berstatus deleted sebelumnya */
+export const mockDeleteMenuNotFound = {
+  success: false,
+  message: 'Menu tidak ditemukan',
+};
+
+// =============================================================================
+// ENDPOINT 6 — GET /api/menu/dropdown
+// List ringkas menu aktif untuk dropdown di modul Production Plan.
+// Berbeda dari endpoint 2: tanpa pagination, field minimal, hanya status active.
+// Field: _id, name, sellingPrice, image — TIDAK ada ingredients/cost/pagination.
+// =============================================================================
+
+/**
+ * Endpoint 6 → 200 OK: list dropdown semua menu aktif.
+ * Sengaja 3 item — menu_002 (Matcha Latte, deleted) tidak muncul sesuai filter active.
+ * Dipanggil Production Plan saat membuat draft (A1).
+ */
+export const mockMenuDropdown = {
+  success: true,
+  data: [
+    {
+      _id: 'menu_001',
+      name: 'Es Kopi Susu',
+      sellingPrice: 18000,
+      image: 'https://cdn.example.com/menu/es-kopi-susu.jpg',
+    },
+    {
+      _id: 'menu_003',
+      name: 'Iced Americano',
+      sellingPrice: 25000,
+      image: 'https://cdn.example.com/menu/nasi-goreng.jpg',
+    },
+    {
+      _id: 'menu_004',
+      name: 'Es Teh Manis',
+      sellingPrice: 8000,
+      image: 'https://cdn.example.com/menu/es-teh.jpg',
+    },
+  ],
+  // Tanpa pagination — semua hasil dikembalikan sekaligus (sesuai contract endpoint 6)
+};
