@@ -1069,3 +1069,370 @@ export const mockMenuDropdown = {
   ],
   // Tanpa pagination — semua hasil dikembalikan sekaligus (sesuai contract endpoint 6)
 };
+
+// =============================================================================
+// MODUL PRODUCTION PLAN — 505_Database Schema_producitonplan.md
+// 10 endpoint (A1 - A10): POST, GET list, GET :id, PUT, POST check-availability,
+// POST approve, POST stop, DELETE, PUT discount, DELETE discount.
+// =============================================================================
+
+// =============================================================================
+// ENDPOINT A1 — POST /api/plan
+// Buat plan baru (draft)
+// =============================================================================
+
+export const mockCreatePlan = {
+  success: true,
+  message: 'Plan berhasil dibuat sebagai draft',
+  data: {
+    _id: 'plan_001',
+    name: 'Promo Nasi Goreng Agustus',
+    tags: ['promo'],
+    status: 'draft',
+    startDate: '2026-08-05T00:00:00.000Z',
+    duration: 14,
+    endDate: '2026-08-19T00:00:00.000Z',
+    menus: [
+      {
+        menuId: 'menu_001',
+        name: 'Nasi Goreng Spesial',
+        quantityPlanned: 100,
+        soldQuantity: 0,
+        lossQuantity: 0,
+        soldOutAt: null,
+        frozenSellingPrice: null,
+        effectiveSellingPrice: 25000,
+        currentPrice: 25000,
+        discount: null,
+      },
+    ],
+    checkResult: [
+      {
+        inventoryId: '66c1a2b3d4e5f6a7b8c9d0e1',
+        nameInventory: 'Beras Premium',
+        quantityNeeded: 20000,
+        sufficient: true,
+        availableQuantity: 25000,
+        hasUnsafeBatch: true,
+        eligibleBatches: [
+          { subInventoryId: 'sub_001', quantityTaken: 8000, expired: '2026-08-12T00:00:00.000Z', batchSafetyStatus: 'unsafe' },
+          { subInventoryId: 'sub_002', quantityTaken: 12000, expired: '2026-09-01T00:00:00.000Z', batchSafetyStatus: 'safe' },
+        ],
+      },
+    ],
+    checkResultStale: false,
+    staleReason: null,
+    readyToApprove: true,
+    hasPendingLossReplacement: false,
+    createdAt: '2026-08-01T02:00:00.000Z',
+  },
+};
+
+export const mockCreatePlanInvalidMenu = {
+  success: false,
+  message: 'Validation error: ada menuId yang tidak ditemukan atau sudah diarsipkan',
+  errors: [{ field: 'menus[1].menuId', message: 'Menu tidak ditemukan atau berstatus deleted' }],
+};
+
+// =============================================================================
+// ENDPOINT A2 — GET /api/plan
+// List semua plan
+// =============================================================================
+
+export const mockPlanList = {
+  success: true,
+  data: [
+    {
+      _id: 'plan_001',
+      name: 'Promo Nasi Goreng Agustus',
+      tags: ['promo'],
+      status: 'active',
+      startDate: '2026-08-05T00:00:00.000Z',
+      endDate: '2026-08-19T00:00:00.000Z',
+      totalMenu: 2,
+      readyToApprove: true,
+      hasPendingLossReplacement: false,
+      hasActiveDiscount: true,
+      hasUnsafeBatch: true,
+    },
+  ],
+  pagination: { totalData: 8, totalPage: 1, currentPage: 1, limit: 10 },
+};
+
+// =============================================================================
+// ENDPOINT A3 — GET /api/plan/:id
+// Detail plan
+// =============================================================================
+
+export const mockPlanDetailDraft = {
+  success: true,
+  data: {
+    _id: 'plan_001',
+    name: 'Promo Nasi Goreng Agustus',
+    status: 'draft',
+    menus: [
+      {
+        menuId: 'menu_001',
+        name: 'Nasi Goreng Spesial',
+        quantityPlanned: 100,
+        frozenSellingPrice: null,
+        effectiveSellingPrice: 25000,
+        currentPrice: 25000,
+        discount: {
+          discountPercentage: 15,
+          startDate: '2026-08-12T00:00:00.000Z',
+          endDate: '2026-08-19T00:00:00.000Z',
+          reason: 'Beras Premium mendekati expired',
+          discountedPrice: 21250,
+          discountStatus: 'upcoming',
+          setBy: 'Admin A',
+          setAt: '2026-08-05T03:00:00.000Z',
+        },
+      },
+    ],
+    checkResult: [
+      {
+        inventoryId: '66c1a2b3d4e5f6a7b8c9d0e1',
+        nameInventory: 'Beras Premium',
+        quantityNeeded: 20000,
+        sufficient: true,
+        availableQuantity: 25000,
+        hasUnsafeBatch: true,
+        eligibleBatches: [
+          { subInventoryId: 'sub_001', quantityTaken: 8000, expired: '2026-08-12T00:00:00.000Z', batchSafetyStatus: 'unsafe' },
+        ],
+      },
+    ],
+    checkResultStale: false,
+    staleReason: null,
+    readyToApprove: true,
+  },
+};
+
+export const mockPlanDetailActive = {
+  success: true,
+  data: {
+    _id: 'plan_001',
+    status: 'active',
+    hasPendingLossReplacement: true,
+    warning: 'Ada laporan kerugian bahan yang sudah disetujui tapi belum diganti stoknya',
+    menus: [
+      {
+        menuId: 'menu_001',
+        name: 'Nasi Goreng Spesial',
+        quantityPlanned: 100,
+        soldQuantity: 62,
+        lossQuantity: 0,
+        remainingQuantity: 38,
+        soldOutAt: null,
+        frozenSellingPrice: 25000,
+        effectiveSellingPrice: 25000,
+        currentPrice: 21250,
+        discount: {
+          discountPercentage: 15,
+          startDate: '2026-08-12T00:00:00.000Z',
+          endDate: '2026-08-19T00:00:00.000Z',
+          reason: 'Beras Premium mendekati expired',
+          discountedPrice: 21250,
+          discountStatus: 'active',
+          setBy: 'Admin A',
+          setAt: '2026-08-05T03:00:00.000Z',
+        },
+      },
+    ],
+    committedIngredients: [
+      {
+        inventoryId: '66c1a2b3d4e5f6a7b8c9d0e1',
+        nameInventory: 'Beras Premium',
+        quantityNeeded: 20000,
+        batches: [
+          { subInventoryId: 'sub_001', quantityUsed: 8000, costPriceUsed: 10000, batchSafetyStatus: 'unsafe' },
+          { subInventoryId: 'sub_002', quantityUsed: 12000, costPriceUsed: 12000, batchSafetyStatus: 'safe' },
+        ],
+      },
+    ],
+  },
+};
+
+export const mockPlanDetailStale = {
+  success: true,
+  data: {
+    _id: 'plan_002',
+    status: 'draft',
+    checkResultStale: true,
+    staleReason: 'recipe_changed',
+    readyToApprove: false,
+    warning: 'Resep salah satu menu di plan ini berubah sejak simulasi terakhir. Refresh check-availability wajib dilakukan sebelum approve.',
+  },
+};
+
+export const mockPlanNotFound = {
+  success: false,
+  message: 'Plan tidak ditemukan',
+};
+
+// =============================================================================
+// ENDPOINT A4 — PUT /api/plan/:id
+// Edit plan (hanya saat draft)
+// =============================================================================
+
+export const mockUpdatePlan = {
+  success: true,
+  message: 'Plan berhasil diperbarui, simulasi ketersediaan sudah di-refresh',
+  data: { _id: 'plan_001', endDate: '2026-08-17T00:00:00.000Z', readyToApprove: true, checkResultStale: false, staleReason: null, updatedAt: '2026-08-02T01:00:00.000Z' },
+};
+
+export const mockUpdatePlanNotDraft = {
+  success: false,
+  message: 'Plan hanya bisa diedit selagi berstatus draft',
+  errors: [{ field: 'status', message: 'Status saat ini: active' }],
+};
+
+export const mockUpdatePlanDiscountOutOfRange = {
+  success: false,
+  message: 'Perubahan durasi plan membuat slot diskon menu_001 berada di luar rentang plan baru, hapus atau sesuaikan diskon tersebut dulu',
+  errors: [{ field: 'duration', message: 'Diskon menu_001 (2026-08-12 s/d 2026-08-19) melebihi endDate baru 2026-08-15' }],
+};
+
+// =============================================================================
+// ENDPOINT A5 — POST /api/plan/:id/check-availability
+// Refresh simulasi ketersediaan bahan
+// =============================================================================
+
+export const mockCheckAvailabilityPlan = {
+  success: true,
+  data: {
+    readyToApprove: false,
+    checkResultStale: false,
+    staleReason: null,
+    checkResult: [
+      {
+        inventoryId: '66c1a2b3d4e5f6a7b8c9d0e1',
+        nameInventory: 'Beras Premium',
+        quantityNeeded: 20000,
+        sufficient: true,
+        availableQuantity: 25000,
+        hasUnsafeBatch: true,
+        eligibleBatches: [
+          { subInventoryId: 'sub_001', quantityTaken: 20000, expired: '2026-08-12T00:00:00.000Z', batchSafetyStatus: 'unsafe' },
+        ],
+      },
+      {
+        inventoryId: '66c1a2b3d4e5f6a7b8c9d0e2',
+        nameInventory: 'Kardus Box Kecil',
+        quantityNeeded: 150,
+        sufficient: false,
+        availableQuantity: 90,
+        shortfall: 60,
+        hasUnsafeBatch: false,
+        eligibleBatches: [
+          { subInventoryId: 'sub_010', quantityTaken: 90, expired: null, batchSafetyStatus: 'safe' },
+        ],
+      },
+    ],
+  },
+};
+
+// =============================================================================
+// ENDPOINT A6 — POST /api/plan/:id/approve
+// Setujui plan → deduct Inventory, bekukan frozenSellingPrice, draft → active
+// =============================================================================
+
+export const mockApprovePlan = {
+  success: true,
+  message: 'Plan disetujui, stok bahan telah dialokasikan dan harga jual dibekukan',
+  data: { _id: 'plan_001', status: 'active', approvedAt: '2026-08-04T02:00:00.000Z' },
+};
+
+export const mockApprovePlanStaleRecipe = {
+  success: false,
+  message: 'Resep salah satu menu berubah sejak simulasi terakhir, wajib refresh check-availability sebelum approve',
+  errors: [{ field: 'staleReason', message: 'staleReason: recipe_changed' }],
+};
+
+export const mockApprovePlanInsufficient = {
+  success: false,
+  message: 'Ketersediaan stok berubah sejak simulasi terakhir, silakan check-availability ulang',
+  errors: [{ field: 'checkResult', message: '1 atau lebih inventoryId tidak lagi mencukupi' }],
+};
+
+export const mockApprovePlanConflict = {
+  success: false,
+  message: 'Masih ada plan lain yang sedang aktif, selesaikan atau hentikan plan tersebut dulu',
+  errors: [{ field: 'status', message: 'Hanya boleh 1 plan berstatus active pada satu waktu' }],
+};
+
+// =============================================================================
+// ENDPOINT A7 — POST /api/plan/:id/stop
+// Hentikan paksa, active → stopped
+// =============================================================================
+
+export const mockStopPlan = {
+  success: true,
+  message: 'Plan dihentikan, laporan akhir telah dibuat',
+  data: { _id: 'plan_001', status: 'stopped', stoppedAt: '2026-08-12T09:00:00.000Z', stoppedBy: 'Admin A', stopReason: 'Kehabisan stok bahan utama' },
+};
+
+export const mockStopPlanNotActive = {
+  success: false,
+  message: 'Hanya plan berstatus active yang bisa dihentikan',
+  errors: [{ field: 'status', message: 'Status saat ini: draft' }],
+};
+
+// =============================================================================
+// ENDPOINT A8 — DELETE /api/plan/:id
+// Batalkan draft (hanya saat draft)
+// =============================================================================
+
+export const mockCancelPlan = {
+  success: true,
+  message: 'Draft plan berhasil dibatalkan',
+  data: { _id: 'plan_001', status: 'cancelled', cancelledAt: '2026-08-02T03:00:00.000Z' },
+};
+
+export const mockCancelPlanNotDraft = {
+  success: false,
+  message: 'Hanya plan berstatus draft yang bisa dibatalkan',
+  errors: [{ field: 'status', message: 'Status saat ini: active — hentikan lewat endpoint stop, bukan dibatalkan' }],
+};
+
+// =============================================================================
+// ENDPOINT A9 — PUT /api/plan/:id/menus/:menuId/discount
+// Set/ganti slot diskon untuk satu menu
+// =============================================================================
+
+export const mockSetDiscount = {
+  success: true,
+  message: 'Diskon berhasil diterapkan pada menu',
+  data: {
+    menuId: 'menu_001',
+    effectiveSellingPrice: 25000,
+    discount: {
+      discountPercentage: 15,
+      startDate: '2026-08-12T00:00:00.000Z',
+      endDate: '2026-08-19T00:00:00.000Z',
+      reason: 'Beras Premium mendekati expired',
+      discountedPrice: 21250,
+      discountStatus: 'upcoming',
+      setBy: 'Admin A',
+      setAt: '2026-08-05T03:00:00.000Z',
+    },
+  },
+};
+
+// =============================================================================
+// ENDPOINT A10 — DELETE /api/plan/:id/menus/:menuId/discount
+// Hapus slot diskon untuk satu menu
+// =============================================================================
+
+export const mockDeleteDiscount = {
+  success: true,
+  message: 'Diskon pada menu berhasil dihapus',
+  data: { menuId: 'menu_001', discount: null },
+};
+
+export const mockDeleteDiscountNotFound = {
+  success: false,
+  message: 'Menu ini tidak memiliki diskon aktif untuk dihapus',
+  errors: [{ field: 'menuId', message: 'discount: null' }],
+};
