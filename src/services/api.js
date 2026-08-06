@@ -1,5 +1,5 @@
 /**
- * services/api.js — Modul Inventory
+ * services/api.js — Modul Inventory + Menu/Resep
  *
  * ATURAN (dari CONVENTIONS.md):
  * - Semua pemanggilan API WAJIB lewat file ini. Jangan import axios langsung di komponen.
@@ -11,11 +11,14 @@
  * - Set USE_MOCK = false begitu backend sudah bisa dihit — tidak perlu ubah kode di komponen.
  * - Bentuk data mock di lib/mockData.js WAJIB identik dengan response API asli.
  *
- * Referensi endpoint: 505_Database Schema_inventory.md (14 endpoint, section 5)
+ * Referensi endpoint:
+ *   - 505_Database Schema_inventory.md (14 endpoint, section 5)
+ *   - 505_Database Schema_resep.md    (6 endpoint, section 5)
  */
 
 import axios from 'axios';
 import {
+  // ── Inventory (Endpoint 1–14) ───────────────────────────────────────────────
   // Endpoint 1 — POST /api/inventory
   mockAddInventory,
   // Endpoint 2 — GET /api/inventory
@@ -44,6 +47,19 @@ import {
   mockDeductReverse,
   // Endpoint 14 — GET /api/history-usage
   mockHistoryUsage,
+  // ── Menu/Resep (Endpoint 1–6) ───────────────────────────────────────────────
+  // Endpoint 1 — POST /api/menu
+  mockMenuCreated,
+  // Endpoint 2 — GET /api/menu
+  mockMenuList,
+  // Endpoint 3 — GET /api/menu/:id
+  mockMenuDetail,
+  // Endpoint 4 — PUT /api/menu/:id
+  mockEditMenu,
+  // Endpoint 5 — DELETE /api/menu/:id
+  mockDeleteMenu,
+  // Endpoint 6 — GET /api/menu/dropdown
+  mockMenuDropdown,
 } from '../lib/mockData';
 
 // ---------------------------------------------------------------------------
@@ -203,3 +219,89 @@ export const getHistoryUsage = (params) =>
   USE_MOCK
     ? Promise.resolve({ data: mockHistoryUsage })
     : api.get('/api/history-usage', { params });
+
+// =============================================================================
+// MODUL MENU / RESEP — 505_Database Schema_resep.md
+// =============================================================================
+
+// =============================================================================
+// ENDPOINT 1 — POST /api/menu
+// Buat menu baru
+// Payload: { name, description?, image?, sellingPrice, ingredients[] }
+//   ingredients[]: [{ inventoryId, quantityNeeded }]
+// Response 201: data menu lengkap + live-populated ingredients + cost fields
+// Response 400: ingredient tidak valid / duplikat inventoryId dalam payload
+// =============================================================================
+export const createMenu = (payload) =>
+  USE_MOCK
+    ? Promise.resolve({ data: mockMenuCreated })
+    : api.post('/api/menu', payload);
+
+// =============================================================================
+// ENDPOINT 2 — GET /api/menu
+// List semua menu (paginated, untuk halaman manajemen)
+// Params opsional: { search, page, limit, includeDeleted }
+//   includeDeleted default false — hanya menu active yang muncul
+// Response: data ringkas per item (tanpa ingredients[], dengan totalIngredients)
+// =============================================================================
+export const getMenuList = (params) =>
+  USE_MOCK
+    ? Promise.resolve({ data: mockMenuList })
+    : api.get('/api/menu', { params });
+
+// =============================================================================
+// ENDPOINT 3 — GET /api/menu/:id
+// Detail menu + breakdown cost & margin per ingredient (diambil live dari Inventory)
+// Tidak ada params tambahan — id saja
+// Response 200 normal   : costComplete: true,  semua cost terisi
+// Response 200 tidak lengkap: costComplete: false, cost null, ada field 'warning'
+// Response 404: menu tidak ditemukan atau status deleted
+// CATATAN: response ini berbeda dari GET list — mengandung ingredients[] penuh
+//          termasuk field inventoryStatus per ingredient
+// =============================================================================
+export const getMenuDetail = (id) =>
+  USE_MOCK
+    ? Promise.resolve({ data: mockMenuDetail })
+    : api.get(`/api/menu/${id}`);
+
+// =============================================================================
+// ENDPOINT 4 — PUT /api/menu/:id
+// Edit menu — semua field opsional, kirim hanya yang berubah
+// Payload: { name?, description?, image?, sellingPrice?, ingredients[]? }
+//   ingredients: kalau dikirim, bersifat REPLACE (array pengganti penuh, bukan patch)
+// Response 200: data field yang diubah + affectedDraftPlans[]
+//   affectedDraftPlans terisi kalau ingredients atau sellingPrice berubah
+//   (draft Plan yang mereferensikan menu ini ditandai checkResultStale: true)
+// Response 400: ingredient tidak valid (sama seperti endpoint 1)
+// =============================================================================
+export const updateMenu = (id, payload) =>
+  USE_MOCK
+    ? Promise.resolve({ data: mockEditMenu })
+    : api.put(`/api/menu/${id}`, payload);
+
+// =============================================================================
+// ENDPOINT 5 — DELETE /api/menu/:id
+// Arsipkan menu (soft-delete) — tidak diblokir kondisi apapun
+// Tidak ada payload
+// Response 200: { data: { _id, status: 'deleted', deletedAt }, affectedDraftPlans[] }
+//   affectedDraftPlans: draft Plan yang ditandai staleReason: 'menu_archived'
+// Response 404: menu tidak ditemukan atau sudah berstatus deleted
+// =============================================================================
+export const archiveMenu = (id) =>
+  USE_MOCK
+    ? Promise.resolve({ data: mockDeleteMenu })
+    : api.delete(`/api/menu/${id}`);
+
+// =============================================================================
+// ENDPOINT 6 — GET /api/menu/dropdown
+// List ringkas menu aktif untuk dropdown di modul Production Plan
+// Params opsional: { search } — search-as-you-type terhadap name
+// Tanpa pagination — kembalikan seluruh data aktif yang match filter
+// Field minimal: _id, name, sellingPrice, image
+// CATATAN: path /dropdown harus didaftarkan SEBELUM /:id di router backend
+//          supaya tidak terbaca sebagai id (sudah dihandle di sisi backend)
+// =============================================================================
+export const getMenuDropdown = (params) =>
+  USE_MOCK
+    ? Promise.resolve({ data: mockMenuDropdown })
+    : api.get('/api/menu/dropdown', { params });
