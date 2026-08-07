@@ -47,15 +47,6 @@ import {
 
 } from '../lib/mockData';
 
-// ---------------------------------------------------------------------------
-// Flag mock global — ubah ke false saat backend sudah siap
-// ---------------------------------------------------------------------------
-const USE_MOCK = true;
-
-
-export const DEFAULT_AUTH_ROLE =
-  import.meta.env.VITE_DEFAULT_AUTH_ROLE || "admin";
-
 /* ==========================================================================
  * AXIOS INSTANCE
  * ========================================================================== */
@@ -98,6 +89,16 @@ export const clearAccessToken = () => {
   accessToken = null;
 };
 
+/**
+ * Satu sumber kebenaran untuk ekstraksi access token dari response body.
+ *
+ * ⚠️ Nama field `accessToken` / `token` masih tebakan (fallback ganda) —
+ * begitu shape response backend dikonfirmasi, hapus salah satu cabang ini
+ * supaya kesalahan shape tidak tertutup diam-diam.
+ */
+export const extractAccessToken = (data) =>
+  data?.accessToken ?? data?.token;
+
 /* ==========================================================================
  * AUTH CALLBACK HANDLERS
  * ========================================================================== */
@@ -120,6 +121,51 @@ export const setAuthHandlers = ({
 }) => {
   onTokenRefreshed = onRefreshed;
   onSessionExpired = onExpired;
+};
+
+/* ==========================================================================
+ * REFRESH TOKEN SINGLE-FLIGHT
+ * ========================================================================== */
+
+/**
+ * Menyimpan Promise refresh yang sedang berjalan.
+ *
+ * Jika refresh dipanggil beberapa kali secara bersamaan, semua pemanggil
+ * akan menggunakan Promise yang sama sehingga backend hanya menerima
+ * satu POST /auth/refresh.
+ */
+let refreshPromise = null;
+
+export const refreshAccessToken = () => {
+  if (refreshPromise) {
+    return refreshPromise;
+  }
+
+  refreshPromise = api.post('/auth/refresh').then((response) => {
+      const refreshResult =
+        response.data?.data ?? response.data;
+
+      //console.log('[REFRESH RESPONSE]', refreshResult);
+
+      const newToken =
+        extractAccessToken(refreshResult);
+
+      if (!newToken) {
+        throw new Error(
+          'Backend tidak mengembalikan access token saat refresh.',
+        );
+      }
+
+      setAccessToken(newToken);
+      onTokenRefreshed?.(newToken);
+
+      return refreshResult;
+    })
+    .finally(() => {
+      refreshPromise = null;
+    });
+
+  return refreshPromise;
 };
 
 /* ==========================================================================
@@ -175,6 +221,11 @@ const resolveRefreshQueue = (newToken) => {
 
       originalRequest.headers.Authorization =
         `Bearer ${newToken}`;
+
+      // Tandai request yang di-queue ini juga sudah pernah di-retry,
+      // supaya kalau token baru ternyata tetap gagal, tidak memicu
+      // siklus refresh baru lagi.
+      originalRequest._retry = true;
 
       resolve(api(originalRequest));
     },
@@ -249,24 +300,17 @@ api.interceptors.response.use(
        * Request ini tetap diletakkan di service layer dan tidak
        * dipanggil dari komponen.
        */
-      const response = await api.post('/auth/refresh');
-
       const refreshResult =
-        response.data?.data ?? response.data;
+        await refreshAccessToken();
 
       const newToken =
-        refreshResult?.accessToken ??
-        refreshResult?.token;
+        extractAccessToken(refreshResult);
 
       if (!newToken) {
         throw new Error(
           'Backend tidak mengembalikan access token saat refresh.',
         );
       }
-
-      setAccessToken(newToken);
-
-      onTokenRefreshed?.(newToken);
 
       /**
        * Jalankan semua request yang sebelumnya menunggu.
@@ -293,6 +337,13 @@ api.interceptors.response.use(
     }
   },
 );
+
+export default api;
+
+// ---------------------------------------------------------------------------
+// Flag mock global — ubah ke false saat backend sudah siap
+// ---------------------------------------------------------------------------
+const USE_MOCK = true;
 
 // =============================================================================
 // ENDPOINT 1 — POST /api/inventory
@@ -440,7 +491,5 @@ export const getHistoryUsage = (params) =>
   USE_MOCK
     ? Promise.resolve({ data: mockHistoryUsage })
     : api.get('/api/history-usage', { params });
-    
-
-export default api;
+  
 
