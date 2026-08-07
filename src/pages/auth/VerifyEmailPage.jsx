@@ -1,10 +1,8 @@
-import { useEffect, useState } from "react";
-import { Link, useLocation, useNavigate } from "react-router-dom";
-import { zodResolver } from "@hookform/resolvers/zod";
+import { Link } from "react-router-dom";
 import { ArrowLeft, LoaderCircle, Mail, ShieldCheck } from "lucide-react";
-import { useForm } from "react-hook-form";
 
 import FormInput from "@/components/shared/FormInput";
+import OtpInput from "@/components/shared/OtpInput";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -14,116 +12,22 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { verifyEmailSchema } from "@/schemas/authSchema";
-import {
-  confirmVerificationEmail,
-  sendVerificationEmail,
-} from "@/services/authApi";
-
-const RESEND_COOLDOWN = 60;
-
-const getErrorMessage = (error, fallbackMessage) =>
-  error.response?.data?.message ||
-  error.response?.data?.error ||
-  error.message ||
-  fallbackMessage;
+import { useVerifyEmailForm } from "@/hooks/useVerifyEmailForm";
 
 export default function VerifyEmailPage() {
-  const location = useLocation();
-  const navigate = useNavigate();
-  const initialEmail = location.state?.email || "";
-
-  const [isResending, setIsResending] = useState(false);
-  const [countdown, setCountdown] = useState(RESEND_COOLDOWN);
-  const [successMessage, setSuccessMessage] = useState(
-    location.state?.message || "",
-  );
-
   const {
     register,
-    handleSubmit,
-    watch,
-    setError,
-    clearErrors,
-    formState: { errors, isSubmitting },
-  } = useForm({
-    resolver: zodResolver(verifyEmailSchema),
-    defaultValues: {
-      email: initialEmail,
-      code: "",
-    },
-  });
-
-  const email = watch("email");
-  const loading = isSubmitting || isResending;
-
-  useEffect(() => {
-    if (countdown <= 0) return undefined;
-
-    const timer = window.setTimeout(() => {
-      setCountdown((currentValue) => currentValue - 1);
-    }, 1000);
-
-    return () => window.clearTimeout(timer);
-  }, [countdown]);
-
-  const handleVerifyEmailSubmit = async ({ email, code }) => {
-    clearErrors("root.server");
-    setSuccessMessage("");
-
-    try {
-      const result = await confirmVerificationEmail({ email, code });
-
-      navigate("/login", {
-        replace: true,
-        state: {
-          message: result?.message || "Email berhasil diverifikasi. Silakan login.",
-        },
-      });
-    } catch (error) {
-      setError("root.server", {
-        type: "server",
-        message: getErrorMessage(
-          error,
-          "Verifikasi email gagal. Silakan periksa kembali kode yang dimasukkan.",
-        ),
-      });
-    }
-  };
-
-  const handleResendCode = async () => {
-    clearErrors("root.server");
-    setSuccessMessage("");
-
-    const trimmedEmail = email?.trim();
-
-    if (!trimmedEmail) {
-      setError("email", {
-        type: "manual",
-        message: "Email wajib diisi sebelum meminta kode baru.",
-      });
-      return;
-    }
-
-    setIsResending(true);
-
-    try {
-      const result = await sendVerificationEmail(trimmedEmail);
-
-      setSuccessMessage(result?.message || "Kode verifikasi baru berhasil dikirim.");
-      setCountdown(RESEND_COOLDOWN);
-    } catch (error) {
-      setError("root.server", {
-        type: "server",
-        message: getErrorMessage(
-          error,
-          "Kode verifikasi gagal dikirim. Silakan coba kembali.",
-        ),
-      });
-    } finally {
-      setIsResending(false);
-    }
-  };
+    errors,
+    loading,
+    isSubmitting,
+    isResending,
+    countdown,
+    successMessage,
+    code,
+    setCode,
+    onSubmit,
+    resendCode,
+  } = useVerifyEmailForm();
 
   return (
     <main className="flex min-h-screen items-center justify-center bg-background p-4 sm:p-6">
@@ -144,11 +48,7 @@ export default function VerifyEmailPage() {
         </CardHeader>
 
         <CardContent>
-          <form
-            noValidate
-            className="space-y-5"
-            onSubmit={handleSubmit(handleVerifyEmailSubmit)}
-          >
+          <form noValidate className="space-y-5" onSubmit={onSubmit}>
             {errors.root?.server && (
               <div
                 role="alert"
@@ -180,20 +80,17 @@ export default function VerifyEmailPage() {
               {...register("email")}
             />
 
-            <FormInput
-              id="verify-code"
-              label="Kode verifikasi"
-              type="text"
-              required
-              icon={ShieldCheck}
-              inputMode="numeric"
-              autoComplete="one-time-code"
-              placeholder="Contoh: 123456"
-              maxLength={8}
-              disabled={loading}
-              error={errors.code?.message}
-              {...register("code")}
-            />
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Kode verifikasi</label>
+
+              <OtpInput
+                length={6}
+                value={code}
+                onChange={setCode}
+                disabled={loading}
+                error={errors.code?.message}
+              />
+            </div>
 
             <Button
               type="submit"
@@ -219,7 +116,7 @@ export default function VerifyEmailPage() {
               variant="link"
               disabled={loading || countdown > 0}
               className="mt-1 h-auto p-0 font-medium text-accent hover:text-accent/90"
-              onClick={handleResendCode}
+              onClick={resendCode}
             >
               {isResending ? (
                 <>
@@ -248,4 +145,3 @@ export default function VerifyEmailPage() {
     </main>
   );
 }
-

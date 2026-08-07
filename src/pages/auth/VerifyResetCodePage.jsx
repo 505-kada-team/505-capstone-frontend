@@ -1,10 +1,11 @@
 import { useEffect, useState } from "react";
 import { Link, Navigate, useLocation, useNavigate } from "react-router-dom";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { ArrowLeft, KeyRound, LoaderCircle, Mail } from "lucide-react";
-import { useForm } from "react-hook-form";
+import { ArrowLeft, LoaderCircle } from "lucide-react";
+import { Controller, useForm } from "react-hook-form";
+import { toast } from "sonner";
 
-import FormInput from "@/components/shared/FormInput";
+import OtpInput from "@/components/shared/OtpInput";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -18,6 +19,9 @@ import { verifyResetCodeSchema } from "@/schemas/authSchema";
 import { forgotPassword, verifyResetCode } from "@/services/authApi";
 
 const RESEND_COOLDOWN = 60;
+// ⚠️ Samakan dengan panjang OTP yang benar-benar dikirim backend
+// (lihat catatan di OtpInput.jsx).
+const CODE_LENGTH = 6;
 
 const getErrorMessage = (error, fallbackMessage) =>
   error.response?.data?.message ||
@@ -32,12 +36,10 @@ export default function VerifyResetCodePage() {
 
   const [isResending, setIsResending] = useState(false);
   const [countdown, setCountdown] = useState(RESEND_COOLDOWN);
-  const [successMessage, setSuccessMessage] = useState(location.state?.message || "");
 
   const {
-    register,
+    control,
     handleSubmit,
-    watch,
     setError,
     clearErrors,
     formState: { errors, isSubmitting },
@@ -49,7 +51,6 @@ export default function VerifyResetCodePage() {
     },
   });
 
-  const email = watch("email");
   const loading = isSubmitting || isResending;
 
   useEffect(() => {
@@ -64,12 +65,11 @@ export default function VerifyResetCodePage() {
 
   if (!emailFromState) return <Navigate to="/forgot-password" replace />;
 
-  const handleVerifyResetCodeSubmit = async ({ email, code }) => {
-    clearErrors("root.server");
-    setSuccessMessage("");
+  const handleVerifyResetCodeSubmit = async ({ code }) => {
+    clearErrors("code");
 
     try {
-      const result = await verifyResetCode({ email, code });
+      const result = await verifyResetCode({ email: emailFromState, code });
       const resetToken = result?.resetToken;
 
       if (!resetToken) throw new Error("Reset token tidak tersedia.");
@@ -78,27 +78,27 @@ export default function VerifyResetCodePage() {
         state: { resetToken },
       });
     } catch (error) {
-      setError("root.server", {
-        type: "server",
-        message: getErrorMessage(
-          error,
-          "Kode reset password tidak valid. Silakan periksa kembali kode yang dimasukkan.",
-        ),
-      });
+      // DESIGN.md 5b: error yang terikat 1 field spesifik (kode salah,
+      // 400/409 dari validasi) tampil inline di bawah field itu.
+      // Error tanpa respons (network) tidak terikat field → toast.
+      const message = getErrorMessage(
+        error,
+        "Kode reset password tidak valid. Silakan periksa kembali kode yang dimasukkan.",
+      );
+
+      if (error.response) {
+        setError("code", { type: "server", message });
+      } else {
+        toast.error(message);
+      }
     }
   };
 
   const handleResendCode = async () => {
-    clearErrors("root.server");
-    setSuccessMessage("");
-
-    const trimmedEmail = email?.trim();
+    const trimmedEmail = emailFromState?.trim();
 
     if (!trimmedEmail) {
-      setError("email", {
-        type: "manual",
-        message: "Email wajib tersedia sebelum meminta kode baru.",
-      });
+      toast.error("Email wajib tersedia sebelum meminta kode baru.");
       return;
     }
 
@@ -107,16 +107,13 @@ export default function VerifyResetCodePage() {
     try {
       const result = await forgotPassword(trimmedEmail);
 
-      setSuccessMessage(result?.message || "Kode reset password berhasil dikirim ulang.");
+      toast.success(result?.message || "Kode reset password berhasil dikirim ulang.");
       setCountdown(RESEND_COOLDOWN);
     } catch (error) {
-      setError("root.server", {
-        type: "server",
-        message: getErrorMessage(
-          error,
-          "Kode reset password gagal dikirim ulang. Silakan coba kembali.",
-        ),
-      });
+      // Bukan error 1 field spesifik → toast (DESIGN.md 5b).
+      toast.error(
+        getErrorMessage(error, "Kode reset password gagal dikirim ulang. Silakan coba kembali."),
+      );
     } finally {
       setIsResending(false);
     }
@@ -125,72 +122,44 @@ export default function VerifyResetCodePage() {
   return (
     <main className="flex min-h-screen items-center justify-center bg-background p-4 sm:p-6">
       <Card className="w-full max-w-md border shadow-sm">
-        <CardHeader className="space-y-3 text-center">
-          <div className="mx-auto flex size-12 items-center justify-center rounded-md bg-accent text-accent-foreground">
-            <KeyRound className="size-6" />
-          </div>
+        <CardHeader className="space-y-2 text-center">
+          <CardTitle className="font-heading text-2xl font-bold">
+            Verifikasi Kode Reset
+          </CardTitle>
 
-          <div className="space-y-2">
-            <CardTitle className="font-heading text-2xl">Verifikasi kode reset</CardTitle>
-
-            <CardDescription className="leading-6">
-              Masukkan kode reset password yang dikirim ke email akunmu untuk melanjutkan pembuatan
-              password baru.
-            </CardDescription>
-          </div>
+          <CardDescription className="text-sm leading-6">
+            Masukkan kode 6 digit yang kami kirim ke
+            <br />
+            <span className="font-medium text-foreground">{emailFromState}</span>
+          </CardDescription>
         </CardHeader>
 
         <CardContent>
           <form
             noValidate
-            className="space-y-5"
+            className="space-y-6"
             onSubmit={handleSubmit(handleVerifyResetCodeSubmit)}
           >
-            {errors.root?.server && (
-              <div
-                role="alert"
-                className="rounded-md border border-destructive/30 bg-destructive/5 px-4 py-3 text-sm text-destructive"
-              >
-                {errors.root.server.message}
-              </div>
-            )}
+            <div className="space-y-2">
+              <p className="text-center text-sm font-medium text-foreground">
+                Kode Verifikasi
+              </p>
 
-            {successMessage && (
-              <div
-                role="status"
-                className="rounded-md border border-border bg-muted/40 px-4 py-3 text-sm text-muted-foreground"
-              >
-                {successMessage}
-              </div>
-            )}
-
-            <FormInput
-              id="reset-email"
-              label="Email"
-              type="email"
-              required
-              icon={Mail}
-              autoComplete="email"
-              placeholder="nama@email.com"
-              disabled={loading}
-              error={errors.email?.message}
-              {...register("email")}
-            />
-
-            <FormInput
-              id="reset-code"
-              label="Kode reset password"
-              type="text"
-              required
-              icon={KeyRound}
-              inputMode="numeric"
-              autoComplete="one-time-code"
-              placeholder="Contoh: 654321"
-              maxLength={8}
-              disabled={loading}
-              error={errors.code?.message}
-              {...register("code")}
-            />
+              <Controller
+                name="code"
+                control={control}
+                render={({ field }) => (
+                  <OtpInput
+                    length={CODE_LENGTH}
+                    value={field.value}
+                    onChange={field.onChange}
+                    disabled={loading}
+                    error={errors.code?.message}
+                    autoFocus
+                  />
+                )}
+              />
+            </div>
 
             <Button
               type="submit"
@@ -199,16 +168,16 @@ export default function VerifyResetCodePage() {
             >
               {isSubmitting ? (
                 <>
-                  <LoaderCircle className="size-4 animate-spin" />
+                  <LoaderCircle className="size-5 animate-spin" />
                   Memverifikasi...
                 </>
               ) : (
-                "Verifikasi kode"
+                "Verifikasi Kode"
               )}
             </Button>
           </form>
 
-          <div className="mt-5 rounded-md border bg-muted/40 px-4 py-3 text-center">
+          <div className="mt-6 text-center">
             <p className="text-sm text-muted-foreground">Belum menerima kode?</p>
 
             <Button
@@ -220,7 +189,7 @@ export default function VerifyResetCodePage() {
             >
               {isResending ? (
                 <>
-                  <LoaderCircle className="size-4 animate-spin" />
+                  <LoaderCircle className="size-5 animate-spin" />
                   Mengirim ulang...
                 </>
               ) : countdown > 0 ? (
