@@ -102,11 +102,298 @@ import {
   mockAddInventoryReplacement,
 } from '../lib/mockData';
 
-// ---------------------------------------------------------------------------
-// Setup axios instance
-// baseURL dibaca dari .env — JANGAN hardcode URL di sini
-// ---------------------------------------------------------------------------
-const api = axios.create({ baseURL: import.meta.env.VITE_API_URL });
+/* ==========================================================================
+ * AXIOS INSTANCE
+ * ========================================================================== */
+
+/**
+ * VITE_API_URL berasal dari file .env.
+ *
+ * Contoh:
+ * VITE_API_URL=https://backend-example.com
+ *
+ * Jangan menyimpan URL backend secara hardcode di file ini.
+ */
+const api = axios.create({
+  baseURL: import.meta.env.VITE_API_URL,
+  withCredentials: true,
+  headers: {
+    'Content-Type': 'application/json',
+    'x-platform': 'web',
+  },
+});
+
+/* ==========================================================================
+ * ACCESS TOKEN MANAGEMENT
+ * ========================================================================== */
+
+/**
+ * Access token disimpan di memory.
+ *
+ * Refresh token diasumsikan disimpan oleh backend dalam cookie HTTP-only.
+ */
+let accessToken = null;
+
+export const setAccessToken = (token) => {
+  accessToken = token;
+};
+
+export const getAccessToken = () => accessToken;
+
+export const clearAccessToken = () => {
+  accessToken = null;
+};
+
+/**
+ * Satu sumber kebenaran untuk ekstraksi access token dari response body.
+ *
+ * ⚠️ Nama field `accessToken` / `token` masih tebakan (fallback ganda) —
+ * begitu shape response backend dikonfirmasi, hapus salah satu cabang ini
+ * supaya kesalahan shape tidak tertutup diam-diam.
+ */
+export const extractAccessToken = (data) =>
+  data?.accessToken ?? data?.token;
+
+/* ==========================================================================
+ * AUTH CALLBACK HANDLERS
+ * ========================================================================== */
+
+/**
+ * Callback ini diisi dari AuthProvider.
+ *
+ * onRefreshed:
+ * Dipanggil ketika access token berhasil diperbarui.
+ *
+ * onExpired:
+ * Dipanggil ketika refresh token gagal sehingga sesi berakhir.
+ */
+let onTokenRefreshed = null;
+let onSessionExpired = null;
+
+export const setAuthHandlers = ({
+  onRefreshed,
+  onExpired,
+}) => {
+  onTokenRefreshed = onRefreshed;
+  onSessionExpired = onExpired;
+};
+
+/* ==========================================================================
+ * REFRESH TOKEN SINGLE-FLIGHT
+ * ========================================================================== */
+
+/**
+ * Menyimpan Promise refresh yang sedang berjalan.
+ *
+ * Jika refresh dipanggil beberapa kali secara bersamaan, semua pemanggil
+ * akan menggunakan Promise yang sama sehingga backend hanya menerima
+ * satu POST /auth/refresh.
+ */
+let refreshPromise = null;
+
+export const refreshAccessToken = () => {
+  if (refreshPromise) {
+    return refreshPromise;
+  }
+
+  refreshPromise = api.post('/auth/refresh').then((response) => {
+      const refreshResult =
+        response.data?.data ?? response.data;
+
+      //console.log('[REFRESH RESPONSE]', refreshResult);
+
+      const newToken =
+        extractAccessToken(refreshResult);
+
+      if (!newToken) {
+        throw new Error(
+          'Backend tidak mengembalikan access token saat refresh.',
+        );
+      }
+
+      setAccessToken(newToken);
+      onTokenRefreshed?.(newToken);
+
+      return refreshResult;
+    })
+    .finally(() => {
+      refreshPromise = null;
+    });
+
+  return refreshPromise;
+};
+
+/* ==========================================================================
+ * REQUEST INTERCEPTOR
+ * ========================================================================== */
+
+/**
+ * Menambahkan access token ke setiap request yang membutuhkan autentikasi.
+ */
+api.interceptors.request.use(
+  (config) => {
+    if (accessToken) {
+      config.headers.Authorization =
+        `Bearer ${accessToken}`;
+    }
+
+    return config;
+  },
+  (error) => Promise.reject(error),
+);
+
+/* ==========================================================================
+ * RESPONSE INTERCEPTOR
+ * ========================================================================== */
+
+/**
+ * Endpoint berikut tidak boleh memicu refresh token otomatis.
+ *
+ * Hal ini mencegah infinite loop ketika login, register,
+ * atau refresh token sendiri mengembalikan status 401.
+ */
+const EXCLUDE_REFRESH = [
+  '/auth/login',
+  '/auth/register',
+  '/auth/refresh',
+  '/auth/logout',
+  '/auth/forgot-password',
+  '/auth/reset-password',
+  '/auth/verify-email',
+];
+
+let isRefreshing = false;
+let refreshQueue = [];
+
+/**
+ * Menjalankan kembali request yang sebelumnya menunggu refresh token.
+ */
+const resolveRefreshQueue = (newToken) => {
+  refreshQueue.forEach(
+    ({ resolve, originalRequest }) => {
+      originalRequest.headers =
+        originalRequest.headers ?? {};
+
+      originalRequest.headers.Authorization =
+        `Bearer ${newToken}`;
+
+      // Tandai request yang di-queue ini juga sudah pernah di-retry,
+      // supaya kalau token baru ternyata tetap gagal, tidak memicu
+      // siklus refresh baru lagi.
+      originalRequest._retry = true;
+
+      resolve(api(originalRequest));
+    },
+  );
+
+  refreshQueue = [];
+};
+
+/**
+ * Menolak semua request yang menunggu jika refresh token gagal.
+ */
+const rejectRefreshQueue = (error) => {
+  refreshQueue.forEach(({ reject }) => {
+    reject(error);
+  });
+
+  refreshQueue = [];
+};
+
+api.interceptors.response.use(
+  (response) => response,
+
+  async (error) => {
+    const originalRequest = error.config;
+
+    /**
+     * Jika error tidak mempunyai konfigurasi request,
+     * request tidak dapat dicoba ulang.
+     */
+    if (!originalRequest) {
+      return Promise.reject(error);
+    }
+
+    const isExcluded = EXCLUDE_REFRESH.some((path) =>
+      originalRequest.url?.includes(path),
+    );
+
+    const shouldRefresh =
+      error.response?.status === 401 &&
+      !originalRequest._retry &&
+      !isExcluded;
+
+    if (!shouldRefresh) {
+      return Promise.reject(error);
+    }
+
+    originalRequest._retry = true;
+
+    /**
+     * Jika proses refresh sedang berjalan, simpan request
+     * berikutnya ke dalam antrean.
+     */
+    if (isRefreshing) {
+      return new Promise((resolve, reject) => {
+        refreshQueue.push({
+          resolve,
+          reject,
+          originalRequest,
+        });
+      });
+    }
+
+    isRefreshing = true;
+
+    try {
+      /**
+       * Refresh token berada dalam cookie HTTP-only.
+       *
+       * withCredentials: true pada Axios instance memastikan
+       * cookie ikut terkirim ke backend.
+       *
+       * Request ini tetap diletakkan di service layer dan tidak
+       * dipanggil dari komponen.
+       */
+      const refreshResult =
+        await refreshAccessToken();
+
+      const newToken =
+        extractAccessToken(refreshResult);
+
+      if (!newToken) {
+        throw new Error(
+          'Backend tidak mengembalikan access token saat refresh.',
+        );
+      }
+
+      /**
+       * Jalankan semua request yang sebelumnya menunggu.
+       */
+      resolveRefreshQueue(newToken);
+
+      originalRequest.headers =
+        originalRequest.headers ?? {};
+
+      originalRequest.headers.Authorization =
+        `Bearer ${newToken}`;
+
+      return api(originalRequest);
+    } catch (refreshError) {
+      rejectRefreshQueue(refreshError);
+
+      clearAccessToken();
+
+      onSessionExpired?.();
+
+      return Promise.reject(refreshError);
+    } finally {
+      isRefreshing = false;
+    }
+  },
+);
+
+export default api;
 
 // ---------------------------------------------------------------------------
 // Flag mock global — ubah ke false saat backend sudah siap
