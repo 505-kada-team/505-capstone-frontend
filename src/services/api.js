@@ -1,5 +1,5 @@
 /**
- * services/api.js — Modul Inventory + Menu/Resep + Production Plan
+ * services/api.js — Modul Inventory + Menu/Resep + Production Plan + Selling
  *
  * ATURAN (dari CONVENTIONS.md):
  * - Semua pemanggilan API WAJIB lewat file ini. Jangan import axios langsung di komponen.
@@ -15,6 +15,7 @@
  *   - 505_Database Schema_inventory.md      (14 endpoint)
  *   - 505_Database Schema_resep.md          (6 endpoint)
  *   - 505_Database Schema_producitonplan.md (10 endpoint)
+ *   - 505_Database Schema_selling.md        (3 endpoint)
  */
 
 import axios from 'axios';
@@ -82,6 +83,13 @@ import {
   mockSetDiscount,
   // Endpoint A10 — DELETE /api/plan/:id/menus/:menuId/discount
   mockDeleteDiscount,
+  // ── Selling (Endpoint B1–B3) ────────────────────────────────────────────
+  // Endpoint B1 — GET /api/selling/active
+  mockSellingActiveList,
+  // Endpoint B2 — POST /api/selling
+  mockCreateSaleNormal, // bisa diganti ke discount/notStarted/insufficient untuk testing UI
+  // Endpoint B3 — GET /api/selling/history
+  mockSellingHistory,
 } from '../lib/mockData';
 
 // ---------------------------------------------------------------------------
@@ -429,3 +437,38 @@ export const deleteMenuDiscount = (id, menuId) =>
   USE_MOCK
     ? Promise.resolve({ data: mockDeleteDiscount })
     : api.delete(`/api/plan/${id}/menus/${menuId}/discount`);
+
+// =============================================================================
+// MODUL SELLING — 505_Database Schema_selling.md
+// =============================================================================
+
+// =============================================================================
+// ENDPOINT B1 — GET /api/selling/active
+// List plan aktif + sisa stok + harga berlaku per menu
+// Tidak ada payload
+// =============================================================================
+export const getSellingActiveList = () =>
+  USE_MOCK
+    ? Promise.resolve({ data: mockSellingActiveList })
+    : api.get('/api/selling/active');
+
+// =============================================================================
+// ENDPOINT B2 — POST /api/selling
+// Catat penjualan
+// Payload: { planId, menuId, quantitySold, cashierName }
+// =============================================================================
+export const createSale = (payload) =>
+  USE_MOCK
+    // TODO: Ganti ke mockCreateSaleDiscount / NotStarted / Insufficient kalau ingin test flow UI spesifik
+    ? Promise.resolve({ data: mockCreateSaleNormal })
+    : api.post('/api/selling', payload);
+
+// =============================================================================
+// ENDPOINT B3 — GET /api/selling/history
+// Riwayat penjualan (untuk rekonsiliasi shift)
+// Params opsional: { planId, date, cashierName }
+// =============================================================================
+export const getSellingHistory = (params) =>
+  USE_MOCK
+    ? Promise.resolve({ data: mockSellingHistory })
+    : api.get('/api/selling/history', { params });

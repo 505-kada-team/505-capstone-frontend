@@ -1436,3 +1436,143 @@ export const mockDeleteDiscountNotFound = {
   message: 'Menu ini tidak memiliki diskon aktif untuk dihapus',
   errors: [{ field: 'menuId', message: 'discount: null' }],
 };
+
+// =============================================================================
+// MODUL SELLING — 505_Database Schema_selling.md
+// 3 endpoint (B1 - B3): GET active, POST sale, GET history.
+// =============================================================================
+
+// =============================================================================
+// ENDPOINT B1 — GET /api/selling/active
+// List plan aktif + sisa stok + harga berlaku per menu
+// =============================================================================
+
+export const mockSellingActiveList = {
+  success: true,
+  data: [
+    {
+      planId: 'plan_001',
+      name: 'Promo Nasi Goreng Agustus',
+      startDate: '2026-08-05T00:00:00.000Z',
+      endDate: '2026-08-19T00:00:00.000Z',
+      sellable: true,
+      menus: [
+        {
+          menuId: 'menu_001',
+          name: 'Nasi Goreng Spesial',
+          sellingPrice: 25000,
+          currentPrice: 21250,
+          isDiscounted: true,
+          discountPercentage: 15,
+          discountEndsAt: '2026-08-19T00:00:00.000Z',
+          remainingQuantity: 47,
+          warning: null,
+        },
+        {
+          menuId: 'menu_002',
+          name: 'Es Teh Manis',
+          sellingPrice: 8000,
+          currentPrice: 8000,
+          isDiscounted: false,
+          discountPercentage: null,
+          discountEndsAt: null,
+          remainingQuantity: 30,
+          warning: null,
+        },
+      ],
+    },
+  ],
+};
+
+// =============================================================================
+// ENDPOINT B2 — POST /api/selling
+// Catat penjualan
+// =============================================================================
+
+export const mockCreateSaleNormal = {
+  success: true,
+  message: 'Penjualan berhasil dicatat',
+  data: {
+    _id: 'sale_045',
+    planId: 'plan_001',
+    menuId: 'menu_001',
+    quantitySold: 2,
+    originalPrice: 25000,
+    priceUsed: 25000,
+    discountApplied: false,
+    discountPercentage: null,
+    cashierName: 'Sari',
+    soldAt: '2026-08-10T04:30:00.000Z',
+    remainingQuantity: 36,
+  },
+};
+
+export const mockCreateSaleDiscount = {
+  success: true,
+  message: 'Penjualan berhasil dicatat (harga diskon)',
+  data: {
+    _id: 'sale_046',
+    planId: 'plan_001',
+    menuId: 'menu_001',
+    quantitySold: 2,
+    originalPrice: 25000,
+    priceUsed: 21250,
+    discountApplied: true,
+    discountPercentage: 15,
+    cashierName: 'Sari',
+    soldAt: '2026-08-13T04:30:00.000Z',
+    remainingQuantity: 34,
+  },
+};
+
+export const mockCreateSaleNotStarted = {
+  success: false,
+  message: 'Plan belum dimulai, penjualan baru bisa dicatat mulai 2026-08-05',
+  errors: [{ field: 'startDate', message: 'Tanggal sekarang masih sebelum startDate plan' }],
+};
+
+export const mockCreateSaleInsufficient = {
+  success: false,
+  message: 'Sisa porsi menu ini tidak mencukupi',
+  errors: [{ field: 'quantitySold', message: 'Sisa 1, diminta 2' }],
+};
+
+// =============================================================================
+// ENDPOINT B3 — GET /api/selling/history
+// Riwayat penjualan
+// =============================================================================
+
+export const mockSellingHistory = {
+  success: true,
+  data: [
+    {
+      _id: 'sale_045',
+      menuId: 'menu_001',
+      menuName: 'Nasi Goreng Spesial',
+      quantitySold: 2,
+      originalPrice: 25000,
+      priceUsed: 25000,
+      discountApplied: false,
+      discountPercentage: null,
+      cashierName: 'Sari',
+      soldAt: '2026-08-10T04:30:00.000Z',
+    },
+    {
+      _id: 'sale_046',
+      menuId: 'menu_001',
+      menuName: 'Nasi Goreng Spesial',
+      quantitySold: 2,
+      originalPrice: 25000,
+      priceUsed: 21250,
+      discountApplied: true,
+      discountPercentage: 15,
+      cashierName: 'Sari',
+      soldAt: '2026-08-13T04:30:00.000Z',
+    },
+  ],
+  summary: {
+    totalTransaction: 14,
+    totalRevenue: 1150000,
+    totalDiscountGiven: 63750,
+  },
+};
