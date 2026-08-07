@@ -1576,3 +1576,183 @@ export const mockSellingHistory = {
     totalDiscountGiven: 63750,
   },
 };
+
+// =============================================================================
+// MODUL PLAN REPORT — 505_Database Schema_planreport.md
+// 4 endpoint (C1 - C4): POST create, GET list, PUT review, POST add-inventory.
+// =============================================================================
+
+// =============================================================================
+// ENDPOINT C1 — POST /api/plan-reports
+// Lapor kerusakan/kehilangan
+// =============================================================================
+
+export const mockCreatePlanReportMenuDiscount = {
+  success: true,
+  message: 'Laporan berhasil dikirim, menunggu review admin',
+  data: {
+    _id: 'report_012',
+    planId: 'plan_001',
+    category: 'menu',
+    refId: 'menu_001',
+    quantityLost: 2,
+    incidentAt: '2026-08-13T03:15:00.000Z',
+    isLateReport: false,
+    reason: 'Terjatuh saat penyajian',
+    reportedBy: 'Sari',
+    reportedByRole: 'cashier',
+    status: 'pending',
+    valuation: {
+      unitCostAtLoss: 4500,
+      costLoss: 9000,
+      originalPriceAtLoss: 25000,
+      discountAppliedAtLoss: true,
+      discountPercentageAtLoss: 15,
+      priceUsedAtLoss: 21250,
+      lostRevenueEstimate: 42500,
+    },
+    createdAt: '2026-08-13T05:00:00.000Z',
+  },
+};
+
+export const mockCreatePlanReportMenuNoDiscount = {
+  success: true,
+  message: 'Laporan berhasil dikirim, menunggu review admin',
+  data: {
+    _id: 'report_014',
+    category: 'menu',
+    refId: 'menu_002',
+    quantityLost: 1,
+    incidentAt: '2026-08-09T10:00:00.000Z',
+    isLateReport: true,
+    status: 'pending',
+    valuation: {
+      unitCostAtLoss: 2200,
+      costLoss: 2200,
+      originalPriceAtLoss: 8000,
+      discountAppliedAtLoss: false,
+      discountPercentageAtLoss: null,
+      priceUsedAtLoss: 8000,
+      lostRevenueEstimate: 8000,
+    },
+    createdAt: '2026-08-11T02:00:00.000Z',
+  },
+};
+
+export const mockCreatePlanReportIngredientAdmin = {
+  success: true,
+  message: 'Laporan tercatat dan otomatis disetujui',
+  data: {
+    _id: 'report_013',
+    category: 'ingredient',
+    refId: '66c1a2b3d4e5f6a7b8c9d0e1',
+    quantityLost: 200,
+    incidentAt: '2026-08-10T08:00:00.000Z',
+    isLateReport: false,
+    reportedBy: 'Admin A',
+    reportedByRole: 'admin',
+    status: 'approved',
+    reviewedBy: 'Admin A',
+    reviewedAt: '2026-08-10T08:05:00.000Z',
+    valuation: null,
+  },
+};
+
+export const mockCreatePlanReportNotActive = {
+  success: false,
+  message: 'Laporan hanya bisa dibuat untuk plan yang sudah pernah aktif',
+  errors: [{ field: 'planId', message: 'Status plan saat ini: draft' }],
+};
+
+export const mockCreatePlanReportOutOfRange = {
+  success: false,
+  message: 'Validation error: incidentAt berada di luar rentang durasi plan',
+  errors: [{ field: 'incidentAt', message: 'incidentAt (2026-08-20) melebihi endDate plan (2026-08-19)' }],
+};
+
+export const mockCreatePlanReportFuture = {
+  success: false,
+  message: 'Validation error: incidentAt tidak boleh di masa depan',
+  errors: [{ field: 'incidentAt', message: 'incidentAt melebihi waktu saat ini' }],
+};
+
+// =============================================================================
+// ENDPOINT C2 — GET /api/plan-reports
+// List laporan
+// =============================================================================
+
+export const mockPlanReportList = {
+  success: true,
+  data: [
+    {
+      _id: 'report_012',
+      planId: 'plan_001',
+      category: 'menu',
+      refId: 'menu_001',
+      nameRef: 'Nasi Goreng Spesial',
+      quantityLost: 2,
+      incidentAt: '2026-08-13T03:15:00.000Z',
+      isLateReport: false,
+      status: 'pending',
+      valuation: {
+        costLoss: 9000,
+        lostRevenueEstimate: 42500,
+      },
+      createdAt: '2026-08-13T05:00:00.000Z',
+    },
+    {
+      _id: 'report_010',
+      planId: 'plan_001',
+      category: 'ingredient',
+      refId: '66c1a2b3d4e5f6a7b8c9d0e1',
+      nameRef: 'Beras Premium',
+      quantityLost: 500,
+      incidentAt: '2026-08-09T02:00:00.000Z',
+      isLateReport: false,
+      status: 'approved',
+      replacementDeducted: false,
+      valuation: null,
+      createdAt: '2026-08-09T02:30:00.000Z',
+    },
+  ],
+};
+
+// =============================================================================
+// ENDPOINT C3 — PUT /api/plan-reports/:id/review
+// ACC/tolak laporan
+// =============================================================================
+
+export const mockReviewPlanReport = {
+  success: true,
+  message: 'Laporan disetujui',
+  data: {
+    _id: 'report_012',
+    status: 'approved',
+    reviewedBy: 'Admin A',
+    reviewedAt: '2026-08-13T06:00:00.000Z',
+    adminNote: 'Sudah dicek, sesuai',
+  },
+};
+
+export const mockReviewPlanReportConflict = {
+  success: false,
+  message: 'Laporan ini sudah pernah direview',
+  errors: [{ field: 'status', message: 'Status saat ini: approved' }],
+};
+
+// =============================================================================
+// ENDPOINT C4 — POST /api/plan-reports/:id/add-inventory
+// Tarik stok pengganti akibat rugi (khusus category ingredient)
+// =============================================================================
+
+export const mockAddInventoryReplacement = {
+  success: true,
+  message: 'Stok pengganti berhasil ditarik dan dicatat di laporan',
+  data: {
+    reportId: 'report_010',
+    replacementBatches: [
+      { subInventoryId: 'sub_004', quantityUsed: 2000, costPriceUsed: 11000 },
+    ],
+    replacementCost: 22000,
+  },
+};
