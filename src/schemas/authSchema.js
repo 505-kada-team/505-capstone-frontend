@@ -6,20 +6,23 @@
  *   banyak if/else di dalam komponen.
  * - Login dan registrasi tetap memiliki skema masing-masing meskipun
  *   ditampilkan dalam satu halaman /login.
- * - Untuk setiap payload request POST/PUT authentication, tersedia
+ * - Untuk setiap payload request POST/PUT/PATCH authentication, tersedia
  *   satu skema validasi di file ini.
  * - Pengguna tidak memilih role saat registrasi atau login.
  *   Role ditentukan oleh backend dan dikembalikan setelah login.
  *
- * Referensi endpoint dan aturan payload harus disesuaikan kembali
- * dengan API contract authentication final.
+ * ⚠️ Path endpoint di komentar mengikuti services/authApi.js (sumber
+ * kebenaran final, tanpa prefix /api). Kode verifikasi email/reset
+ * diasumsikan 6 digit — belum terkonfirmasi ke backend, rfc.auth.md
+ * menyebut "4–8 digit numeric". Sesuaikan regex code di bawah kalau
+ * ternyata berbeda.
  */
 
 import { z } from "zod"
 
 
 // =============================================================================
-// ENDPOINT 1 — POST /api/auth/register
+// ENDPOINT 1 — POST /auth/register
 // Mendaftarkan pengguna baru
 // =============================================================================
 
@@ -47,7 +50,7 @@ export const registerSchema = z
   })
 
 // =============================================================================
-// ENDPOINT 2 — POST /api/auth/login
+// ENDPOINT 2 — POST /auth/login
 // Masuk menggunakan email dan password
 // =============================================================================
 
@@ -66,7 +69,7 @@ export const loginSchema = z.object({
 })
 
 // =============================================================================
-// ENDPOINT 3 — POST /api/auth/verify-email
+// ENDPOINT 3 — POST /auth/verify-email/confirm
 // Memverifikasi email menggunakan kode verifikasi
 // =============================================================================
 
@@ -88,7 +91,7 @@ export const verifyEmailSchema = z.object({
 })
 
 // =============================================================================
-// ENDPOINT 4 — POST /api/auth/resend-verification
+// ENDPOINT 4 — POST /auth/verify-email/send
 // Mengirim ulang kode verifikasi email
 // =============================================================================
 
@@ -104,7 +107,7 @@ export const resendVerificationSchema = z.object({
 })
 
 // =============================================================================
-// ENDPOINT 5 — POST /api/auth/forgot-password
+// ENDPOINT 5 — POST /auth/forgot-password
 // Meminta kode reset password
 // =============================================================================
 
@@ -114,15 +117,15 @@ export const resendVerificationSchema = z.object({
  *
  * Aturan:
  * - email: wajib dan harus berformat email
- * - Backend sebaiknya memberikan pesan umum baik email terdaftar maupun tidak
- *   untuk mencegah account enumeration.
+ * - Backend selalu balikin 200 baik email terdaftar maupun tidak,
+ *   untuk mencegah account enumeration (auth.flow.md §8).
  */
 export const forgotPasswordSchema = z.object({
   email: z.string().trim().min(1, "Email wajib diisi").email("Format email tidak valid"),
 })
 
 // =============================================================================
-// ENDPOINT 6 — POST /api/auth/verify-reset-code
+// ENDPOINT 6 — POST /auth/forgot-password/verify-code
 // Memverifikasi kode reset password
 // =============================================================================
 
@@ -144,7 +147,7 @@ export const verifyResetCodeSchema = z.object({
 })
 
 // =============================================================================
-// ENDPOINT 7 — POST /api/auth/reset-password
+// ENDPOINT 7 — POST /auth/reset-password
 // Mengubah password setelah kode reset berhasil diverifikasi
 // =============================================================================
 
@@ -154,20 +157,52 @@ export const verifyResetCodeSchema = z.object({
  *
  * Aturan:
  * - resetToken: wajib, diperoleh dari response verifikasi kode reset
- * - password: minimal 8 karakter
- * - confirmPassword: harus sama dengan password
+ * - newPassword: minimal 8 karakter
+ * - confirmPassword: harus sama dengan newPassword
  *
- * Catatan:
- * Jika contract backend memakai email dan code sebagai pengganti resetToken,
- * sesuaikan field payload setelah contract final tersedia.
+ * ⚠️ Field bernama `newPassword` (BUKAN `password`) — harus match persis
+ * dengan payload yang dikirim resetPassword() di services/authApi.js
+ * ({ resetToken, newPassword }), supaya hasil form bisa langsung
+ * di-spread tanpa mapping manual.
  */
 export const resetPasswordSchema = z
   .object({
     resetToken: z.string().trim().min(1, "Token reset password tidak tersedia"),
-    password: z.string().min(1, "Password baru wajib diisi").min(8, "Password minimal 8 karakter"),
+    newPassword: z.string().min(1, "Password baru wajib diisi").min(8, "Password minimal 8 karakter"),
     confirmPassword: z.string().min(1, "Konfirmasi password wajib diisi"),
   })
-  .refine((data) => data.password === data.confirmPassword, {
+  .refine((data) => data.newPassword === data.confirmPassword, {
     message: "Konfirmasi password tidak sama",
     path: ["confirmPassword"],
   })
+
+// =============================================================================
+// ENDPOINT 8 — PATCH /auth/change-password
+// Mengganti password pengguna yang sedang login
+// =============================================================================
+
+/**
+ * changePasswordSchema
+ * Dipakai di: form ganti password (halaman profil/pengaturan akun)
+ *
+ * Aturan:
+ * - oldPassword: wajib diisi
+ * - newPassword: minimal 8 karakter, TIDAK BOLEH sama dengan oldPassword
+ *   (backend juga menolak ini di auth.flow.md §9 — validasi di FE cuma
+ *   untuk UX lebih cepat, backend tetap sumber kebenaran)
+ * - confirmPassword: harus sama dengan newPassword
+ */
+export const changePasswordSchema = z
+  .object({
+    oldPassword: z.string().min(1, "Password lama wajib diisi"),
+    newPassword: z.string().min(1, "Password baru wajib diisi").min(8, "Password minimal 8 karakter"),
+    confirmPassword: z.string().min(1, "Konfirmasi password wajib diisi"),
+  })
+  .refine((data) => data.newPassword === data.confirmPassword, {
+    message: "Konfirmasi password tidak sama",
+    path: ["confirmPassword"],
+  })
+  .refine((data) => data.newPassword !== data.oldPassword, {
+    message: "Password baru tidak boleh sama dengan password lama",
+    path: ["newPassword"],
+  })    

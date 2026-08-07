@@ -22,6 +22,12 @@ import VerifyEmailPage from "@/pages/auth/VerifyEmailPage"
 import VerifyResetCodePage from "@/pages/auth/VerifyResetCodePage"
 import InventoryPage from "@/pages/admin/InventoryPage"
 import ProtectedRoute from "@/routes/ProtectedRoute"
+import RootRedirect from "@/routes/RootRedirect"
+
+// Kasir routes
+import CashierLayout from "@/layouts/CashierLayout"
+import CashierPage from "@/pages/cashier/TransactionPage"
+
 
 // Placeholder untuk halaman yang belum dibuat
 function ComingSoon({ name }) {
@@ -37,8 +43,8 @@ function ComingSoon({ name }) {
 export default function App() {
   return (
     <Routes>
-      {/* Root redirect → halaman login */}
-      <Route path="/" element={<Navigate to="/login" replace />} />
+      {/* Root — redirect berdasarkan status auth, bukan statis ke /login */}
+      <Route path="/" element={<RootRedirect />} />
 
       {/* Authentication routes */}
       <Route path="/login" element={<LoginPage />} />
@@ -61,6 +67,21 @@ export default function App() {
           <Route path="ai-scan" element={<ComingSoon name="AI Scanning Input" />} />
         </Route>
       </Route>
+
+      {/* Kasir routes */}
+    <Route element={<ProtectedRoute allowedRoles={["cashier"]} />}>
+      <Route path="/kasir" element={<CashierLayout   />}>
+        <Route index element={<Navigate to="cashier" replace />} />
+        <Route path="cashier" element={<CashierPage />} />
+        <Route path="invoice" element={<ComingSoon name="Invoice" />} />
+        <Route path="invoice/:id" element={<ComingSoon name="Detail Invoice" />} />
+        <Route path="barang" element={<ComingSoon name="Barang" />} />
+        <Route path="report-issue" element={<ComingSoon name="Report Issue" />} />
+        <Route path="report-issue/create" element={<ComingSoon name="Form Report Issue" />} />
+        <Route path="report-issue/:id" element={<ComingSoon name="Detail Report Issue" />} />
+      </Route>
+    </Route>
+
 
       {/* Catch-all */}
       <Route path="*" element={<Navigate to="/login" replace />} />

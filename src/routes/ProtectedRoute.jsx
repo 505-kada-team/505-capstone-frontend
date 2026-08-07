@@ -1,8 +1,10 @@
-import {Navigate, Outlet,} from 'react-router-dom';
+import { Navigate, Outlet } from 'react-router-dom';
 
 import { useAuth } from '@/context/AuthContext';
 
-export default function ProtectedRoute({allowedRoles,}) {
+export default function ProtectedRoute({
+  allowedRoles = [],
+}) {
   const {
     isAuthenticated,
     isAuthLoading,
@@ -17,7 +19,7 @@ export default function ProtectedRoute({allowedRoles,}) {
     );
   }
 
-  if (!isAuthenticated) {
+  if (!isAuthenticated || !role) {
     return (
       <Navigate
         to="/login"
@@ -26,18 +28,14 @@ export default function ProtectedRoute({allowedRoles,}) {
     );
   }
 
-  if (
-    allowedRoles?.length &&
-    !allowedRoles.includes(role)
-  ) {
-    const target =
-      role === 'admin'
-        ? '/admin'
-        : '/kasir';
+  const isRoleAllowed =
+    allowedRoles.length === 0 ||
+    allowedRoles.includes(role);
 
+  if (!isRoleAllowed) {
     return (
       <Navigate
-        to={target}
+        to="/login"
         replace
       />
     );
