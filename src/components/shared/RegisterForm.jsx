@@ -1,75 +1,16 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { registerSchema } from '@/schemas/authSchema';
-import { register as registerRequest } from '@/services/authApi';
+import { useRegisterForm } from '@/hooks/useRegisterForm';
 
-const getErrorMessage = (error) =>
-  error.response?.data?.message ||
-  error.response?.data?.error ||
-  error.message ||
-  'Registrasi gagal. Silakan coba kembali.';
-
-export default function RegisterForm({
-  onSwitchToLogin,
-}) {
-  const navigate = useNavigate();
-
-  const [serverError, setServerError] = useState('');
-
-  const {
-    register,
-    handleSubmit,
-    formState: {
-      errors,
-      isSubmitting,
-    },
-  } = useForm({
-    resolver: zodResolver(registerSchema),
-    defaultValues: {
-      name: '',
-      email: '',
-      password: '',
-      confirmPassword: '',
-    },
-  });
-
-  const handleRegister = async (values) => {
-    setServerError('');
-
-    try {
-      await registerRequest({
-        name: values.name,
-        email: values.email,
-        password: values.password,
-      });
-
-      navigate('/verify-email', {
-        replace: true,
-        state: {
-          email: values.email,
-        },
-      });
-    } catch (error) {
-      setServerError(getErrorMessage(error));
-    }
-  };
+export default function RegisterForm({ onSwitchToLogin }) {
+  const { register, errors, isSubmitting, serverError, onSubmit } =
+    useRegisterForm({ onSwitchToLogin });
 
   return (
-    <form
-      onSubmit={handleSubmit(handleRegister)}
-      className="space-y-5"
-      noValidate
-    >
+    <form onSubmit={onSubmit} className="space-y-5" noValidate>
       <div className="space-y-2">
-        <Label htmlFor="register-name">
-          Nama lengkap
-        </Label>
+        <Label htmlFor="register-name">Nama lengkap</Label>
 
         <Input
           id="register-name"
@@ -81,16 +22,12 @@ export default function RegisterForm({
         />
 
         {errors.name && (
-          <p className="text-sm text-destructive">
-            {errors.name.message}
-          </p>
+          <p className="text-sm text-destructive">{errors.name.message}</p>
         )}
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="register-email">
-          Email
-        </Label>
+        <Label htmlFor="register-email">Email</Label>
 
         <Input
           id="register-email"
@@ -102,16 +39,12 @@ export default function RegisterForm({
         />
 
         {errors.email && (
-          <p className="text-sm text-destructive">
-            {errors.email.message}
-          </p>
+          <p className="text-sm text-destructive">{errors.email.message}</p>
         )}
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="register-password">
-          Password
-        </Label>
+        <Label htmlFor="register-password">Password</Label>
 
         <Input
           id="register-password"
@@ -123,25 +56,19 @@ export default function RegisterForm({
         />
 
         {errors.password && (
-          <p className="text-sm text-destructive">
-            {errors.password.message}
-          </p>
+          <p className="text-sm text-destructive">{errors.password.message}</p>
         )}
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="register-confirm-password">
-          Konfirmasi password
-        </Label>
+        <Label htmlFor="register-confirm-password">Konfirmasi password</Label>
 
         <Input
           id="register-confirm-password"
           type="password"
           placeholder="Ulangi password"
           autoComplete="new-password"
-          aria-invalid={Boolean(
-            errors.confirmPassword,
-          )}
+          aria-invalid={Boolean(errors.confirmPassword)}
           {...register('confirmPassword')}
         />
 
@@ -166,9 +93,7 @@ export default function RegisterForm({
         disabled={isSubmitting}
         className="w-full bg-[#F97331] text-white hover:bg-[#F97331]/90"
       >
-        {isSubmitting
-          ? 'Mendaftarkan akun...'
-          : 'Daftar'}
+        {isSubmitting ? 'Mendaftarkan akun...' : 'Daftar'}
       </Button>
 
       <p className="text-center text-sm text-muted-foreground">

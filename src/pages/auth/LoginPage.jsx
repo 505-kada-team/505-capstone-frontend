@@ -1,9 +1,8 @@
-import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState } from "react";
 
 import LoginForm from "@/components/shared/LoginForm";
 import RegisterForm from "@/components/shared/RegisterForm";
-import { useAuth } from "@/context/AuthContext";
+import { useAuthRedirect } from "@/hooks/useAuthRedirect";
 
 const FORM_MODE = {
   LOGIN: "login",
@@ -11,22 +10,8 @@ const FORM_MODE = {
 };
 
 export default function LoginPage() {
-  const navigate = useNavigate();
-  const { user, isAuthenticated, isAuthLoading } = useAuth();
+  const { isAuthLoading } = useAuthRedirect();
   const [formMode, setFormMode] = useState(FORM_MODE.LOGIN);
-
-  useEffect(() => {
-    if (isAuthLoading || !isAuthenticated) return;
-
-    if (user?.role === "admin") {
-      navigate("/admin", { replace: true });
-      return;
-    }
-
-    if (user?.role === "kasir") {
-      navigate("/kasir", { replace: true });
-    }
-  }, [isAuthenticated, isAuthLoading, navigate, user]);
 
   if (isAuthLoading) {
     return (
@@ -139,4 +124,3 @@ export default function LoginPage() {
     </main>
   );
 }
-

@@ -1,88 +1,25 @@
-import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { loginSchema } from '@/schemas/authSchema';
-import { useAuth } from '@/context/AuthContext';
-
-const getErrorMessage = (error) =>
-  error.response?.data?.message ||
-  error.response?.data?.error ||
-  error.message ||
-  'Login gagal. Silakan coba kembali.';
+import { useLoginForm } from '@/hooks/useLoginForm';
 
 export default function LoginForm({ onSwitchToRegister }) {
   const navigate = useNavigate();
-  const { login } = useAuth();
+  const { register, errors, isSubmitting, serverError, onSubmit } = useLoginForm();
 
-  const [serverError, setServerError] = useState('');
-
-  const {
-    register,
-    handleSubmit,
-    formState: {
-      errors,
-      isSubmitting,
-    },
-  } = useForm({
-    resolver: zodResolver(loginSchema),
-    defaultValues: {
-      email: '',
-      password: '',
-    },
-  });
-
-  const handleLogin = async (values) => {
-    setServerError('');
-
-    try {
-      const user = await login({
-        email: values.email,
-        password: values.password,
-      });
-
-      if (!user) {
-        throw new Error(
-          'Data pengguna tidak ditemukan pada response login.',
-        );
-      }
-
-      if (user.role === 'admin') {
-        navigate('/admin', {
-          replace: true,
-        });
-        return;
-      }
-
-      if (user.role === 'kasir') {
-        navigate('/kasir', {
-          replace: true,
-        });
-        return;
-      }
-
-      throw new Error(
-        'Role pengguna tidak dikenali.',
-      );
-    } catch (error) {
-      setServerError(getErrorMessage(error));
+  const handleFormSubmit = async (e) => {
+    const result = await submit(e);
+    if (result?.redirectToVerify) {
+      navigate('/verify-email', { state: { email: result.redirectToVerify } });
     }
   };
 
   return (
-    <form
-      onSubmit={handleSubmit(handleLogin)}
-      className="space-y-5"
-      noValidate
-    >
+    <form onSubmit={onSubmit} className="space-y-5" noValidate>
       <div className="space-y-2">
-        <Label htmlFor="login-email">
-          Email
-        </Label>
+        <Label htmlFor="login-email">Email</Label>
 
         <Input
           id="login-email"
@@ -94,17 +31,13 @@ export default function LoginForm({ onSwitchToRegister }) {
         />
 
         {errors.email && (
-          <p className="text-sm text-destructive">
-            {errors.email.message}
-          </p>
+          <p className="text-sm text-destructive">{errors.email.message}</p>
         )}
       </div>
 
       <div className="space-y-2">
         <div className="flex items-center justify-between gap-4">
-          <Label htmlFor="login-password">
-            Password
-          </Label>
+          <Label htmlFor="login-password">Password</Label>
 
           <button
             type="button"
@@ -125,9 +58,7 @@ export default function LoginForm({ onSwitchToRegister }) {
         />
 
         {errors.password && (
-          <p className="text-sm text-destructive">
-            {errors.password.message}
-          </p>
+          <p className="text-sm text-destructive">{errors.password.message}</p>
         )}
       </div>
 
@@ -145,9 +76,7 @@ export default function LoginForm({ onSwitchToRegister }) {
         disabled={isSubmitting}
         className="w-full bg-[#F97331] text-white hover:bg-[#F97331]/90"
       >
-        {isSubmitting
-          ? 'Memproses login...'
-          : 'Masuk'}
+        {isSubmitting ? 'Memproses login...' : 'Masuk'}
       </Button>
 
       <p className="text-center text-sm text-muted-foreground">
