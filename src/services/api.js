@@ -1,5 +1,5 @@
 /**
- * services/api.js — Modul Inventory + Menu/Resep + Production Plan + Selling
+ * services/api.js — Modul Inventory + Menu/Resep + Production Plan + Selling + Plan Report
  *
  * ATURAN (dari CONVENTIONS.md):
  * - Semua pemanggilan API WAJIB lewat file ini. Jangan import axios langsung di komponen.
@@ -16,6 +16,7 @@
  *   - 505_Database Schema_resep.md          (6 endpoint)
  *   - 505_Database Schema_producitonplan.md (10 endpoint)
  *   - 505_Database Schema_selling.md        (3 endpoint)
+ *   - 505_Database Schema_planreport.md     (4 endpoint)
  */
 
 import axios from 'axios';
@@ -90,6 +91,15 @@ import {
   mockCreateSaleNormal, // bisa diganti ke discount/notStarted/insufficient untuk testing UI
   // Endpoint B3 — GET /api/selling/history
   mockSellingHistory,
+  // ── Plan Report (Endpoint C1–C4) ────────────────────────────────────────
+  // Endpoint C1 — POST /api/plan-reports
+  mockCreatePlanReportMenuDiscount, // bisa diganti untuk testing UI
+  // Endpoint C2 — GET /api/plan-reports
+  mockPlanReportList,
+  // Endpoint C3 — PUT /api/plan-reports/:id/review
+  mockReviewPlanReport,
+  // Endpoint C4 — POST /api/plan-reports/:id/add-inventory
+  mockAddInventoryReplacement,
 } from '../lib/mockData';
 
 // ---------------------------------------------------------------------------
@@ -472,3 +482,48 @@ export const getSellingHistory = (params) =>
   USE_MOCK
     ? Promise.resolve({ data: mockSellingHistory })
     : api.get('/api/selling/history', { params });
+
+// =============================================================================
+// MODUL PLAN REPORT — 505_Database Schema_planreport.md
+// =============================================================================
+
+// =============================================================================
+// ENDPOINT C1 — POST /api/plan-reports
+// Lapor kerusakan/kehilangan
+// Payload: { planId, category, refId, quantityLost, incidentAt, reason, reportedBy, reportedByRole }
+// =============================================================================
+export const createPlanReport = (payload) =>
+  USE_MOCK
+    // TODO: Ganti ke mock variasi lain kalau ingin test error state atau form kasir vs admin
+    ? Promise.resolve({ data: mockCreatePlanReportMenuDiscount })
+    : api.post('/api/plan-reports', payload);
+
+// =============================================================================
+// ENDPOINT C2 — GET /api/plan-reports
+// List laporan
+// Params opsional: { planId, status, category }
+// =============================================================================
+export const getPlanReportList = (params) =>
+  USE_MOCK
+    ? Promise.resolve({ data: mockPlanReportList })
+    : api.get('/api/plan-reports', { params });
+
+// =============================================================================
+// ENDPOINT C3 — PUT /api/plan-reports/:id/review
+// ACC/tolak laporan (hanya dari status pending)
+// Payload: { decision, adminNote }
+// =============================================================================
+export const reviewPlanReport = (id, payload) =>
+  USE_MOCK
+    ? Promise.resolve({ data: mockReviewPlanReport })
+    : api.put(`/api/plan-reports/${id}/review`, payload);
+
+// =============================================================================
+// ENDPOINT C4 — POST /api/plan-reports/:id/add-inventory
+// Tarik stok pengganti akibat rugi (khusus category ingredient)
+// Payload: { replacementQuantity, availableUntil, varianceNote }
+// =============================================================================
+export const addInventoryReplacement = (id, payload) =>
+  USE_MOCK
+    ? Promise.resolve({ data: mockAddInventoryReplacement })
+    : api.post(`/api/plan-reports/${id}/add-inventory`, payload);
