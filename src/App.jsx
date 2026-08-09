@@ -11,7 +11,8 @@
 
 import { Routes, Route, Navigate } from 'react-router';
 import AdminLayout    from '@/layouts/AdminLayout';
-import InventoryPage  from '@/pages/admin/InventoryPage';
+import InventoryPage  from '@/pages/admin/inventory/InventoryPage';
+import DetailInventoryPage from '@/pages/admin/inventory/DetailInventoryPage';
 
 // Placeholder untuk halaman yang belum dibuat
 function ComingSoon({ name }) {
@@ -34,7 +35,7 @@ export default function App() {
       <Route path="/admin" element={<AdminLayout />}>
         <Route index element={<Navigate to="inventory" replace />} />
         <Route path="inventory"            element={<InventoryPage />} />
-        <Route path="inventory/:id"        element={<ComingSoon name="Detail Inventory" />} />
+        <Route path="inventory/:id"        element={<DetailInventoryPage />} />
         <Route path="dashboard"            element={<ComingSoon name="Dashboard" />} />
         <Route path="recipes"              element={<ComingSoon name="Recipes" />} />
         <Route path="production-plan/draft"  element={<ComingSoon name="Draft Plan" />} />

@@ -37,16 +37,6 @@ const variantMap = {
     className: 'bg-muted text-muted-foreground border border-border',
   },
 
-  // ── Kategori inventory ───────────────────────────────────
-  ingredients: {
-    label: 'Ingredient',
-    // Oranye = aksen brand (bukan status warning), sesuai DESIGN_v1.md
-    className: 'bg-[#F97316]/15 text-[#F97316] border border-[#F97316]/40',
-  },
-  packaging: {
-    label: 'Packaging',
-    className: 'bg-muted text-muted-foreground border border-border',
-  },
 
   // ── Batch safety status (check-availability & deduct) ────
   safe: {

@@ -35,7 +35,7 @@ const ENABLE_COLLAPSIBLE_SIDEBAR = true;
 
 // Mock hook untuk auth (diganti nanti saat integrasi AuthContext)
 const useAuthMock = () => ({
-  user: { name: 'Kitchen Admin', role: 'admin' },
+  user: { name: 'Admin', role: 'Admin' },
   logout: () => console.log('Logout clicked'),
 });
 

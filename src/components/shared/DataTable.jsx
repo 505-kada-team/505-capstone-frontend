@@ -41,7 +41,7 @@ export default function DataTable({
     return (
       <div className="flex items-center justify-center py-16 text-muted-foreground gap-2">
         <Loader2 size={18} className="animate-spin" strokeWidth={2} />
-        <span className="text-sm">Memuat data...</span>
+        <span className="text-sm">Loading data...</span>
       </div>
     );
   }
@@ -68,7 +68,6 @@ export default function DataTable({
       {/* Body */}
       <TableBody>
         {data.length === 0 ? (
-          // Empty state — teks + 1 ikon lucide, tanpa ilustrasi (sesuai DESIGN_v1.md)
           <TableRow className="hover:bg-transparent border-0">
             <TableCell
               colSpan={columns.length}
@@ -84,7 +83,6 @@ export default function DataTable({
           data.map((row, idx) => (
             <TableRow
               key={row._id ?? idx}
-              // Striped/zebra style sesuai DESIGN_v1.md Section 5
               className="border-b border-border/50 odd:bg-muted/10 hover:bg-muted/20 transition-colors"
             >
               {columns.map((col) => (

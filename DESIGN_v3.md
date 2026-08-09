@@ -18,7 +18,7 @@ Mendukung **light mode dan dark mode**.
 
 ## 1b. Identitas Aplikasi (Ditambahkan — sebelumnya belum diputuskan)
 
-- Nama app: **Artisan Coffee Inventory** — final, dipakai apa adanya di semua tempat (sidebar, title bar, dst). Bukan placeholder.
+- Nama app: **Artisan Inventory** — final, dipakai apa adanya di semua tempat (sidebar, title bar, dst). Bukan placeholder.
 - Label role di bawah nama app di sidebar: **"Admin"** untuk role admin (bukan "Kitchen Admin" — itu placeholder Stitch, tidak dipakai). Untuk role kasir, label mengikuti pola sama: **"Kasir"**.
 
 ---
