@@ -18,7 +18,7 @@ Mendukung **light mode dan dark mode**.
 
 ## 1b. Identitas Aplikasi (Ditambahkan — sebelumnya belum diputuskan)
 
-- Nama app: **Artisan Inventory** — final, dipakai apa adanya di semua tempat (sidebar, title bar, dst). Bukan placeholder.
+- Nama app: **Artisan Coffee Inventory** — final, dipakai apa adanya di semua tempat (sidebar, title bar, dst). Bukan placeholder.
 - Label role di bawah nama app di sidebar: **"Admin"** untuk role admin (bukan "Kitchen Admin" — itu placeholder Stitch, tidak dipakai). Untuk role kasir, label mengikuti pola sama: **"Kasir"**.
 
 ---
@@ -78,15 +78,14 @@ Kategori itu taksonomi tetap (bukan kondisi yang berubah), jadi TIDAK pakai warn
 
 | Elemen | Font | Size (Tailwind) | Weight |
 | --- | --- | --- | --- |
-| Headline (H1) | Geist Mono | `text-2xl` | `font-bold` |
-| Judul section (H2) | Geist Mono | `text-lg` | `font-semibold` |
-| Body/isi tabel (teks) | Geist Mono | `text-sm` | `font-normal` |
-| Label form | Geist Mono | `text-sm` | `font-medium` |
-| **Kolom angka di tabel** (quantity, costPrices, _id) | Geist Mono | `text-sm` | `font-normal` |
-| Caption/timestamp | Geist Mono | `text-xs` | `font-normal`, warna `muted` |
+| Headline (H1) | Epilogue | `text-2xl` | `font-bold` |
+| Judul section (H2) | Epilogue | `text-lg` | `font-semibold` |
+| Body/isi tabel (teks) | Work Sans | `text-sm` | `font-normal` |
+| Label form | Work Sans | `text-sm` | `font-medium` |
+| **Kolom angka di tabel** (quantity, costPrices, _id) | **Geist Mono** | `text-sm` | `font-normal` |
+| Caption/timestamp | Work Sans | `text-xs` | `font-normal`, warna `muted` |
 
-**Update (menggantikan draft Epilogue/Work Sans/JetBrains Mono sebelumnya):** seluruh app pindah ke **Geist Mono** sebagai satu-satunya font family, konsisten dengan migrasi tema global yang sudah diterapkan. Karena Geist Mono sendiri monospace, aturan "font khusus buat kolom angka" jadi tidak perlu lagi — semua teks otomatis dapat manfaat digit sejajar. Kalau nanti ternyata butuh font berbeda buat body text biasa (Geist Mono di paragraf panjang bisa terasa berat dibaca), revisi ini gampang diubah — cukup 1 baris di sini.
-
+**Aturan khusus:** Geist Mono dipakai HANYA untuk data numerik/kode di tabel (bukan body text biasa) — supaya angka sejajar rapi dan gampang di-scan, konsisten di semua tabel (Inventory, SubInventory, Transaksi, dst).
 ---
 
 ## 4. Bentuk & Spacing
