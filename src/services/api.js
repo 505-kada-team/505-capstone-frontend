@@ -1,5 +1,5 @@
 /**
- * services/api.js — Modul Inventory + Menu/Resep + Production Plan + Selling + Plan Report
+ * services/api.js — Modul Inventory + Menu/Resep + Production Plan + Selling + Plan Report + Dashboard
  *
  * ATURAN (dari CONVENTIONS.md):
  * - Semua pemanggilan API WAJIB lewat file ini. Jangan import axios langsung di komponen.
@@ -17,6 +17,7 @@
  *   - 505_Database Schema_producitonplan.md (10 endpoint)
  *   - 505_Database Schema_selling.md        (3 endpoint)
  *   - 505_Database Schema_planreport.md     (4 endpoint)
+ *   - 505_Database Schema_dashboard.md      (1 endpoint)
  */
 
 import axios from 'axios';
@@ -100,6 +101,8 @@ import {
   mockReviewPlanReport,
   // Endpoint C4 — POST /api/plan-reports/:id/add-inventory
   mockAddInventoryReplacement,
+  // ── Dashboard (Endpoint D1) ─────────────────────────────────────────────
+  mockDashboardHourly, // ganti ke mockDashboardDaily atau mockDashboardEmpty untuk testing UI
 } from '../lib/mockData';
 
 // ---------------------------------------------------------------------------
@@ -118,20 +121,14 @@ const USE_MOCK = true;
 // Buat inventory baru
 // Payload: { nameInventory, category, unit, description }
 // =============================================================================
-export const createInventory = (payload) =>
-  USE_MOCK
-    ? Promise.resolve({ data: mockAddInventory })
-    : api.post('/api/inventory', payload);
+export const createInventory = (payload) => (USE_MOCK ? Promise.resolve({ data: mockAddInventory }) : api.post('/api/inventory', payload));
 
 // =============================================================================
 // ENDPOINT 2 — GET /api/inventory
 // List semua inventory (paginated, halaman manajemen)
 // Params opsional: { category, search, page, limit, includeDeleted }
 // =============================================================================
-export const getInventoryList = (params) =>
-  USE_MOCK
-    ? Promise.resolve({ data: mockInventoryList })
-    : api.get('/api/inventory', { params });
+export const getInventoryList = (params) => (USE_MOCK ? Promise.resolve({ data: mockInventoryList }) : api.get('/api/inventory', { params }));
 
 // =============================================================================
 // ENDPOINT 3 — GET /api/inventory/dropdown
@@ -139,20 +136,14 @@ export const getInventoryList = (params) =>
 // Params opsional: { category, search }
 // Tanpa pagination — kembalikan seluruh data aktif yang match filter
 // =============================================================================
-export const getInventoryDropdown = (params) =>
-  USE_MOCK
-    ? Promise.resolve({ data: mockInventoryDropdown })
-    : api.get('/api/inventory/dropdown', { params });
+export const getInventoryDropdown = (params) => (USE_MOCK ? Promise.resolve({ data: mockInventoryDropdown }) : api.get('/api/inventory/dropdown', { params }));
 
 // =============================================================================
 // ENDPOINT 4 — GET /api/inventory/:id
 // Detail inventory + list subinventory aktif
 // Backend menjalankan lazy expired-check sebelum mengembalikan data
 // =============================================================================
-export const getInventoryDetail = (id) =>
-  USE_MOCK
-    ? Promise.resolve({ data: mockInventoryDetail })
-    : api.get(`/api/inventory/${id}`);
+export const getInventoryDetail = (id) => (USE_MOCK ? Promise.resolve({ data: mockInventoryDetail }) : api.get(`/api/inventory/${id}`));
 
 // =============================================================================
 // ENDPOINT 5 — PUT /api/inventory/:id
@@ -160,20 +151,14 @@ export const getInventoryDetail = (id) =>
 // Payload: { nameInventory?, description? }
 // CATATAN: category dan unit TERKUNCI — backend tolak 400 kalau disertakan
 // =============================================================================
-export const updateInventory = (id, payload) =>
-  USE_MOCK
-    ? Promise.resolve({ data: mockEditInventory })
-    : api.put(`/api/inventory/${id}`, payload);
+export const updateInventory = (id, payload) => (USE_MOCK ? Promise.resolve({ data: mockEditInventory }) : api.put(`/api/inventory/${id}`, payload));
 
 // =============================================================================
 // ENDPOINT 6 — DELETE /api/inventory/:id
 // Arsipkan inventory (soft-delete). Hard delete tidak ada di modul ini.
 // Akan ditolak 409 kalau masih ada batch aktif dengan quantity > 0
 // =============================================================================
-export const archiveInventory = (id) =>
-  USE_MOCK
-    ? Promise.resolve({ data: mockDeleteInventory })
-    : api.delete(`/api/inventory/${id}`);
+export const archiveInventory = (id) => (USE_MOCK ? Promise.resolve({ data: mockDeleteInventory }) : api.delete(`/api/inventory/${id}`));
 
 // =============================================================================
 // ENDPOINT 7 — POST /api/inventory/:id/subinventory
@@ -181,40 +166,28 @@ export const archiveInventory = (id) =>
 // Payload: { quantity, costPrices, inDate, expired, nameResponsible }
 // CATATAN: expired wajib untuk ingredients, paksa null untuk packaging
 // =============================================================================
-export const addSubInventory = (inventoryId, payload) =>
-  USE_MOCK
-    ? Promise.resolve({ data: mockAddSubInventoryBatch })
-    : api.post(`/api/inventory/${inventoryId}/subinventory`, payload);
+export const addSubInventory = (inventoryId, payload) => (USE_MOCK ? Promise.resolve({ data: mockAddSubInventoryBatch }) : api.post(`/api/inventory/${inventoryId}/subinventory`, payload));
 
 // =============================================================================
 // ENDPOINT 8 — GET /api/inventory/:id/subinventory
 // List batch milik 1 inventory
 // Params opsional: { status } — default 'active'; bisa 'depleted', 'expired', 'deleted', 'all'
 // =============================================================================
-export const getSubInventoryList = (inventoryId, params) =>
-  USE_MOCK
-    ? Promise.resolve({ data: mockSubInventoryList })
-    : api.get(`/api/inventory/${inventoryId}/subinventory`, { params });
+export const getSubInventoryList = (inventoryId, params) => (USE_MOCK ? Promise.resolve({ data: mockSubInventoryList }) : api.get(`/api/inventory/${inventoryId}/subinventory`, { params }));
 
 // =============================================================================
 // ENDPOINT 9 — DELETE /api/subinventory/:id
 // Arsipkan (soft-delete) 1 batch secara manual
 // Payload opsional: { deletedBy, reason }
 // =============================================================================
-export const archiveSubInventory = (subInventoryId, payload) =>
-  USE_MOCK
-    ? Promise.resolve({ data: mockDeleteSubInventory })
-    : api.delete(`/api/subinventory/${subInventoryId}`, { data: payload });
+export const archiveSubInventory = (subInventoryId, payload) => (USE_MOCK ? Promise.resolve({ data: mockDeleteSubInventory }) : api.delete(`/api/subinventory/${subInventoryId}`, { data: payload }));
 
 // =============================================================================
 // ENDPOINT 10 — GET /api/history-sub-inventory
 // Log semua transaksi pembelian batch (rekaman permanen, tidak pernah dihapus)
 // Params opsional: { inventoryId, nameResponsible, startDate, endDate, page, limit }
 // =============================================================================
-export const getHistorySubInventory = (params) =>
-  USE_MOCK
-    ? Promise.resolve({ data: mockHistorySubInventory })
-    : api.get('/api/history-sub-inventory', { params });
+export const getHistorySubInventory = (params) => (USE_MOCK ? Promise.resolve({ data: mockHistorySubInventory }) : api.get('/api/history-sub-inventory', { params }));
 
 // =============================================================================
 // ENDPOINT 11 — POST /api/subinventory/check-availability
@@ -223,10 +196,7 @@ export const getHistorySubInventory = (params) =>
 // Payload: { inventoryId, quantityNeeded, availableUntil }
 // Response selalu 200 (sufficient: false adalah hasil valid, bukan error)
 // =============================================================================
-export const checkAvailability = (payload) =>
-  USE_MOCK
-    ? Promise.resolve({ data: mockCheckAvailabilitySufficient })
-    : api.post('/api/subinventory/check-availability', payload);
+export const checkAvailability = (payload) => (USE_MOCK ? Promise.resolve({ data: mockCheckAvailabilitySufficient }) : api.post('/api/subinventory/check-availability', payload));
 
 // =============================================================================
 // ENDPOINT 12 — POST /api/subinventory/deduct
@@ -235,30 +205,21 @@ export const checkAvailability = (payload) =>
 // Payload: { inventoryId, quantityNeeded, planId, availableUntil? }
 // availableUntil opsional — wajib dikirim oleh Production Plan saat approve
 // =============================================================================
-export const deductStock = (payload) =>
-  USE_MOCK
-    ? Promise.resolve({ data: mockDeductStock })
-    : api.post('/api/subinventory/deduct', payload);
+export const deductStock = (payload) => (USE_MOCK ? Promise.resolve({ data: mockDeductStock }) : api.post('/api/subinventory/deduct', payload));
 
 // =============================================================================
 // ENDPOINT 13 — POST /api/subinventory/deduct/reverse
 // Batalkan pemotongan stok — kembalikan quantity ke SubInventory terkait
 // Payload: { planId, reason? }
 // =============================================================================
-export const reverseDeductStock = (payload) =>
-  USE_MOCK
-    ? Promise.resolve({ data: mockDeductReverse })
-    : api.post('/api/subinventory/deduct/reverse', payload);
+export const reverseDeductStock = (payload) => (USE_MOCK ? Promise.resolve({ data: mockDeductReverse }) : api.post('/api/subinventory/deduct/reverse', payload));
 
 // =============================================================================
 // ENDPOINT 14 — GET /api/history-usage
 // Log semua transaksi pemakaian stok (COGS, rekaman permanen)
 // Params opsional: { inventoryId, planId, startDate, endDate, page, limit }
 // =============================================================================
-export const getHistoryUsage = (params) =>
-  USE_MOCK
-    ? Promise.resolve({ data: mockHistoryUsage })
-    : api.get('/api/history-usage', { params });
+export const getHistoryUsage = (params) => (USE_MOCK ? Promise.resolve({ data: mockHistoryUsage }) : api.get('/api/history-usage', { params }));
 
 // =============================================================================
 // MODUL MENU / RESEP — 505_Database Schema_resep.md
@@ -272,10 +233,7 @@ export const getHistoryUsage = (params) =>
 // Response 201: data menu lengkap + live-populated ingredients + cost fields
 // Response 400: ingredient tidak valid / duplikat inventoryId dalam payload
 // =============================================================================
-export const createMenu = (payload) =>
-  USE_MOCK
-    ? Promise.resolve({ data: mockMenuCreated })
-    : api.post('/api/menu', payload);
+export const createMenu = (payload) => (USE_MOCK ? Promise.resolve({ data: mockMenuCreated }) : api.post('/api/menu', payload));
 
 // =============================================================================
 // ENDPOINT 2 — GET /api/menu
@@ -284,10 +242,7 @@ export const createMenu = (payload) =>
 //   includeDeleted default false — hanya menu active yang muncul
 // Response: data ringkas per item (tanpa ingredients[], dengan totalIngredients)
 // =============================================================================
-export const getMenuList = (params) =>
-  USE_MOCK
-    ? Promise.resolve({ data: mockMenuList })
-    : api.get('/api/menu', { params });
+export const getMenuList = (params) => (USE_MOCK ? Promise.resolve({ data: mockMenuList }) : api.get('/api/menu', { params }));
 
 // =============================================================================
 // ENDPOINT 3 — GET /api/menu/:id
@@ -299,10 +254,7 @@ export const getMenuList = (params) =>
 // CATATAN: response ini berbeda dari GET list — mengandung ingredients[] penuh
 //          termasuk field inventoryStatus per ingredient
 // =============================================================================
-export const getMenuDetail = (id) =>
-  USE_MOCK
-    ? Promise.resolve({ data: mockMenuDetail })
-    : api.get(`/api/menu/${id}`);
+export const getMenuDetail = (id) => (USE_MOCK ? Promise.resolve({ data: mockMenuDetail }) : api.get(`/api/menu/${id}`));
 
 // =============================================================================
 // ENDPOINT 4 — PUT /api/menu/:id
@@ -314,10 +266,7 @@ export const getMenuDetail = (id) =>
 //   (draft Plan yang mereferensikan menu ini ditandai checkResultStale: true)
 // Response 400: ingredient tidak valid (sama seperti endpoint 1)
 // =============================================================================
-export const updateMenu = (id, payload) =>
-  USE_MOCK
-    ? Promise.resolve({ data: mockEditMenu })
-    : api.put(`/api/menu/${id}`, payload);
+export const updateMenu = (id, payload) => (USE_MOCK ? Promise.resolve({ data: mockEditMenu }) : api.put(`/api/menu/${id}`, payload));
 
 // =============================================================================
 // ENDPOINT 5 — DELETE /api/menu/:id
@@ -327,10 +276,7 @@ export const updateMenu = (id, payload) =>
 //   affectedDraftPlans: draft Plan yang ditandai staleReason: 'menu_archived'
 // Response 404: menu tidak ditemukan atau sudah berstatus deleted
 // =============================================================================
-export const archiveMenu = (id) =>
-  USE_MOCK
-    ? Promise.resolve({ data: mockDeleteMenu })
-    : api.delete(`/api/menu/${id}`);
+export const archiveMenu = (id) => (USE_MOCK ? Promise.resolve({ data: mockDeleteMenu }) : api.delete(`/api/menu/${id}`));
 
 // =============================================================================
 // ENDPOINT 6 — GET /api/menu/dropdown
@@ -341,10 +287,7 @@ export const archiveMenu = (id) =>
 // CATATAN: path /dropdown harus didaftarkan SEBELUM /:id di router backend
 //          supaya tidak terbaca sebagai id (sudah dihandle di sisi backend)
 // =============================================================================
-export const getMenuDropdown = (params) =>
-  USE_MOCK
-    ? Promise.resolve({ data: mockMenuDropdown })
-    : api.get('/api/menu/dropdown', { params });
+export const getMenuDropdown = (params) => (USE_MOCK ? Promise.resolve({ data: mockMenuDropdown }) : api.get('/api/menu/dropdown', { params }));
 
 // =============================================================================
 // MODUL PRODUCTION PLAN — 505_Database Schema_producitonplan.md
@@ -355,20 +298,14 @@ export const getMenuDropdown = (params) =>
 // Buat plan baru (draft)
 // Payload: { name, tags?, startDate, duration, menus: [{ menuId, quantityPlanned }] }
 // =============================================================================
-export const createPlan = (payload) =>
-  USE_MOCK
-    ? Promise.resolve({ data: mockCreatePlan })
-    : api.post('/api/plan', payload);
+export const createPlan = (payload) => (USE_MOCK ? Promise.resolve({ data: mockCreatePlan }) : api.post('/api/plan', payload));
 
 // =============================================================================
 // ENDPOINT A2 — GET /api/plan
 // List semua plan (filter status)
 // Params opsional: { status, search, tags, page, limit }
 // =============================================================================
-export const getPlanList = (params) =>
-  USE_MOCK
-    ? Promise.resolve({ data: mockPlanList })
-    : api.get('/api/plan', { params });
+export const getPlanList = (params) => (USE_MOCK ? Promise.resolve({ data: mockPlanList }) : api.get('/api/plan', { params }));
 
 // =============================================================================
 // ENDPOINT A3 — GET /api/plan/:id
@@ -376,8 +313,8 @@ export const getPlanList = (params) =>
 // =============================================================================
 export const getPlanDetail = (id) =>
   USE_MOCK
-    // TODO: Ganti ke mockPlanDetailActive kalau ingin test UI state active
-    ? Promise.resolve({ data: mockPlanDetailDraft })
+    ? // TODO: Ganti ke mockPlanDetailActive kalau ingin test UI state active
+      Promise.resolve({ data: mockPlanDetailDraft })
     : api.get(`/api/plan/${id}`);
 
 // =============================================================================
@@ -385,68 +322,47 @@ export const getPlanDetail = (id) =>
 // Edit plan (hanya saat draft)
 // Payload: { startDate?, duration?, menus? }
 // =============================================================================
-export const updatePlan = (id, payload) =>
-  USE_MOCK
-    ? Promise.resolve({ data: mockUpdatePlan })
-    : api.put(`/api/plan/${id}`, payload);
+export const updatePlan = (id, payload) => (USE_MOCK ? Promise.resolve({ data: mockUpdatePlan }) : api.put(`/api/plan/${id}`, payload));
 
 // =============================================================================
 // ENDPOINT A5 — POST /api/plan/:id/check-availability
 // Refresh simulasi ketersediaan bahan (hanya saat draft)
 // Tidak ada payload
 // =============================================================================
-export const checkAvailabilityPlan = (id) =>
-  USE_MOCK
-    ? Promise.resolve({ data: mockCheckAvailabilityPlan })
-    : api.post(`/api/plan/${id}/check-availability`);
+export const checkAvailabilityPlan = (id) => (USE_MOCK ? Promise.resolve({ data: mockCheckAvailabilityPlan }) : api.post(`/api/plan/${id}/check-availability`));
 
 // =============================================================================
 // ENDPOINT A6 — POST /api/plan/:id/approve
 // Setujui plan → deduct Inventory, bekukan frozenSellingPrice, draft → active
 // Tidak ada payload
 // =============================================================================
-export const approvePlan = (id) =>
-  USE_MOCK
-    ? Promise.resolve({ data: mockApprovePlan })
-    : api.post(`/api/plan/${id}/approve`);
+export const approvePlan = (id) => (USE_MOCK ? Promise.resolve({ data: mockApprovePlan }) : api.post(`/api/plan/${id}/approve`));
 
 // =============================================================================
 // ENDPOINT A7 — POST /api/plan/:id/stop
 // Hentikan paksa, active → stopped
 // Payload opsional: { reason, stoppedBy }
 // =============================================================================
-export const stopPlan = (id, payload) =>
-  USE_MOCK
-    ? Promise.resolve({ data: mockStopPlan })
-    : api.post(`/api/plan/${id}/stop`, payload);
+export const stopPlan = (id, payload) => (USE_MOCK ? Promise.resolve({ data: mockStopPlan }) : api.post(`/api/plan/${id}/stop`, payload));
 
 // =============================================================================
 // ENDPOINT A8 — DELETE /api/plan/:id
 // Batalkan draft (hanya saat draft)
 // =============================================================================
-export const cancelPlan = (id) =>
-  USE_MOCK
-    ? Promise.resolve({ data: mockCancelPlan })
-    : api.delete(`/api/plan/${id}`);
+export const cancelPlan = (id) => (USE_MOCK ? Promise.resolve({ data: mockCancelPlan }) : api.delete(`/api/plan/${id}`));
 
 // =============================================================================
 // ENDPOINT A9 — PUT /api/plan/:id/menus/:menuId/discount
 // Set/ganti slot diskon untuk satu menu
 // Payload: { discountPercentage, startDate, endDate, reason }
 // =============================================================================
-export const setMenuDiscount = (id, menuId, payload) =>
-  USE_MOCK
-    ? Promise.resolve({ data: mockSetDiscount })
-    : api.put(`/api/plan/${id}/menus/${menuId}/discount`, payload);
+export const setMenuDiscount = (id, menuId, payload) => (USE_MOCK ? Promise.resolve({ data: mockSetDiscount }) : api.put(`/api/plan/${id}/menus/${menuId}/discount`, payload));
 
 // =============================================================================
 // ENDPOINT A10 — DELETE /api/plan/:id/menus/:menuId/discount
 // Hapus slot diskon untuk satu menu
 // =============================================================================
-export const deleteMenuDiscount = (id, menuId) =>
-  USE_MOCK
-    ? Promise.resolve({ data: mockDeleteDiscount })
-    : api.delete(`/api/plan/${id}/menus/${menuId}/discount`);
+export const deleteMenuDiscount = (id, menuId) => (USE_MOCK ? Promise.resolve({ data: mockDeleteDiscount }) : api.delete(`/api/plan/${id}/menus/${menuId}/discount`));
 
 // =============================================================================
 // MODUL SELLING — 505_Database Schema_selling.md
@@ -457,10 +373,7 @@ export const deleteMenuDiscount = (id, menuId) =>
 // List plan aktif + sisa stok + harga berlaku per menu
 // Tidak ada payload
 // =============================================================================
-export const getSellingActiveList = () =>
-  USE_MOCK
-    ? Promise.resolve({ data: mockSellingActiveList })
-    : api.get('/api/selling/active');
+export const getSellingActiveList = () => (USE_MOCK ? Promise.resolve({ data: mockSellingActiveList }) : api.get('/api/selling/active'));
 
 // =============================================================================
 // ENDPOINT B2 — POST /api/selling
@@ -469,8 +382,8 @@ export const getSellingActiveList = () =>
 // =============================================================================
 export const createSale = (payload) =>
   USE_MOCK
-    // TODO: Ganti ke mockCreateSaleDiscount / NotStarted / Insufficient kalau ingin test flow UI spesifik
-    ? Promise.resolve({ data: mockCreateSaleNormal })
+    ? // TODO: Ganti ke mockCreateSaleDiscount / NotStarted / Insufficient kalau ingin test flow UI spesifik
+      Promise.resolve({ data: mockCreateSaleNormal })
     : api.post('/api/selling', payload);
 
 // =============================================================================
@@ -478,10 +391,7 @@ export const createSale = (payload) =>
 // Riwayat penjualan (untuk rekonsiliasi shift)
 // Params opsional: { planId, date, cashierName }
 // =============================================================================
-export const getSellingHistory = (params) =>
-  USE_MOCK
-    ? Promise.resolve({ data: mockSellingHistory })
-    : api.get('/api/selling/history', { params });
+export const getSellingHistory = (params) => (USE_MOCK ? Promise.resolve({ data: mockSellingHistory }) : api.get('/api/selling/history', { params }));
 
 // =============================================================================
 // MODUL PLAN REPORT — 505_Database Schema_planreport.md
@@ -494,8 +404,8 @@ export const getSellingHistory = (params) =>
 // =============================================================================
 export const createPlanReport = (payload) =>
   USE_MOCK
-    // TODO: Ganti ke mock variasi lain kalau ingin test error state atau form kasir vs admin
-    ? Promise.resolve({ data: mockCreatePlanReportMenuDiscount })
+    ? // TODO: Ganti ke mock variasi lain kalau ingin test error state atau form kasir vs admin
+      Promise.resolve({ data: mockCreatePlanReportMenuDiscount })
     : api.post('/api/plan-reports', payload);
 
 // =============================================================================
@@ -503,27 +413,37 @@ export const createPlanReport = (payload) =>
 // List laporan
 // Params opsional: { planId, status, category }
 // =============================================================================
-export const getPlanReportList = (params) =>
-  USE_MOCK
-    ? Promise.resolve({ data: mockPlanReportList })
-    : api.get('/api/plan-reports', { params });
+export const getPlanReportList = (params) => (USE_MOCK ? Promise.resolve({ data: mockPlanReportList }) : api.get('/api/plan-reports', { params }));
 
 // =============================================================================
 // ENDPOINT C3 — PUT /api/plan-reports/:id/review
 // ACC/tolak laporan (hanya dari status pending)
 // Payload: { decision, adminNote }
 // =============================================================================
-export const reviewPlanReport = (id, payload) =>
-  USE_MOCK
-    ? Promise.resolve({ data: mockReviewPlanReport })
-    : api.put(`/api/plan-reports/${id}/review`, payload);
+export const reviewPlanReport = (id, payload) => (USE_MOCK ? Promise.resolve({ data: mockReviewPlanReport }) : api.put(`/api/plan-reports/${id}/review`, payload));
 
 // =============================================================================
 // ENDPOINT C4 — POST /api/plan-reports/:id/add-inventory
 // Tarik stok pengganti akibat rugi (khusus category ingredient)
 // Payload: { replacementQuantity, availableUntil, varianceNote }
 // =============================================================================
-export const addInventoryReplacement = (id, payload) =>
+export const addInventoryReplacement = (id, payload) => (USE_MOCK ? Promise.resolve({ data: mockAddInventoryReplacement }) : api.post(`/api/plan-reports/${id}/add-inventory`, payload));
+
+// =============================================================================
+// MODUL DASHBOARD — 505_Database Schema_dashboard.md
+// =============================================================================
+
+// =============================================================================
+// ENDPOINT D1 — GET /api/dashboard/summary
+// Ringkasan KPI & Tren Penjualan
+// Params opsional:
+// - { date: 'YYYY-MM-DD' } untuk Single-Day/Hourly Trend
+// - { startDate: 'YYYY-MM-DD', endDate: 'YYYY-MM-DD' } untuk Multi-Day/Daily Trend
+// - {} (kosong) = default hari ini (Single-Day) di sisi backend
+// =============================================================================
+export const getDashboardSummary = (params) =>
   USE_MOCK
-    ? Promise.resolve({ data: mockAddInventoryReplacement })
-    : api.post(`/api/plan-reports/${id}/add-inventory`, payload);
+    ? // TODO: Ganti mock ini (mockDashboardHourly / mockDashboardDaily / mockDashboardEmpty)
+      // untuk menguji UI/chart dashboard dengan mode data yang berbeda.
+      Promise.resolve({ data: mockDashboardHourly })
+    : api.get('/api/dashboard/summary', { params });
