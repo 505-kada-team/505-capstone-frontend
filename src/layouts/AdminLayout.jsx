@@ -53,7 +53,9 @@ export default function AdminLayout() {
   // Update accordion state jika navigasi berubah dari luar
   useEffect(() => {
     if (isProdPlanActive && isSidebarOpen) {
-      setIsProductionPlanOpen(true);
+      setTimeout(() => {
+        setIsProductionPlanOpen(true);
+      }, 0);
     }
   }, [isProdPlanActive, isSidebarOpen]);
 

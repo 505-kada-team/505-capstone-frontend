@@ -13,6 +13,8 @@ import { Routes, Route, Navigate } from 'react-router';
 import AdminLayout    from '@/layouts/AdminLayout';
 import InventoryPage  from '@/pages/admin/inventory/InventoryPage';
 import DetailInventoryPage from '@/pages/admin/inventory/DetailInventoryPage';
+import RecipePage from '@/pages/admin/recipes/RecipePage';
+import { Toaster } from 'sonner';
 
 // Placeholder untuk halaman yang belum dibuat
 function ComingSoon({ name }) {
@@ -27,6 +29,7 @@ function ComingSoon({ name }) {
 
 export default function App() {
   return (
+    <>
     <Routes>
       {/* Root redirect → inventory */}
       <Route path="/" element={<Navigate to="/admin/inventory" replace />} />
@@ -37,7 +40,7 @@ export default function App() {
         <Route path="inventory"            element={<InventoryPage />} />
         <Route path="inventory/:id"        element={<DetailInventoryPage />} />
         <Route path="dashboard"            element={<ComingSoon name="Dashboard" />} />
-        <Route path="recipes"              element={<ComingSoon name="Recipes" />} />
+        <Route path="recipes"              element={<RecipePage />} />
         <Route path="production-plan/draft"  element={<ComingSoon name="Draft Plan" />} />
         <Route path="production-plan/active" element={<ComingSoon name="Active Plan" />} />
         <Route path="report"               element={<ComingSoon name="Report" />} />
@@ -47,5 +50,7 @@ export default function App() {
       {/* Catch-all */}
       <Route path="*" element={<Navigate to="/admin/inventory" replace />} />
     </Routes>
+    <Toaster richColors position="top-right" />
+    </>
   );
 }

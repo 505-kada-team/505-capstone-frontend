@@ -62,12 +62,7 @@ const CATEGORY_FILTER_OPTIONS = [
   { value: 'Packaging',   label: 'Packaging' },
 ];
 
-const SORT_OPTIONS = [
-  { value: 'Latest', label: 'Sort: Latest' },
-  { value: 'Oldest', label: 'Sort: Oldest' },
-  { value: 'Name',   label: 'Sort: Name A–Z' },
-  { value: 'Stock',  label: 'Sort: Stock ↓' },
-];
+
 
 
 
@@ -121,7 +116,7 @@ export default function InventoryPage() {
   // ── Filter state ──────────────────────────────────────────
   const [search,   setSearch]   = useState('');
   const [category, setCategory] = useState('all');
-  const [sort,     setSort]     = useState('latest');
+  const [sort]                  = useState('latest');
   const [page,     setPage]     = useState(1);
 
   // ── Dialog state ──────────────────────────────────────────
@@ -158,7 +153,6 @@ export default function InventoryPage() {
   // Reset page ke 1 setiap kali filter berubah
   const handleSearch   = (val) => { setSearch(val);   setPage(1); };
   const handleCategory = (val) => { setCategory(val); setPage(1); };
-  const handleSort     = (val) => { setSort(val);     setPage(1); };
 
   // ── Archive inventory ─────────────────────────────────────
   const handleArchiveConfirm = async () => {
