@@ -1756,3 +1756,154 @@ export const mockAddInventoryReplacement = {
     replacementCost: 22000,
   },
 };
+
+// ==================================Transaction Cashier Mock Data==================================
+
+// Bentuk data WAJIB sama persis dengan API contract (lihat CONVENTIONS.md section 5).
+// Swap ke getProducts() di services/api.js begitu backend siap.
+export const mockProducts = [
+  {
+    id: 'prod-001',
+    name: 'Latte',
+    image: 'https://picsum.photos/seed/latte/300/200',
+    price: 12700,
+    discountPrice: null,
+    discountPercent: null,
+    stockRemaining: 10,
+    isAvailable: true,
+  },
+  {
+    id: 'prod-002',
+    name: 'Ice Americano',
+    image: 'https://picsum.photos/seed/ice-americano/300/200',
+    price: 18750,
+    discountPrice: 15000,
+    discountPercent: 20,
+    stockRemaining: null,
+    isAvailable: true,
+  },
+  {
+    id: 'prod-003',
+    name: 'Matcha Drink',
+    image: 'https://picsum.photos/seed/matcha/300/200',
+    price: 26000,
+    discountPrice: null,
+    discountPercent: null,
+    stockRemaining: null,
+    isAvailable: true,
+  },
+  {
+    id: 'prod-004',
+    name: 'Cappuccino',
+    image: 'https://picsum.photos/seed/cappuccino/300/200',
+    price: 18000,
+    discountPrice: null,
+    discountPercent: null,
+    stockRemaining: 0,
+    isAvailable: false,
+  },
+  {
+    id: 'prod-005',
+    name: 'Lemonade',
+    image: 'https://picsum.photos/seed/lemonade/300/200',
+    price: 15500,
+    discountPrice: null,
+    discountPercent: null,
+    stockRemaining: null,
+    isAvailable: true,
+  },
+];
+
+// =============================================================================
+// MODUL DASHBOARD — 505_Database Schema_dashboard.md
+// 1 endpoint (D1): GET summary
+// =============================================================================
+
+export const mockDashboardHourly = {
+  success: true,
+  message: "Data dashboard harian (hourly) berhasil didapatkan",
+  filter: {
+    selectedDate: "2026-08-07",
+    startDate: "2026-08-07T00:00:00.000Z",
+    endDate: "2026-08-07T23:59:59.999Z"
+  },
+  data: {
+    kpi: {
+      totalRevenue: 1250000,
+      totalCupsSold: 58
+    },
+    hourlyTrend: [
+      {
+        hour: "08:00",
+        hourlyRevenue: 150000,
+        hourlyCupsSold: 8,
+        totalTransactions: 5
+      },
+      {
+        hour: "09:00",
+        hourlyRevenue: 220000,
+        hourlyCupsSold: 11,
+        totalTransactions: 7
+      },
+      {
+        hour: "14:00",
+        hourlyRevenue: 340000,
+        hourlyCupsSold: 15,
+        totalTransactions: 10
+      },
+      {
+        hour: "19:00",
+        hourlyRevenue: 180000,
+        hourlyCupsSold: 8,
+        totalTransactions: 6
+      }
+    ]
+  }
+};
+
+export const mockDashboardDaily = {
+  success: true,
+  message: "Data dashboard rentang tanggal berhasil didapatkan",
+  filter: {
+    startDate: "2026-08-01T00:00:00.000Z",
+    endDate: "2026-08-07T23:59:59.999Z"
+  },
+  data: {
+    kpi: {
+      totalRevenue: 14250000,
+      totalCupsSold: 680
+    },
+    dailyTrend: [
+      {
+        date: "2026-08-01",
+        dailyRevenue: 1850000,
+        dailyCupsSold: 88,
+        totalTransactions: 52
+      },
+      {
+        date: "2026-08-02",
+        dailyRevenue: 2100000,
+        dailyCupsSold: 102,
+        totalTransactions: 61
+      }
+    ]
+  }
+};
+
+export const mockDashboardEmpty = {
+  success: true,
+  message: "Data dashboard berhasil didapatkan (kosong)",
+  filter: {
+    selectedDate: "2026-08-08",
+    startDate: "2026-08-08T00:00:00.000Z",
+    endDate: "2026-08-08T23:59:59.999Z"
+  },
+  data: {
+    kpi: {
+      totalRevenue: 0,
+      totalCupsSold: 0
+    },
+    hourlyTrend: [],
+    dailyTrend: []
+  }
+};
