@@ -128,8 +128,8 @@ export default function PlanDetailPane({ planId, onRefreshList }) {
   // Map ingredients based on status
   const ingredientsSource = plan.status === 'draft' ? plan.checkResult : plan.committedIngredients;
   const mappedIngredients = (ingredientsSource || []).map(ing => {
-    let currentAvailable = 0;
-    let isUnsafe = false;
+    let currentAvailable;
+    let isUnsafe;
     let earliestExpiry = null;
     
     if (plan.status === 'draft') {
