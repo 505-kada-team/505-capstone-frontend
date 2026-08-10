@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { History } from 'lucide-react';
 
@@ -10,9 +9,10 @@ import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { getMenuDropdown, createPlan } from '@/services/api';
 import PlanDetailModal from './components/PlanDetailModal';
+import PlanHistoryView from './components/PlanHistoryView';
 
 export default function DraftPlanPage() {
-  const navigate = useNavigate();
+  const [view, setView] = useState('create'); // 'create' | 'history'
   const [step, setStep] = useState(1);
   
   // API State
@@ -122,6 +122,10 @@ export default function DraftPlanPage() {
     }
   };
 
+  if (view === 'history') {
+    return <PlanHistoryView onNavigateToCreate={() => setView('create')} />;
+  }
+
   return (
     <div className="flex flex-col gap-6">
       <div className="flex items-center justify-between">
@@ -131,7 +135,7 @@ export default function DraftPlanPage() {
         />
         <Button
             className="bg-[#F97316] hover:bg-[#F97316]/90 text-white gap-2 font-medium"
-            onClick={() => navigate('/admin/production-plan')}
+            onClick={() => setView('history')}
           >
             <History className="w-4 h-4" />
             Plan History

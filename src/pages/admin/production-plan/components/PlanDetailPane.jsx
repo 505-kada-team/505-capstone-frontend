@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
-import { Printer, Edit, Trash2, CheckCircle, StopCircle, Eye } from 'lucide-react';
+import { Printer, Edit, CheckCircle, StopCircle, Eye } from 'lucide-react';
 import { getPlanDetail, cancelPlan, approvePlan, stopPlan } from '@/services/api';
 
 import StatusBadge from '@/components/shared/StatusBadge';
@@ -51,7 +51,7 @@ export default function PlanDetailPane({ planId, onRefreshList }) {
         if (res.data?.success) {
           setPlan(res.data.data);
         }
-      } catch (error) {
+      } catch {
         toast.error('Failed to load plan detail');
       } finally {
         setIsLoading(false);
@@ -128,23 +128,23 @@ export default function PlanDetailPane({ planId, onRefreshList }) {
   // Map ingredients based on status
   const ingredientsSource = plan.status === 'draft' ? plan.checkResult : plan.committedIngredients;
   const mappedIngredients = (ingredientsSource || []).map(ing => {
-    let hasUnsafe = false;
-    let available = 0;
+    let currentAvailable = 0;
+    let isUnsafe = false;
     
     if (plan.status === 'draft') {
-      hasUnsafe = ing.hasUnsafeBatch;
-      available = ing.availableQuantity;
+      isUnsafe = ing.hasUnsafeBatch;
+      currentAvailable = ing.availableQuantity;
     } else {
       // For active plan, sum quantityUsed from batches
-      available = ing.batches?.reduce((sum, b) => sum + (b.quantityUsed || 0), 0) || 0;
-      hasUnsafe = ing.batches?.some(b => b.batchSafetyStatus === 'unsafe') || false;
+      currentAvailable = ing.batches?.reduce((sum, b) => sum + (b.quantityUsed || 0), 0) || 0;
+      isUnsafe = ing.batches?.some(b => b.batchSafetyStatus === 'unsafe') || false;
     }
 
     return {
       name: ing.nameInventory,
       needed: `${ing.quantityNeeded} units`, // simplified unit
-      available: `${available} units`,
-      status: hasUnsafe ? 'unsafe' : 'safe'
+      available: `${currentAvailable} units`,
+      status: isUnsafe ? 'unsafe' : 'safe'
     };
   });
 

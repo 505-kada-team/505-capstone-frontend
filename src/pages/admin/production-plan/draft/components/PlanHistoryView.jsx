@@ -1,11 +1,10 @@
 import { useState, useEffect, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { RefreshCw, PlusCircle, Filter, ClipboardList } from 'lucide-react';
 import { toast } from 'sonner';
 
 import PageHeader from '@/components/shared/PageHeader';
 import PlanListCard from '@/components/shared/PlanListCard';
-import PlanDetailPane from './components/PlanDetailPane';
+import PlanDetailPane from '@/pages/admin/production-plan/components/PlanDetailPane';
 import { Button } from '@/components/ui/button';
 import { getPlanList } from '@/services/api';
 
@@ -30,17 +29,16 @@ function ListSkeleton() {
   );
 }
 
-// ─── Main Page ────────────────────────────────────────────────────────────────
-export default function ProductionPlanPage() {
-  const navigate = useNavigate();
+// ─── Main Component ─────────────────────────────────────────────────────────────
+export default function PlanHistoryView({ onNavigateToCreate }) {
 
   const [plans, setPlans] = useState([]);
   const [isLoadingList, setIsLoadingList] = useState(false);
   const [selectedPlanId, setSelectedPlanId] = useState(null);
 
   // ── Fetch plan list ──────────────────────────────────────────────────────
-  const fetchPlans = useCallback(async () => {
-    setIsLoadingList(true);
+  const fetchPlans = useCallback(async (showLoading = true) => {
+    if (showLoading) setIsLoadingList(true);
     try {
       const res = await getPlanList();
       if (res.data?.success) {
@@ -49,12 +47,16 @@ export default function ProductionPlanPage() {
     } catch {
       toast.error('Failed to load plan history');
     } finally {
-      setIsLoadingList(false);
+      if (showLoading) setIsLoadingList(false);
     }
   }, []);
 
   useEffect(() => {
-    fetchPlans();
+    // Use timeout to push the initial fetch to the next tick, avoiding synchronous setState
+    const timer = setTimeout(() => {
+      fetchPlans();
+    }, 0);
+    return () => clearTimeout(timer);
   }, [fetchPlans]);
 
   // ── Handlers ─────────────────────────────────────────────────────────────
@@ -86,7 +88,7 @@ export default function ProductionPlanPage() {
             </Button>
             <Button
               className="bg-[#F97316] hover:bg-[#F97316]/90 text-white gap-2 font-medium"
-              onClick={() => navigate('/admin/production-plan/draft')}
+              onClick={onNavigateToCreate}
             >
               <PlusCircle className="w-4 h-4" />
               Buat Plan
