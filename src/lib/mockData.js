@@ -1170,6 +1170,8 @@ export const mockPlanDetailDraft = {
     _id: 'plan_001',
     name: 'Promo Nasi Goreng Agustus',
     status: 'draft',
+    startDate: '2026-08-05T00:00:00.000Z',
+    duration: 14,
     menus: [
       {
         menuId: 'menu_001',
@@ -1213,7 +1215,10 @@ export const mockPlanDetailActive = {
   success: true,
   data: {
     _id: 'plan_001',
+    name: 'Promo Nasi Goreng Agustus',
     status: 'active',
+    startDate: '2026-08-05T00:00:00.000Z',
+    duration: 14,
     hasPendingLossReplacement: true,
     warning: 'Ada laporan kerugian bahan yang sudah disetujui tapi belum diganti stoknya',
     menus: [

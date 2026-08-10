@@ -48,6 +48,24 @@ const variantMap = {
     label: 'Berisiko',
     className: 'bg-[#B45309]/15 text-[#B45309] border border-[#B45309]/40 dark:bg-[#B45309]/10 dark:text-[#D4810A]',
   },
+
+  // ── Production Plan status ──────────────────────────────
+  'low stock': {
+    label: 'Low Stock',
+    className: 'bg-[#F97316]/15 text-[#F97316] border border-[#F97316]/30 dark:bg-[#F97316]/10 dark:text-[#F97316]',
+  },
+  aman: {
+    label: 'Aman',
+    className: 'bg-[#4E6A3E]/20 text-[#4E6A3E] border border-[#4E6A3E]/40 dark:bg-[#4E6A3E]/15 dark:text-[#86C060]',
+  },
+  'tidak aman': {
+    label: 'Tidak Aman',
+    className: 'bg-[#C4441F]/15 text-[#C4441F] border border-[#C4441F]/40 dark:bg-[#C4441F]/10 dark:text-[#E07055]',
+  },
+  kurang: {
+    label: 'Kurang',
+    className: 'bg-[#C4441F]/15 text-[#C4441F] border border-[#C4441F]/40 dark:bg-[#C4441F]/10 dark:text-[#E07055]',
+  },
 };
 
 export default function StatusBadge({ variant, label: labelOverride, className }) {

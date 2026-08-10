@@ -1,0 +1,280 @@
+import { useState, useEffect } from 'react';
+import { toast } from 'sonner';
+
+import PageHeader from '@/components/shared/PageHeader';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { getMenuDropdown, createPlan } from '@/services/api';
+import PlanDetailModal from './components/PlanDetailModal';
+
+export default function DraftPlanPage() {
+  const [step, setStep] = useState(1);
+  
+  // API State
+  const [availableMenus, setAvailableMenus] = useState([]);
+  const [createdPlanId, setCreatedPlanId] = useState(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Form State
+  const [planName, setPlanName] = useState('');
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
+
+  // Cart State
+  const [cart, setCart] = useState([]);
+  const [selectedMenu, setSelectedMenu] = useState('');
+  const [quantity, setQuantity] = useState('1');
+
+  useEffect(() => {
+    if (step === 2 && availableMenus.length === 0) {
+      getMenuDropdown().then(res => {
+        if (res.data?.success) {
+          setAvailableMenus(res.data.data);
+        }
+      }).catch(() => toast.error('Gagal mengambil daftar menu'));
+    }
+  }, [step, availableMenus.length]);
+
+  const handleNext = () => {
+    if (!planName || !startDate || !endDate) {
+      toast.error('Harap lengkapi nama dan periode plan');
+      return;
+    }
+    setStep(2);
+  };
+
+  const handleForecast = () => {
+    toast.success('Data ditarik dari forecast (Mock)');
+    setPlanName('Forecast Plan - Agustus');
+    const today = new Date();
+    setStartDate(today.toISOString().split('T')[0]);
+    const nextWeek = new Date();
+    nextWeek.setDate(today.getDate() + 7);
+    setEndDate(nextWeek.toISOString().split('T')[0]);
+  };
+
+  const handleAddToCart = () => {
+    if (!selectedMenu || !quantity || Number(quantity) <= 0) return;
+    const menu = availableMenus.find(m => m._id === selectedMenu);
+    if (!menu) return;
+
+    setCart([...cart, {
+      _id: menu._id,
+      name: menu.name,
+      price: menu.sellingPrice,
+      qty: Number(quantity),
+      subtotal: menu.sellingPrice * Number(quantity)
+    }]);
+    
+    setSelectedMenu('');
+    setQuantity('1');
+  };
+
+  const handleRemoveFromCart = (index) => {
+    const newCart = [...cart];
+    newCart.splice(index, 1);
+    setCart(newCart);
+  };
+
+  const totalEstimated = cart.reduce((acc, item) => acc + item.subtotal, 0);
+
+  const formatRp = (num) => `Rp ${num.toLocaleString('id-ID')}`;
+
+  const handleCreatePlan = async () => {
+    if (cart.length === 0) {
+      toast.error('Pilih setidaknya satu menu');
+      return;
+    }
+    
+    setIsSubmitting(true);
+    try {
+      // Hitung duration (hari)
+      const start = new Date(startDate);
+      const end = new Date(endDate);
+      const duration = Math.max(1, Math.ceil((end - start) / (1000 * 60 * 60 * 24)));
+      
+      const payload = {
+        name: planName,
+        startDate: new Date(startDate).toISOString(),
+        duration,
+        menus: cart.map(item => ({
+          menuId: item._id,
+          quantityPlanned: item.qty
+        }))
+      };
+      
+      const res = await createPlan(payload);
+      if (res.data?.success) {
+        toast.success(res.data.message);
+        setCreatedPlanId(res.data.data._id);
+      } else {
+        toast.error('Gagal membuat draft plan');
+      }
+    } catch {
+      toast.error('Terjadi kesalahan sistem');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  return (
+    <div className="flex flex-col gap-6">
+      <div className="flex items-center justify-between">
+        <PageHeader 
+          title="Production Planning" 
+          badges={[{ label: 'DRAFT PLAN', variant: 'low stock' }]} 
+        />
+        <Button className="bg-[#F97316] hover:bg-[#F97316]/90 text-white gap-2 font-medium">
+          Plan History
+        </Button>
+      </div>
+
+      <Card className="max-w-4xl shadow-sm">
+        <CardHeader className="pb-4">
+          <CardTitle className="text-xl">Draft Plan</CardTitle>
+          <CardDescription>Plan your selling and estimate the flow</CardDescription>
+        </CardHeader>
+        
+        <CardContent>
+          {step === 1 && (
+            <div className="flex flex-col gap-6 mt-4">
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-foreground capitalize">nama rencana</label>
+                <Input 
+                  placeholder="Masukkan nama rencana produksi" 
+                  value={planName}
+                  onChange={(e) => setPlanName(e.target.value)}
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-6">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-foreground capitalize">tanggal mulai</label>
+                  <Input 
+                    type="date"
+                    value={startDate}
+                    onChange={(e) => setStartDate(e.target.value)}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-foreground capitalize">tanggal akhir</label>
+                  <Input 
+                    type="date"
+                    value={endDate}
+                    onChange={(e) => setEndDate(e.target.value)}
+                  />
+                </div>
+              </div>
+
+              <div className="flex justify-end gap-4 mt-6">
+                <Button variant="outline" onClick={handleForecast}>
+                  buat dari forecast
+                </Button>
+                <Button onClick={handleNext}>
+                  lanjutkan
+                </Button>
+              </div>
+            </div>
+          )}
+
+          {step === 2 && (
+            <div className="flex flex-col gap-6 mt-4">
+              <div className="flex items-end gap-4">
+                <div className="flex-1 space-y-2">
+                  <label className="text-sm font-medium text-foreground capitalize">pilih menu</label>
+                  <Select className="" value={selectedMenu} onValueChange={setSelectedMenu}>
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Select menu item..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {availableMenus.map(m => (
+                        <SelectItem key={m._id} value={m._id}>{m.name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="w-32 space-y-2">
+                  <label className="text-sm font-medium text-foreground capitalize">jumlah</label>
+                  <Input 
+                    type="number"
+                    value={quantity}
+                    onChange={(e) => setQuantity(e.target.value)}
+                  />
+                </div>
+                <Button 
+                  variant="secondary" 
+                  onClick={handleAddToCart}
+                  className="bg-[#E6D5C3] text-primary hover:bg-[#E6D5C3]/80 border border-[#E6D5C3]/40"
+                >
+                  Add
+                </Button>
+              </div>
+
+              {/* Tabel Menu */}
+              <div className="border rounded-md overflow-hidden mt-2">
+                <table className="w-full text-sm">
+                  <thead className="bg-muted text-muted-foreground">
+                    <tr>
+                      <th className="py-3 px-4 text-left font-medium capitalize">menu</th>
+                      <th className="py-3 px-4 text-center font-medium capitalize">jumlah</th>
+                      <th className="py-3 px-4 text-left font-medium capitalize">subtotal</th>
+                      <th className="py-3 px-4 text-center font-medium capitalize">aksi</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y">
+                    {cart.map((item, index) => (
+                      <tr key={index}>
+                        <td className="py-3 px-4 text-foreground">{item.name}</td>
+                        <td className="py-3 px-4 text-center font-mono">{item.qty}</td>
+                        <td className="py-3 px-4 font-mono">{formatRp(item.subtotal)}</td>
+                        <td className="py-3 px-4 text-center">
+                          <button 
+                            className="text-destructive text-sm hover:underline"
+                            onClick={() => handleRemoveFromCart(index)}
+                          >
+                            hapus
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                    {cart.length === 0 && (
+                      <tr>
+                        <td colSpan={4} className="py-8 text-center text-muted-foreground">
+                          Belum ada menu ditambahkan
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Total Summary */}
+              <div className="flex justify-between items-end mt-4">
+                <div className="flex flex-col gap-1">
+                  <span className="text-sm text-muted-foreground capitalize">estimasi total (harga jual)</span>
+                  <span className="text-xl font-bold font-mono">{formatRp(totalEstimated)}</span>
+                </div>
+                <div className="flex gap-4">
+                  <Button variant="outline" onClick={() => setStep(1)} disabled={isSubmitting}>
+                    kembali
+                  </Button>
+                  <Button onClick={handleCreatePlan} disabled={isSubmitting}>
+                    {isSubmitting ? 'memproses...' : 'buat plan'}
+                  </Button>
+                </div>
+              </div>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      <PlanDetailModal 
+        isOpen={!!createdPlanId} 
+        onClose={() => setCreatedPlanId(null)}
+        planId={createdPlanId}
+      />
+    </div>
+  );
+}
