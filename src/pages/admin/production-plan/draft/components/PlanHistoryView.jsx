@@ -91,7 +91,7 @@ export default function PlanHistoryView({ onNavigateToCreate }) {
               onClick={onNavigateToCreate}
             >
               <PlusCircle className="w-4 h-4" />
-              Buat Plan
+              Create Plan
             </Button>
           </div>
         }

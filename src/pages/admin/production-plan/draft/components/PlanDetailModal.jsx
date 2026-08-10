@@ -27,7 +27,7 @@ export default function PlanDetailModal({ isOpen, onClose, planId }) {
         setPlan(res.data.data);
       }
     } catch {
-      toast.error('Gagal mengambil detail plan');
+      toast.error('Failed to get detail plan');
     } finally {
       setIsLoading(false);
     }
@@ -56,11 +56,11 @@ export default function PlanDetailModal({ isOpen, onClose, planId }) {
     try {
       const res = await approvePlan(planId);
       if (res.data?.success) {
-        toast.success(res.data.message || 'Plan berhasil diapprove!');
+        toast.success(res.data.message || 'Plan successfully approved!');
         onClose();
       }
     } catch {
-      toast.error('Gagal menyetujui plan');
+      toast.error('Failed to approve plan');
     } finally {
       setIsProcessing(false);
     }
@@ -71,11 +71,11 @@ export default function PlanDetailModal({ isOpen, onClose, planId }) {
     try {
       const res = await cancelPlan(planId);
       if (res.data?.success) {
-        toast.info('Plan dibatalkan');
+        toast.info('Plan cancelled');
         onClose();
       }
     } catch {
-      toast.error('Gagal membatalkan plan');
+      toast.error('Failed to cancel plan');
     } finally {
       setIsProcessing(false);
     }
@@ -86,7 +86,7 @@ export default function PlanDetailModal({ isOpen, onClose, planId }) {
     if (!dateStr) return 'xx/xx/xxxx';
     const d = new Date(dateStr);
     if (isNaN(d.getTime())) return dateStr;
-    const months = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
+    const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
     return `${String(d.getDate()).padStart(2, '0')} ${months[d.getMonth()]} ${d.getFullYear()}`;
   };
 
@@ -128,9 +128,9 @@ export default function PlanDetailModal({ isOpen, onClose, planId }) {
       // Find the most critical batch for expired date and status
       const worstBatch = cr.eligibleBatches?.find(b => b.batchSafetyStatus === 'unsafe') || cr.eligibleBatches?.[0] || {};
       
-      let statusVariant = 'aman';
-      if (!cr.sufficient) statusVariant = 'kurang';
-      else if (cr.hasUnsafeBatch) statusVariant = 'tidak aman';
+      let statusVariant = 'safe';
+      if (!cr.sufficient) statusVariant = 'less';
+      else if (cr.hasUnsafeBatch) statusVariant = 'unsafe';
       
       return {
         name: cr.nameInventory,
@@ -150,13 +150,13 @@ export default function PlanDetailModal({ isOpen, onClose, planId }) {
       <Dialog open={isOpen} onOpenChange={onClose}>
         <DialogContent className="w-full sm:max-w-5xl max-h-[90vh] overflow-y-auto">
           {isLoading || !plan ? (
-            <div className="py-24 text-center text-muted-foreground">Memuat detail plan...</div>
+            <div className="py-24 text-center text-muted-foreground">Loading detail plan...</div>
           ) : (
             <>
               <DialogHeader className="mb-4 text-left">
                 <div className="flex items-center gap-3">
                   <DialogTitle className="text-xl font-bold font-heading">
-                    {plan.name || 'Nama Plan'}
+                    {plan.name || 'Plan Name'}
                   </DialogTitle>
                   <StatusBadge variant="low stock" />
                 </div>
@@ -166,32 +166,32 @@ export default function PlanDetailModal({ isOpen, onClose, planId }) {
               {/* Alert Cards */}
               <div className="grid grid-cols-2 gap-4 mb-6">
                 <AlertSummaryCard
-                  title="STATUS INVENTORY"
-                  value={hasUnsafeBatch ? 'Tidak Aman' : 'Aman'}
+                  title="INVENTORY STATUS"
+                  value={hasUnsafeBatch ? 'Unsafe' : 'Safe'}
                   variant={hasUnsafeBatch ? 'warning' : 'success'}
                   icon={<TriangleAlert className="w-5 h-5" />}
                 />
                 {hasDiscount ? (
                   <AlertSummaryCard
-                    title="SARAN"
-                    value="Diskon ditambahkan"
+                    title="TIPS"
+                    value="Discount added"
                     variant="success"
                     icon={<Lightbulb className="w-5 h-5" />}
                     action={
                       <Button variant="outline" size="sm" onClick={() => setIsDiscountModalOpen(true)}>
-                        <Link className="w-4 h-4 mr-2" /> Lihat Diskon
+                        <Link className="w-4 h-4 mr-2" /> View Discount
                       </Button>
                     }
                   />
                 ) : (
                   <AlertSummaryCard
-                    title="SARAN"
-                    value="Tambahkan diskon"
+                    title="TIPS"
+                    value="Add discount"
                     variant="success"
                     icon={<Lightbulb className="w-5 h-5" />}
                     action={
                       <Button size="sm" onClick={() => setIsDiscountModalOpen(true)}>
-                        <PlusCircle className="w-4 h-4 mr-2" /> Tambah Diskon
+                        <PlusCircle className="w-4 h-4 mr-2" /> Add Discount
                       </Button>
                     }
                   />
@@ -230,10 +230,10 @@ export default function PlanDetailModal({ isOpen, onClose, planId }) {
 
               <DialogFooter className="flex justify-between items-center sm:justify-between w-full mt-4">
                 <Button variant="outline" className="text-destructive border-destructive/50 hover:bg-destructive/10" onClick={handleHapus} disabled={isProcessing}>
-                  hapus
+                  Remove
                 </Button>
                 <Button className="bg-[#2D241E] hover:bg-[#2D241E]/90 text-primary-foreground" onClick={handleAccept} disabled={isProcessing}>
-                  {isProcessing ? 'Memproses...' : 'accept'}
+                  {isProcessing ? 'Processing...' : 'Accept'}
                 </Button>
               </DialogFooter>
             </>

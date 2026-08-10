@@ -36,20 +36,20 @@ export default function DraftPlanPage() {
         if (res.data?.success) {
           setAvailableMenus(res.data.data);
         }
-      }).catch(() => toast.error('Gagal mengambil daftar menu'));
+      }).catch(() => toast.error('Failed to load menu'));
     }
   }, [step, availableMenus.length]);
 
   const handleNext = () => {
     if (!planName || !startDate || !endDate) {
-      toast.error('Harap lengkapi nama dan periode plan');
+      toast.error('Please complete plan name and period');
       return;
     }
     setStep(2);
   };
 
   const handleForecast = () => {
-    toast.success('Data ditarik dari forecast (Mock)');
+    toast.success('Data pulled from forecast (Mock)');
     setPlanName('Forecast Plan - Agustus');
     const today = new Date();
     setStartDate(today.toISOString().split('T')[0]);
@@ -87,7 +87,7 @@ export default function DraftPlanPage() {
 
   const handleCreatePlan = async () => {
     if (cart.length === 0) {
-      toast.error('Pilih setidaknya satu menu');
+      toast.error('Choose at least one menu');
       return;
     }
     
@@ -113,10 +113,10 @@ export default function DraftPlanPage() {
         toast.success(res.data.message);
         setCreatedPlanId(res.data.data._id);
       } else {
-        toast.error('Gagal membuat draft plan');
+        toast.error('Failed to create draft plan');
       }
     } catch {
-      toast.error('Terjadi kesalahan sistem');
+      toast.error('System error');
     } finally {
       setIsSubmitting(false);
     }
@@ -152,9 +152,9 @@ export default function DraftPlanPage() {
           {step === 1 && (
             <div className="border border-border/80 rounded-xl p-6 mt-4 flex flex-col gap-6 bg-background">
               <div className="space-y-2">
-                <label className="text-sm font-medium text-foreground capitalize">nama rencana</label>
+                <label className="text-sm font-medium text-foreground capitalize">Plan Title</label>
                 <Input 
-                  placeholder="Masukkan nama rencana produksi" 
+                  placeholder="Enter plan title" 
                   value={planName}
                   onChange={(e) => setPlanName(e.target.value)}
                 />
@@ -162,7 +162,7 @@ export default function DraftPlanPage() {
 
               <div className="grid grid-cols-2 gap-6">
                 <div className="space-y-2">
-                  <label className="text-sm font-medium text-foreground capitalize">tanggal mulai</label>
+                  <label className="text-sm font-medium text-foreground capitalize">Start Date</label>
                   <Input 
                     type="date"
                     value={startDate}
@@ -170,7 +170,7 @@ export default function DraftPlanPage() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <label className="text-sm font-medium text-foreground capitalize">tanggal akhir</label>
+                  <label className="text-sm font-medium text-foreground capitalize">End Date</label>
                   <Input 
                     type="date"
                     value={endDate}
@@ -181,10 +181,10 @@ export default function DraftPlanPage() {
 
               <div className="flex justify-end gap-4 mt-6">
                 <Button variant="outline" className="border-border hover:bg-muted" onClick={handleForecast}>
-                  buat dari forecast
+                  Create from Forecast
                 </Button>
                 <Button className="bg-[#F97316] hover:bg-[#F97316]/90 text-white font-medium px-6" onClick={handleNext}>
-                  lanjutkan
+                  Next
                 </Button>
               </div>
             </div>
@@ -194,7 +194,7 @@ export default function DraftPlanPage() {
             <div className="border border-border/80 rounded-xl p-6 mt-4 flex flex-col gap-6 bg-background">
               <div className="flex items-end gap-4">
                 <div className="flex-1 space-y-2">
-                  <label className="text-sm font-medium text-foreground capitalize">pilih menu</label>
+                  <label className="text-sm font-medium text-foreground capitalize">Choose Menu</label>
                   <Select value={selectedMenu} onValueChange={setSelectedMenu}>
                     <SelectTrigger className="w-full">
                       <SelectValue placeholder="Select menu item..." />
@@ -207,7 +207,7 @@ export default function DraftPlanPage() {
                   </Select>
                 </div>
                 <div className="w-32 space-y-2">
-                  <label className="text-sm font-medium text-foreground capitalize">jumlah</label>
+                  <label className="text-sm font-medium text-foreground capitalize">Quantity</label>
                   <Input 
                     type="number"
                     value={quantity}
@@ -219,7 +219,7 @@ export default function DraftPlanPage() {
                   onClick={handleAddToCart}
                   className="bg-[#E6D5C3] text-primary hover:bg-[#E6D5C3]/80 border border-[#E6D5C3]/40 px-6 font-medium"
                 >
-                  tambah
+                  Add
                 </Button>
               </div>
 
@@ -228,10 +228,10 @@ export default function DraftPlanPage() {
                 <table className="w-full text-sm">
                   <thead className="bg-muted text-muted-foreground">
                     <tr>
-                      <th className="py-3 px-4 text-left font-medium capitalize">menu</th>
-                      <th className="py-3 px-4 text-center font-medium capitalize">jumlah</th>
-                      <th className="py-3 px-4 text-left font-medium capitalize">subtotal</th>
-                      <th className="py-3 px-4 text-center font-medium capitalize">aksi</th>
+                      <th className="py-3 px-4 text-left font-medium capitalize">Menu</th>
+                      <th className="py-3 px-4 text-center font-medium capitalize">Quantity</th>
+                      <th className="py-3 px-4 text-left font-medium capitalize">Subtotal</th>
+                      <th className="py-3 px-4 text-center font-medium capitalize">Action</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y">
@@ -245,7 +245,7 @@ export default function DraftPlanPage() {
                             className="text-destructive text-sm hover:underline"
                             onClick={() => handleRemoveFromCart(index)}
                           >
-                            hapus
+                            Remove
                           </button>
                         </td>
                       </tr>
@@ -253,7 +253,7 @@ export default function DraftPlanPage() {
                     {cart.length === 0 && (
                       <tr>
                         <td colSpan={4} className="py-8 text-center text-muted-foreground">
-                          Belum ada menu ditambahkan
+                          No menu added yet
                         </td>
                       </tr>
                     )}
@@ -264,15 +264,15 @@ export default function DraftPlanPage() {
               {/* Total Summary */}
               <div className="flex justify-between items-end mt-4">
                 <div className="flex flex-col gap-1">
-                  <span className="text-xs text-muted-foreground capitalize font-medium">estimasi total (harga jual)</span>
+                  <span className="text-xs text-muted-foreground capitalize font-medium">Total Estimated (Selling Price)</span>
                   <span className="text-2xl font-bold font-mono text-foreground">{formatRp(totalEstimated)}</span>
                 </div>
                 <div className="flex gap-4">
                   <Button variant="outline" className="border-border hover:bg-muted" onClick={() => setStep(1)} disabled={isSubmitting}>
-                    kembali
+                    Back
                   </Button>
                   <Button className="bg-[#F97316] hover:bg-[#F97316]/90 text-white font-medium px-6" onClick={handleCreatePlan} disabled={isSubmitting}>
-                    {isSubmitting ? 'memproses...' : 'buat plan'}
+                    {isSubmitting ? 'Prosessing...' : 'Create Plan'}
                   </Button>
                 </div>
               </div>

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
-import { Printer, Edit, CheckCircle, StopCircle, Eye } from 'lucide-react';
+import { Printer, Edit, CheckCircle, StopCircle, Eye, Lightbulb, Link } from 'lucide-react';
 import { getPlanDetail, cancelPlan, approvePlan, stopPlan } from '@/services/api';
 
 import StatusBadge from '@/components/shared/StatusBadge';
@@ -130,27 +130,44 @@ export default function PlanDetailPane({ planId, onRefreshList }) {
   const mappedIngredients = (ingredientsSource || []).map(ing => {
     let currentAvailable = 0;
     let isUnsafe = false;
+    let earliestExpiry = null;
     
     if (plan.status === 'draft') {
       isUnsafe = ing.hasUnsafeBatch;
       currentAvailable = ing.availableQuantity;
+      if (ing.eligibleBatches?.length > 0) {
+        earliestExpiry = ing.eligibleBatches[0].expired;
+      }
     } else {
-      // For active plan, sum quantityUsed from batches
       currentAvailable = ing.batches?.reduce((sum, b) => sum + (b.quantityUsed || 0), 0) || 0;
       isUnsafe = ing.batches?.some(b => b.batchSafetyStatus === 'unsafe') || false;
+      if (ing.batches?.length > 0) {
+        // Mock earliest expiry for active (not directly in committedIngredients batch in mock, but lets assume)
+        earliestExpiry = ing.batches[0].expired || null; 
+      }
     }
+
+    const shortage = ing.quantityNeeded > currentAvailable ? (ing.quantityNeeded - currentAvailable) : 0;
 
     return {
       name: ing.nameInventory,
-      needed: `${ing.quantityNeeded} units`, // simplified unit
-      available: `${currentAvailable} units`,
-      status: isUnsafe ? 'unsafe' : 'safe'
+      needed: `${ing.quantityNeeded} kg`, // Mock unit
+      available: `${currentAvailable} kg`,
+      status: isUnsafe ? 'tidak aman' : 'aman',
+      shortage: shortage > 0 ? `${shortage} kg` : '-',
+      expired: earliestExpiry ? formatDate(earliestExpiry) : '-/-/-'
     };
   });
 
   const badgeVariant = deriveBadgeVariant(plan);
   const isDraft = plan.status === 'draft';
   const isActive = plan.status === 'active';
+
+  // Calculate Total Target
+  const totalTarget = plan.menus?.reduce((sum, menu) => sum + (menu.quantityPlanned || 0), 0) || 0;
+  
+  // Check if plan has discount
+  const hasPlanDiscount = plan.menus?.some(m => m.discount?.discountPercentage > 0);
 
   return (
     <div className="flex flex-col h-full bg-card rounded-lg border border-border shadow-sm overflow-hidden">
@@ -179,13 +196,18 @@ export default function PlanDetailPane({ planId, onRefreshList }) {
         <div className="flex items-center gap-12 mt-6">
           <div className="flex flex-col gap-1">
             <span className="text-xs text-muted-foreground">Period</span>
-            <span className="text-sm font-semibold">
+            <span className="text-sm font-semibold flex items-center gap-1.5">
+              <Printer className="w-3.5 h-3.5 hidden" /> {/* Placeholder icon to align with text if needed, skipped per design just plain text for now */}
               {formatDate(plan.startDate)} - {formatDate(plan.endDate)}
             </span>
           </div>
           <div className="flex flex-col gap-1">
             <span className="text-xs text-muted-foreground">Created By</span>
-            <span className="text-sm font-semibold">Kitchen Admin</span>
+            <span className="text-sm font-semibold">Admin Production</span>
+          </div>
+          <div className="flex flex-col gap-1">
+            <span className="text-xs text-muted-foreground">Total Target</span>
+            <span className="text-sm font-semibold">{totalTarget.toLocaleString('id-ID')} units</span>
           </div>
         </div>
       </div>
@@ -210,23 +232,58 @@ export default function PlanDetailPane({ planId, onRefreshList }) {
             className="mb-0"
           />
         )}
+        {hasPlanDiscount && (
+          <AlertSummaryCard
+            title="SARAN"
+            value="Diskon ditambahkan"
+            variant="success"
+            icon={<Lightbulb className="w-5 h-5" />}
+            action={
+              <Button variant="outline" size="sm" onClick={() => toast.info('View discount info')}>
+                <Link className="w-4 h-4 mr-2" /> Lihat Diskon
+              </Button>
+            }
+          />
+        )}
 
         <div>
           <h3 className="font-semibold text-lg mb-4">Production Items</h3>
           
           <div className="flex flex-col gap-3">
-            {plan.menus?.map((menu, idx) => (
-              <PlanMenuAccordion
-                key={menu.menuId}
-                variant="active"
-                menuName={menu.name}
-                menuInitials={getInitials(menu.name)}
-                menuSubtitle="Beverage • 250ml" // hardcoded category for visual prototype
-                targetQty={menu.quantityPlanned}
-                ingredients={idx === 0 ? mappedIngredients : []} // Show ingredients only on first item for prototype
-                defaultOpen={idx === 0}
-              />
-            ))}
+            {plan.menus?.map((menu, idx) => {
+              const disc = menu.discount || {};
+              const menuHasDiscount = disc.discountPercentage > 0;
+              const summary = {
+                quantity: menu.quantityPlanned,
+                originalPrice: menu.currentPrice || 25000,
+                estimatedRevenue: (menu.quantityPlanned * (menu.currentPrice || 25000)),
+                estimatedProfit: (menu.quantityPlanned * (menu.currentPrice || 25000)) / 2, // Mock 50% profit
+                ...(menuHasDiscount ? {
+                  discountPercent: disc.discountPercentage,
+                  newPrice: disc.discountedPrice,
+                  newProfit: (menu.quantityPlanned * disc.discountedPrice) / 2 // Mock new profit
+                } : {})
+              };
+
+              // Determine if ingredients have shortage for this menu
+              const hasShortage = mappedIngredients.some(ing => ing.shortage !== '-');
+              const badges = hasShortage ? ['kurang bahan'] : ['cukup'];
+
+              return (
+                <PlanMenuAccordion
+                  key={menu.menuId}
+                  variant="active"
+                  menuName={menu.name}
+                  menuInitials={getInitials(menu.name)}
+                  menuSubtitle="Beverage"
+                  targetQty={menu.quantityPlanned}
+                  badges={badges}
+                  summary={summary}
+                  ingredients={idx === 0 ? mappedIngredients : []} // Show ingredients only on first item for prototype
+                  defaultOpen={idx === 0}
+                />
+              );
+            })}
           </div>
         </div>
       </div>
