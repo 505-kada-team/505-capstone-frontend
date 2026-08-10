@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
+import { History } from 'lucide-react';
 
 import PageHeader from '@/components/shared/PageHeader';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -127,11 +128,12 @@ export default function DraftPlanPage() {
           badges={[{ label: 'DRAFT PLAN', variant: 'low stock' }]} 
         />
         <Button className="bg-[#F97316] hover:bg-[#F97316]/90 text-white gap-2 font-medium">
-          Plan History
+          <History className="w-4 h-4" />
+          Riwayat Plan
         </Button>
       </div>
 
-      <Card className="max-w-4xl shadow-sm">
+      <Card className="w-full shadow-sm">
         <CardHeader className="pb-4">
           <CardTitle className="text-xl">Draft Plan</CardTitle>
           <CardDescription>Plan your selling and estimate the flow</CardDescription>
@@ -139,7 +141,7 @@ export default function DraftPlanPage() {
         
         <CardContent>
           {step === 1 && (
-            <div className="flex flex-col gap-6 mt-4">
+            <div className="border border-border/80 rounded-xl p-6 mt-4 flex flex-col gap-6 bg-background">
               <div className="space-y-2">
                 <label className="text-sm font-medium text-foreground capitalize">nama rencana</label>
                 <Input 
@@ -169,10 +171,10 @@ export default function DraftPlanPage() {
               </div>
 
               <div className="flex justify-end gap-4 mt-6">
-                <Button variant="outline" onClick={handleForecast}>
+                <Button variant="outline" className="border-border hover:bg-muted" onClick={handleForecast}>
                   buat dari forecast
                 </Button>
-                <Button onClick={handleNext}>
+                <Button className="bg-[#F97316] hover:bg-[#F97316]/90 text-white font-medium px-6" onClick={handleNext}>
                   lanjutkan
                 </Button>
               </div>
@@ -180,11 +182,11 @@ export default function DraftPlanPage() {
           )}
 
           {step === 2 && (
-            <div className="flex flex-col gap-6 mt-4">
+            <div className="border border-border/80 rounded-xl p-6 mt-4 flex flex-col gap-6 bg-background">
               <div className="flex items-end gap-4">
                 <div className="flex-1 space-y-2">
                   <label className="text-sm font-medium text-foreground capitalize">pilih menu</label>
-                  <Select className="" value={selectedMenu} onValueChange={setSelectedMenu}>
+                  <Select value={selectedMenu} onValueChange={setSelectedMenu}>
                     <SelectTrigger className="w-full">
                       <SelectValue placeholder="Select menu item..." />
                     </SelectTrigger>
@@ -206,9 +208,9 @@ export default function DraftPlanPage() {
                 <Button 
                   variant="secondary" 
                   onClick={handleAddToCart}
-                  className="bg-[#E6D5C3] text-primary hover:bg-[#E6D5C3]/80 border border-[#E6D5C3]/40"
+                  className="bg-[#E6D5C3] text-primary hover:bg-[#E6D5C3]/80 border border-[#E6D5C3]/40 px-6 font-medium"
                 >
-                  Add
+                  tambah
                 </Button>
               </div>
 
@@ -226,7 +228,7 @@ export default function DraftPlanPage() {
                   <tbody className="divide-y">
                     {cart.map((item, index) => (
                       <tr key={index}>
-                        <td className="py-3 px-4 text-foreground">{item.name}</td>
+                        <td className="py-3 px-4 text-foreground capitalize">{item.name}</td>
                         <td className="py-3 px-4 text-center font-mono">{item.qty}</td>
                         <td className="py-3 px-4 font-mono">{formatRp(item.subtotal)}</td>
                         <td className="py-3 px-4 text-center">
@@ -253,14 +255,14 @@ export default function DraftPlanPage() {
               {/* Total Summary */}
               <div className="flex justify-between items-end mt-4">
                 <div className="flex flex-col gap-1">
-                  <span className="text-sm text-muted-foreground capitalize">estimasi total (harga jual)</span>
-                  <span className="text-xl font-bold font-mono">{formatRp(totalEstimated)}</span>
+                  <span className="text-xs text-muted-foreground capitalize font-medium">estimasi total (harga jual)</span>
+                  <span className="text-2xl font-bold font-mono text-foreground">{formatRp(totalEstimated)}</span>
                 </div>
                 <div className="flex gap-4">
-                  <Button variant="outline" onClick={() => setStep(1)} disabled={isSubmitting}>
+                  <Button variant="outline" className="border-border hover:bg-muted" onClick={() => setStep(1)} disabled={isSubmitting}>
                     kembali
                   </Button>
-                  <Button onClick={handleCreatePlan} disabled={isSubmitting}>
+                  <Button className="bg-[#F97316] hover:bg-[#F97316]/90 text-white font-medium px-6" onClick={handleCreatePlan} disabled={isSubmitting}>
                     {isSubmitting ? 'memproses...' : 'buat plan'}
                   </Button>
                 </div>
