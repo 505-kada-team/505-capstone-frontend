@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { History } from 'lucide-react';
 
@@ -11,6 +12,7 @@ import { getMenuDropdown, createPlan } from '@/services/api';
 import PlanDetailModal from './components/PlanDetailModal';
 
 export default function DraftPlanPage() {
+  const navigate = useNavigate();
   const [step, setStep] = useState(1);
   
   // API State
@@ -127,10 +129,13 @@ export default function DraftPlanPage() {
           title="Production Planning" 
           badges={[{ label: 'DRAFT PLAN', variant: 'low stock' }]} 
         />
-        <Button className="bg-[#F97316] hover:bg-[#F97316]/90 text-white gap-2 font-medium">
-          <History className="w-4 h-4" />
-          Riwayat Plan
-        </Button>
+        <Button
+            className="bg-[#F97316] hover:bg-[#F97316]/90 text-white gap-2 font-medium"
+            onClick={() => navigate('/admin/production-plan')}
+          >
+            <History className="w-4 h-4" />
+            Plan History
+          </Button>
       </div>
 
       <Card className="w-full shadow-sm">

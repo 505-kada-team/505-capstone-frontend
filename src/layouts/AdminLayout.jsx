@@ -172,8 +172,8 @@ export default function AdminLayout() {
                   <NavLink to="/admin/production-plan/draft" className={subNavLinkStyle}>
                     <span className="whitespace-nowrap">Draft Plan</span>
                   </NavLink>
-                  <NavLink to="/admin/production-plan/history" className={subNavLinkStyle}>
-                    <span className="whitespace-nowrap">Active Plan</span>
+                  <NavLink to="/admin/production-plan" className={subNavLinkStyle}>
+                    <span className="whitespace-nowrap">Plan History</span>
                   </NavLink>
                 </div>
               </div>

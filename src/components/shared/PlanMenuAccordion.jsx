@@ -1,18 +1,85 @@
 import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from '@/components/ui/accordion';
 import StatusBadge from './StatusBadge';
+import { CheckCircle2, TriangleAlert } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 export default function PlanMenuAccordion({ 
-  // menuId, // pass this if needed as value
+  variant = 'draft', // 'draft' | 'active'
   menuName, 
+  menuInitials = '',
+  menuSubtitle = '',
+  targetQty = 0,
   badges = [], 
   summary = {}, 
   ingredients = [],
-  defaultOpen = false
+  defaultOpen = false,
+  className
 }) {
   const formatRp = (num) => num != null ? `Rp ${num.toLocaleString('id-ID')}` : '-';
 
+  if (variant === 'active') {
+    return (
+      <Accordion type="single" collapsible defaultValue={defaultOpen ? 'item-1' : ''} className={cn("w-full", className)}>
+        <AccordionItem value="item-1" className="border rounded-lg mb-4 bg-card px-4 border-border data-[state=open]:border-border/80 shadow-sm">
+          <AccordionTrigger className="hover:no-underline py-4">
+            <div className="flex items-center justify-between w-full pr-4 text-left">
+              <div className="flex items-center gap-4">
+                <div className="w-10 h-10 shrink-0 bg-[#4E6A3E]/10 text-[#4E6A3E] rounded flex items-center justify-center font-bold text-sm">
+                  {menuInitials}
+                </div>
+                <div className="flex flex-col">
+                  <span className="font-semibold text-foreground leading-tight">{menuName}</span>
+                  {menuSubtitle && (
+                    <span className="text-xs text-muted-foreground mt-0.5">{menuSubtitle}</span>
+                  )}
+                </div>
+              </div>
+              <div className="flex flex-col items-end gap-1">
+                <span className="text-xs text-muted-foreground">Target qty</span>
+                <span className="font-semibold text-sm">{targetQty} units</span>
+              </div>
+            </div>
+          </AccordionTrigger>
+          <AccordionContent className="pb-4 pt-2">
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm text-left">
+                <thead className="text-xs text-muted-foreground border-b border-border">
+                  <tr>
+                    <th className="pb-3 font-medium px-2">Ingredient</th>
+                    <th className="pb-3 font-medium text-center px-2">Est. Required</th>
+                    <th className="pb-3 font-medium text-center px-2">Current Stock</th>
+                    <th className="pb-3 font-medium text-center px-2">Status</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-border/50">
+                  {ingredients.map((ing, i) => (
+                    <tr key={i} className="hover:bg-muted/30">
+                      <td className="py-3 px-2 text-foreground">{ing.name}</td>
+                      <td className="py-3 px-2 font-mono text-center">{ing.needed}</td>
+                      <td className="py-3 px-2 font-mono text-center">{ing.available}</td>
+                      <td className="py-3 px-2 text-center">
+                        <div className="flex justify-center">
+                          {ing.status === 'safe' || ing.status === 'aman' || ing.status === 'in-stock' ? (
+                            <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                          ) : (
+                            <TriangleAlert className="w-4 h-4 text-amber-500" />
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </AccordionContent>
+        </AccordionItem>
+      </Accordion>
+    );
+  }
+
+  // Variant Draft (existing behavior)
   return (
-    <Accordion type="single" collapsible defaultValue={defaultOpen ? 'item-1' : ''} className="w-full">
+    <Accordion type="single" collapsible defaultValue={defaultOpen ? 'item-1' : ''} className={cn("w-full", className)}>
       <AccordionItem value="item-1" className="border rounded-lg mb-4 bg-card px-4 border-destructive/20 data-[state=open]:border-destructive/30">
         <AccordionTrigger className="hover:no-underline py-4">
           <div className="flex items-center justify-between w-full pr-4">
