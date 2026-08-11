@@ -1285,6 +1285,92 @@ export const mockPlanDetailDraft = {
   },
 };
 
+// Bentuk data WAJIB sama persis dengan API contract (lihat CONVENTIONS.md section 5).
+// Swap ke getProducts() di services/api.js begitu backend siap.
+export const mockProducts = [
+  {
+    id: "prod-001",
+    name: "Latte",
+    image:
+      "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQRHV4c9P4IXb6Dsk1F69YM13GJU9NuO-WIvNit9Ed_QA&s=10",
+    price: 12700,
+    discountPrice: null,
+    discountPercent: null,
+    stockRemaining: 10,
+    isAvailable: true,
+  },
+  {
+    id: "prod-002",
+    name: "Ice Americano",
+    image: "https://picsum.photos/seed/ice-americano/300/200",
+    price: 18750,
+    discountPrice: 15000,
+    discountPercent: 20,
+    stockRemaining: null,
+    isAvailable: true,
+  },
+  {
+    id: "prod-003",
+    name: "Matcha Drink",
+    image: "https://picsum.photos/seed/matcha/300/200",
+    price: 26000,
+    discountPrice: null,
+    discountPercent: null,
+    stockRemaining: null,
+    isAvailable: true,
+  },
+  {
+    id: "prod-004",
+    name: "Cappuccino",
+    image: "https://picsum.photos/seed/cappuccino/300/200",
+    price: 18000,
+    discountPrice: null,
+    discountPercent: null,
+    stockRemaining: 0,
+    isAvailable: false,
+  },
+  {
+    id: "prod-005",
+    name: "Lemonade",
+    image: "https://picsum.photos/seed/lemonade/300/200",
+    price: 15500,
+    discountPrice: null,
+    discountPercent: null,
+    stockRemaining: null,
+    isAvailable: true,
+  },
+  {
+    id: "prod-006",
+    name: "Latte",
+    image: "https://picsum.photos/seed/latte/300/200",
+    price: 12700,
+    discountPrice: null,
+    discountPercent: null,
+    stockRemaining: 10,
+    isAvailable: true,
+  },
+  {
+    id: "prod-007",
+    name: "Ice Americano",
+    image: "https://picsum.photos/seed/ice-americano/300/200",
+    price: 18750,
+    discountPrice: 15000,
+    discountPercent: 20,
+    stockRemaining: 5,
+    isAvailable: true,
+  },
+  {
+    id: "prod-008",
+    name: "Matcha Drink",
+    image: "https://picsum.photos/seed/matcha/300/200",
+    price: 26000,
+    discountPrice: null,
+    discountPercent: null,
+    stockRemaining: 50,
+    isAvailable: true,
+  },
+];
+
 export const mockPlanDetailActive = {
   success: true,
   data: {
@@ -1936,61 +2022,159 @@ export const mockAddInventoryReplacement = {
     replacementCost: 22000,
   },
 };
-
 // ==================================Transaction Cashier Mock Data==================================
 
 // Bentuk data WAJIB sama persis dengan API contract (lihat CONVENTIONS.md section 5).
 // Swap ke getProducts() di services/api.js begitu backend siap.
-export const mockProducts = [
+
+
+// TODO: ganti dengan getInvoices() / getInvoiceDetail() dari services/api.js
+// begitu backend siap. Pindahkan array ini ke lib/mockData.js kalau memang
+// jadi sumber dummy bersama (biar konsisten dengan mockProducts), bentuknya
+// WAJIB sama persis dengan API contract nanti.
+
+export const mockInvoices = [
   {
-    id: "prod-001",
-    name: "Latte",
-    image: "https://picsum.photos/seed/latte/300/200",
-    price: 12700,
-    discountPrice: null,
-    discountPercent: null,
-    stockRemaining: 10,
-    isAvailable: true,
+    id: "INV-001",
+    date: "2026-07-20",
+    cashierName: "Sarah Jenkins",
+    items: [
+      { name: "Americano", price: 12700, qty: 1 },
+      { name: "Matcha Latte", price: 12700, qty: 1 },
+      { name: "Latte", price: 12700, qty: 1 },
+      { name: "Machiato", price: 12700, qty: 1 },
+      { name: "Matcha Latte", price: 12700, qty: 1 },
+      { name: "Latte", price: 12700, qty: 1 },
+      { name: "Machiato", price: 12700, qty: 1 },
+    ],
   },
   {
-    id: "prod-002",
-    name: "Ice Americano",
-    image: "https://picsum.photos/seed/ice-americano/300/200",
-    price: 18750,
-    discountPrice: 15000,
-    discountPercent: 20,
-    stockRemaining: null,
-    isAvailable: true,
+    id: "INV-002",
+    date: "2026-07-20",
+    cashierName: "Sarah Jenkins",
+    items: [
+      { name: "Ice Americano", price: 15000, qty: 1 },
+      { name: "Matcha Drink", price: 20000, qty: 1 },
+    ],
+  },
+];
+
+// TODO: ganti dengan getInventory() dari services/api.js begitu backend siap.
+// Pindahkan ke lib/mockData.js kalau jadi sumber dummy bersama, bentuknya
+// WAJIB sama persis dengan API contract nanti.
+export const mockInventory = [
+  {
+    id: "ITM-001",
+    name: "Bubuk Kopi Arabica",
+    qty: 150,
+    unit: "Kg",
+    expiryDate: "2026-07-20",
+    category: "Ingredient",
+    status: "aman",
   },
   {
-    id: "prod-003",
-    name: "Matcha Drink",
-    image: "https://picsum.photos/seed/matcha/300/200",
-    price: 26000,
-    discountPrice: null,
-    discountPercent: null,
-    stockRemaining: null,
-    isAvailable: true,
+    id: "ITM-002",
+    name: "Cup Plastik",
+    qty: 150,
+    unit: "Kg",
+    expiryDate: "2026-07-20",
+    category: "Packaging",
+    status: "tidak aman",
   },
   {
-    id: "prod-004",
-    name: "Cappuccino",
-    image: "https://picsum.photos/seed/cappuccino/300/200",
-    price: 18000,
-    discountPrice: null,
-    discountPercent: null,
-    stockRemaining: 0,
-    isAvailable: false,
+    id: "ITM-003",
+    name: "Susu UHT",
+    qty: 50,
+    unit: "L",
+    expiryDate: "2026-07-22",
+    category: "Ingredient",
+    status: "tidak aman",
+  },
+];
+
+// TODO: ganti dengan getReportIssues() dari services/api.js begitu backend
+// siap. Pindahkan ke lib/mockData.js kalau jadi sumber dummy bersama,
+// bentuknya WAJIB sama persis dengan API contract nanti.
+export const initialIssues = [
+  {
+    id: "ISS-001",
+    title: "Inventory Mismatch",
+    context: "Inventory",
+    date: "2026-07-20",
+    description: "Jumlah stok di sistem tidak sesuai fisik.",
+    reportedBy: "Budi (Cashier)",
   },
   {
-    id: "prod-005",
-    name: "Lemonade",
-    image: "https://picsum.photos/seed/lemonade/300/200",
-    price: 15500,
-    discountPrice: null,
-    discountPercent: null,
-    stockRemaining: null,
-    isAvailable: true,
+    id: "ISS-002",
+    title: "Menu Link Broken",
+    context: "Menu",
+    date: "2026-07-20",
+    description: "Link gambar menu Matcha Drink rusak.",
+    reportedBy: "Siti (Cashier)",
+  },
+  {
+    id: "ISS-003",
+    title: "Stock Level Error",
+    context: "Inventory",
+    date: "2026-07-19",
+    description: "Stok Susu UHT tidak update otomatis.",
+    reportedBy: "Agus (Cashier)",
+  },
+  {
+    id: "ISS-004",
+    title: "Item Image Missing",
+    context: "Menu",
+    date: "2026-07-18",
+    description: "Foto produk Cappuccino belum di-upload.",
+    reportedBy: "Dewi (Cashier)",
+  },
+  {
+    id: "ISS-005",
+    title: "Wrong Price Displayed",
+    context: "Menu",
+    date: "2026-07-17",
+    description: "Harga Latte tampil salah di kasir.",
+    reportedBy: "Budi (Cashier)",
+  },
+  {
+    id: "ISS-006",
+    title: "Barcode Not Found",
+    context: "Inventory",
+    date: "2026-07-16",
+    description: "Barcode Cup Plastik tidak terbaca scanner.",
+    reportedBy: "Siti (Cashier)",
+  },
+  {
+    id: "ISS-007",
+    title: "Printer Offline",
+    context: "Hardware",
+    date: "2026-07-15",
+    description: "Printer struk tidak merespon.",
+    reportedBy: "Agus (Cashier)",
+  },
+  {
+    id: "ISS-008",
+    title: "Duplicate Category",
+    context: "Menu",
+    date: "2026-07-14",
+    description: 'Kategori "Ingredient" muncul 2 kali.',
+    reportedBy: "Dewi (Cashier)",
+  },
+  {
+    id: "ISS-009",
+    title: "Unit Conversion Wrong",
+    context: "Inventory",
+    date: "2026-07-13",
+    description: "Konversi Kg ke gram salah hitung.",
+    reportedBy: "Budi (Cashier)",
+  },
+  {
+    id: "ISS-010",
+    title: "Login Session Expired",
+    context: "System",
+    date: "2026-07-12",
+    description: "Sesi login terputus terlalu cepat.",
+    reportedBy: "Siti (Cashier)",
   },
 ];
 

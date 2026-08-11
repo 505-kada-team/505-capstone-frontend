@@ -25,9 +25,11 @@ import ProtectedRoute from "@/routes/ProtectedRoute";
 import RootRedirect from "@/routes/RootRedirect";
 
 // Kasir routes
-import CashierLayout from "@/layouts/CashierLayout";
-import CashierPage from "@/pages/cashier/TransactionPage";
-
+import CashierLayout from "@/layouts/CashierLayout"
+import CashierPage from "@/pages/cashier/TransactionPage"
+import InvoicePage from "./pages/cashier/InvoicePage"
+import OverviewPage from "./pages/cashier/OverviewPage"
+import ReportIssue from "./pages/cashier/ReportIssuePage"
 import DetailInventoryPage from "@/pages/admin/inventory/DetailInventoryPage";
 import RecipePage from "@/pages/admin/recipes/RecipePage";
 import DraftPlanPage from "@/pages/admin/production-plan/draft/DraftPlanPage";
@@ -86,31 +88,20 @@ export default function App() {
           </Route>
         </Route>
 
-        {/* Kasir routes */}
-        <Route element={<ProtectedRoute allowedRoles={["cashier"]} />}>
-          <Route path="/kasir" element={<CashierLayout />}>
-            <Route index element={<Navigate to="cashier" replace />} />
-            <Route path="cashier" element={<CashierPage />} />
-            <Route path="invoice" element={<ComingSoon name="Invoice" />} />
-            <Route
-              path="invoice/:id"
-              element={<ComingSoon name="Detail Invoice" />}
-            />
-            <Route path="barang" element={<ComingSoon name="Barang" />} />
-            <Route
-              path="report-issue"
-              element={<ComingSoon name="Report Issue" />}
-            />
-            <Route
-              path="report-issue/create"
-              element={<ComingSoon name="Form Report Issue" />}
-            />
-            <Route
-              path="report-issue/:id"
-              element={<ComingSoon name="Detail Report Issue" />}
-            />
-          </Route>
-        </Route>
+      {/* Kasir routes */}
+    <Route element={<ProtectedRoute allowedRoles={["cashier"]} />}>
+      <Route path="/kasir" element={<CashierLayout   />}>
+        <Route index element={<Navigate to="cashier" replace />} />
+        <Route path="cashier" element={<CashierPage />} />
+        <Route path="invoice" element={<InvoicePage />} />
+        <Route path="invoice/:id" element={<ComingSoon name="Detail Invoice" />} />
+        <Route path="barang" element={<ComingSoon name="Barang" />} />
+        <Route path="report-issue" element={<ComingSoon name="Report Issue" />} />
+        <Route path="report-issue/create" element={<ComingSoon name="Form Report Issue" />} />
+        <Route path="report-issue/:id" element={<ComingSoon name="Detail Report Issue" />} />
+      </Route>
+    </Route>
+
 
         {/* Catch-all */}
         <Route path="*" element={<Navigate to="/login" replace />} />
