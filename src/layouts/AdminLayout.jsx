@@ -16,6 +16,7 @@ import {
   PanelLeftClose,
   PanelLeftOpen
 } from 'lucide-react';
+import { useAuth } from '@/context/AuthContext';
 
 import {
   DropdownMenu,
@@ -33,14 +34,8 @@ import {
 // -----------------------------------------------------------------------------
 const ENABLE_COLLAPSIBLE_SIDEBAR = true;
 
-// Mock hook untuk auth (diganti nanti saat integrasi AuthContext)
-const useAuthMock = () => ({
-  user: { name: 'Admin', role: 'Admin' },
-  logout: () => console.log('Logout clicked'),
-});
-
 export default function AdminLayout() {
-  const { user, logout } = useAuthMock();
+  const { user, logout } = useAuth();
   const location = useLocation();
   
   // State untuk sidebar collapse (jika fitur aktif, default terbuka. Jika nonaktif, selalu terbuka)
