@@ -8,12 +8,15 @@ import AddRecipeModal from './components/AddRecipeModal';
 import DetailRecipeModal from './components/DetailRecipeModal';
 import ConfirmDialog from '@/components/shared/ConfirmDialog';
 import { Button } from '@/components/ui/button';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { ListFilter } from 'lucide-react';
 import { toast } from 'sonner';
 
 export default function RecipePage() {
   const [recipes, setRecipes] = useState([]);
   const [pagination, setPagination] = useState({ currentPage: 1, totalPage: 1 });
   const [search, setSearch] = useState('');
+  const [filterStatus, setFilterStatus] = useState('active');
   const [isLoading, setIsLoading] = useState(true);
 
   // Modal states
@@ -23,10 +26,10 @@ export default function RecipePage() {
   // Archive Confirmation
   const [archiveTarget, setArchiveTarget] = useState(null);
 
-  const fetchRecipes = async (page = 1, searchQuery = '') => {
+  const fetchRecipes = async (page = 1, searchQuery = '', status = 'active') => {
     setIsLoading(true);
     try {
-      const res = await getMenuList({ page, limit: 12, search: searchQuery });
+      const res = await getMenuList({ page, limit: 12, search: searchQuery, status });
       if (res.data.success) {
         setRecipes(res.data.data);
         setPagination(res.data.pagination);
@@ -40,14 +43,14 @@ export default function RecipePage() {
 
   useEffect(() => {
     const delay = setTimeout(() => {
-      fetchRecipes(1, search);
+      fetchRecipes(1, search, filterStatus);
     }, 300);
     return () => clearTimeout(delay);
-  }, [search]);
+  }, [search, filterStatus]);
 
   const handlePageChange = (newPage) => {
     if (newPage > 0 && newPage <= pagination.totalPage) {
-      fetchRecipes(newPage, search);
+      fetchRecipes(newPage, search, filterStatus);
     }
   };
 
@@ -57,7 +60,7 @@ export default function RecipePage() {
       const res = await archiveMenu(archiveTarget);
       if (res.data.success) {
         toast.success(res.data.message);
-        fetchRecipes(pagination.currentPage, search);
+        fetchRecipes(pagination.currentPage, search, filterStatus);
       }
     } catch (err) {
       toast.error(err?.message || 'Gagal mengarsipkan resep');
@@ -82,13 +85,29 @@ export default function RecipePage() {
       />
 
       <div className="p-6 flex-1 flex flex-col gap-6">
-        <div className="flex justify-between items-center">
+        <div className="flex justify-between items-center gap-2">
           <SearchInput
             placeholder="Search by name or ingredient..."
             value={search}
             onChange={setSearch}
-            className="max-w-md"
+            className="w-[400px]"
           />
+          <div className="flex items-center gap-3">
+            <Select value={filterStatus} onValueChange={setFilterStatus}>
+              <SelectTrigger className="w-[160px] h-9 text-muted-foreground font-normal">
+                <SelectValue placeholder="Status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="active">Active</SelectItem>
+                <SelectItem value="archived">Archived</SelectItem>
+              </SelectContent>
+            </Select>
+
+            <Button variant="outline" className="gap-2 h-9 text-muted-foreground font-normal">
+              <ListFilter size={16} />
+              Filter
+            </Button>
+          </div>
         </div>
 
         {/* Content Area */}

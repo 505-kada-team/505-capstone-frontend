@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
-import { Calendar, Plus, TriangleAlert, ChevronLeft, ChevronRight, StopCircle } from 'lucide-react';
+import { Calendar, Plus, TriangleAlert, ChevronLeft, ChevronRight, StopCircle, ListFilter } from 'lucide-react';
 
 import StatusBadge from '@/components/shared/StatusBadge';
 import ConfirmDialog from '@/components/shared/ConfirmDialog';
@@ -9,6 +9,9 @@ import PlanReportBanner from '@/components/shared/admin/PlanReportBanner';
 import { Card, CardContent } from '@/components/ui/card';
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
 import { Button } from '@/components/ui/button';
+import PageHeader from '@/components/shared/PageHeader';
+import SearchInput from '@/components/shared/SearchInput';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { getPlanList, getPlanDetail, stopPlan } from '@/services/api';
 
 function formatDate(dateStr) {
@@ -40,11 +43,19 @@ function ProgressBar({ current, max, colorClass = "bg-[#4E6A3E]" }) {
 export default function ActivePlanPage() {
   const navigate = useNavigate();
   const [plans, setPlans] = useState([]);
+  const [searchHistory, setSearchHistory] = useState('');
+  const [filterStatus, setFilterStatus] = useState('all');
   const [activePlanDetail, setActivePlanDetail] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   
   const [isStopDialogOpen, setIsStopDialogOpen] = useState(false);
   const [isStopping, setIsStopping] = useState(false);
+
+  const filteredPlans = plans.filter(plan => {
+    const matchSearch = plan.name.toLowerCase().includes(searchHistory.toLowerCase());
+    const matchStatus = filterStatus === 'all' || plan.status === filterStatus;
+    return matchSearch && matchStatus;
+  });
 
   const fetchData = async () => {
       setIsLoading(true);
@@ -264,6 +275,35 @@ export default function ActivePlanPage() {
       {/* BOTTOM SECTION: RIWAYAT PLAN */}
       <div className="flex flex-col mt-4">
         <h2 className="text-xl font-bold font-heading mb-4 px-1">Plan History</h2>
+
+        <div className="flex items-center justify-between gap-2 mb-2">
+          <SearchInput
+            id="plan-history-search"
+            placeholder="Search plan by name..."
+            value={searchHistory}
+            onChange={setSearchHistory}
+            className="w-[400px]"
+          />
+          <div className="flex items-center gap-3">
+            <Select value={filterStatus} onValueChange={setFilterStatus}>
+              <SelectTrigger className="w-[160px] h-9 text-muted-foreground font-normal">
+                <SelectValue placeholder="Status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Semua Status</SelectItem>
+                <SelectItem value="completed">Executed</SelectItem>
+                <SelectItem value="cancelled">Cancelled</SelectItem>
+                <SelectItem value="stopped">Stopped</SelectItem>
+              </SelectContent>
+            </Select>
+
+            <Button variant="outline" className="gap-2 h-9 text-muted-foreground font-normal">
+              <ListFilter size={16} />
+              Filter
+            </Button>
+          </div>
+        </div>
+
         <Card className="w-full shadow-sm">
           <CardContent className="p-0">
             <div className="overflow-x-auto">
@@ -279,10 +319,10 @@ export default function ActivePlanPage() {
                 <tbody className="divide-y divide-border/50">
                   {isLoading ? (
                     <tr><td colSpan="4" className="py-10 text-center text-muted-foreground">Loading data...</td></tr>
-                  ) : plans.length === 0 ? (
+                  ) : filteredPlans.length === 0 ? (
                     <tr><td colSpan="4" className="py-10 text-center text-muted-foreground">No plan history</td></tr>
                   ) : (
-                    plans.map((p) => {
+                    filteredPlans.map((p) => {
                       // Status mapping to match UI
                       let displayStatus = p.status;
                       if (p.status === 'completed') displayStatus = 'Executed';
