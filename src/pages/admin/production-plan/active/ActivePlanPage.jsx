@@ -72,8 +72,9 @@ export default function ActivePlanPage() {
     };
     
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchData();
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  }, []);
 
   const handleStopPlan = async () => {
     setIsStopping(true);

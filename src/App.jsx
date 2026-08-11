@@ -16,6 +16,7 @@ import DetailInventoryPage from '@/pages/admin/inventory/DetailInventoryPage';
 import RecipePage from '@/pages/admin/recipes/RecipePage';
 import DraftPlanPage from '@/pages/admin/production-plan/draft/DraftPlanPage';
 import ActivePlanPage from '@/pages/admin/production-plan/active/ActivePlanPage';
+import PlanReportPage from '@/pages/admin/production-plan/report/PlanReportPage';
 import { Toaster } from 'sonner';
 
 // Placeholder untuk halaman yang belum dibuat
@@ -45,6 +46,7 @@ export default function App() {
         <Route path="recipes"              element={<RecipePage />} />
         <Route path="production-plan/draft"  element={<DraftPlanPage />} />
         <Route path="production-plan/active" element={<ActivePlanPage />} />
+        <Route path="production-plan/report" element={<PlanReportPage />} />
         <Route path="report"               element={<ComingSoon name="Report" />} />
         <Route path="ai-scan"              element={<ComingSoon name="AI Scanning Input" />} />
       </Route>

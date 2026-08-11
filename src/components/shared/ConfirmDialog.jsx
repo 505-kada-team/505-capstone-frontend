@@ -16,7 +16,7 @@
  *   loading      : boolean — tombol disabled + teks "Memproses..."
  */
 
-import { TriangleAlert, AlertCircle } from 'lucide-react';
+import { TriangleAlert } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
