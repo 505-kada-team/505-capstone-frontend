@@ -14,6 +14,7 @@
  *   SubInventory status: 'depleted' | 'expired' | 'deleted'
  *   Category          : 'ingredients' | 'packaging'
  *   Batch safety      : 'safe' | 'unsafe'
+ *   Production Plan   : 'in-stock' | 'low stock' | 'completed' | 'stopped'
  */
 
 import { cn } from '@/lib/utils';
@@ -37,16 +38,6 @@ const variantMap = {
     className: 'bg-muted text-muted-foreground border border-border',
   },
 
-  // ── Kategori inventory ───────────────────────────────────
-  ingredients: {
-    label: 'Ingredient',
-    // Oranye = aksen brand (bukan status warning), sesuai DESIGN_v1.md
-    className: 'bg-[#F97316]/15 text-[#F97316] border border-[#F97316]/40',
-  },
-  packaging: {
-    label: 'Packaging',
-    className: 'bg-muted text-muted-foreground border border-border',
-  },
 
   // ── Batch safety status (check-availability & deduct) ────
   safe: {
@@ -57,6 +48,40 @@ const variantMap = {
     // #B45309 = warna warning TERPISAH dari orange brand — lihat DESIGN_v1.md keputusan final
     label: 'Berisiko',
     className: 'bg-[#B45309]/15 text-[#B45309] border border-[#B45309]/40 dark:bg-[#B45309]/10 dark:text-[#D4810A]',
+  },
+
+  // ── Production Plan status ──────────────────────────────
+  'in-stock': {
+    // Draft + readyToApprove: true + hasUnsafeBatch: false
+    label: 'In Stock',
+    className: 'bg-[#4E6A3E]/20 text-[#4E6A3E] border border-[#4E6A3E]/40 dark:bg-[#4E6A3E]/15 dark:text-[#86C060]',
+  },
+  'low stock': {
+    // Draft + !readyToApprove OR hasUnsafeBatch: true
+    label: 'Low Stock',
+    className: 'bg-[#F97316]/15 text-[#F97316] border border-[#F97316]/30 dark:bg-[#F97316]/10 dark:text-[#F97316]',
+  },
+  completed: {
+    // Plan selesai durasi (status: 'completed')
+    label: 'Completed',
+    className: 'bg-muted text-muted-foreground border border-border',
+  },
+  stopped: {
+    // Plan dihentikan paksa (status: 'stopped' | 'cancelled')
+    label: 'Stopped',
+    className: 'bg-muted text-muted-foreground border border-border',
+  },
+  aman: {
+    label: 'Aman',
+    className: 'bg-[#4E6A3E]/20 text-[#4E6A3E] border border-[#4E6A3E]/40 dark:bg-[#4E6A3E]/15 dark:text-[#86C060]',
+  },
+  'tidak aman': {
+    label: 'Tidak Aman',
+    className: 'bg-[#C4441F]/15 text-[#C4441F] border border-[#C4441F]/40 dark:bg-[#C4441F]/10 dark:text-[#E07055]',
+  },
+  kurang: {
+    label: 'Kurang',
+    className: 'bg-[#C4441F]/15 text-[#C4441F] border border-[#C4441F]/40 dark:bg-[#C4441F]/10 dark:text-[#E07055]',
   },
 };
 

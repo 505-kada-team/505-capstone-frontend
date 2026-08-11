@@ -1,1 +1,0 @@
-export const formatCurrency = (value) => `Rp ${Number(value).toLocaleString('id-ID')}`;
