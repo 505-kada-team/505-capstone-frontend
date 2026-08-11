@@ -1,18 +1,24 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback } from "react";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
   DialogFooter,
-} from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
-import { getMenuDetail } from '@/services/api';
-import { formatCurrency } from '@/lib/formatCurrency';
-import { TriangleAlert, Trash2, Edit2 } from 'lucide-react';
-import { toast } from 'sonner';
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { getMenuDetail } from "@/services/api";
+import { formatCurrency } from "@/lib/FormatCurrency";
+import { TriangleAlert, Trash2, Edit2 } from "lucide-react";
+import { toast } from "sonner";
 
-export default function DetailRecipeModal({ isOpen, onClose, recipeId, onArchive, onEdit }) {
+export default function DetailRecipeModal({
+  isOpen,
+  onClose,
+  recipeId,
+  onArchive,
+  onEdit,
+}) {
   const [recipe, setRecipe] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -30,7 +36,7 @@ export default function DetailRecipeModal({ isOpen, onClose, recipeId, onArchive
         setRecipe(res.data.data);
       }
     } catch (err) {
-      toast.error(err?.message || 'Gagal memuat detail resep');
+      toast.error(err?.message || "Gagal memuat detail resep");
       onCloseRef.current?.();
     } finally {
       setIsLoading(false);
@@ -53,8 +59,11 @@ export default function DetailRecipeModal({ isOpen, onClose, recipeId, onArchive
 
   if (!isOpen) return null;
 
-  const ingredients = recipe?.ingredients?.filter(item => item.category === 'ingredients') || [];
-  const packaging = recipe?.ingredients?.filter(item => item.category === 'packaging') || [];
+  const ingredients =
+    recipe?.ingredients?.filter((item) => item.category === "ingredients") ||
+    [];
+  const packaging =
+    recipe?.ingredients?.filter((item) => item.category === "packaging") || [];
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -77,7 +86,8 @@ export default function DetailRecipeModal({ isOpen, onClose, recipeId, onArchive
                 <div className="bg-warning/10 border-l-4 border-warning p-4 rounded-r-md flex items-start gap-3">
                   <TriangleAlert className="text-warning w-5 h-5 mt-0.5 flex-shrink-0" />
                   <p className="text-sm text-warning font-medium">
-                    {recipe.warning || 'Beberapa bahan tidak aktif atau belum memiliki harga batch. Estimasi biaya tidak dapat dihitung penuh.'}
+                    {recipe.warning ||
+                      "Beberapa bahan tidak aktif atau belum memiliki harga batch. Estimasi biaya tidak dapat dihitung penuh."}
                   </p>
                 </div>
               )}
@@ -88,7 +98,7 @@ export default function DetailRecipeModal({ isOpen, onClose, recipeId, onArchive
                   DESKRIPSI
                 </h4>
                 <p className="text-sm text-foreground">
-                  {recipe.description || 'Tidak ada deskripsi.'}
+                  {recipe.description || "Tidak ada deskripsi."}
                 </p>
               </div>
 
@@ -103,7 +113,9 @@ export default function DetailRecipeModal({ isOpen, onClose, recipeId, onArchive
                       <thead className="bg-muted text-muted-foreground">
                         <tr>
                           <th className="px-4 py-2 font-medium">bahan</th>
-                          <th className="px-4 py-2 font-medium text-right">jumlah</th>
+                          <th className="px-4 py-2 font-medium text-right">
+                            jumlah
+                          </th>
                         </tr>
                       </thead>
                       <tbody className="divide-y">
@@ -111,7 +123,7 @@ export default function DetailRecipeModal({ isOpen, onClose, recipeId, onArchive
                           <tr key={idx} className="bg-background">
                             <td className="px-4 py-2">
                               {item.nameInventory}
-                              {item.inventoryStatus === 'deleted' && (
+                              {item.inventoryStatus === "deleted" && (
                                 <span className="ml-2 text-[10px] bg-neutral-200 text-neutral-600 px-1.5 py-0.5 rounded">
                                   Dihapus
                                 </span>
@@ -126,7 +138,9 @@ export default function DetailRecipeModal({ isOpen, onClose, recipeId, onArchive
                     </table>
                   </div>
                 ) : (
-                  <p className="text-sm text-muted-foreground italic">Tidak ada bahan baku.</p>
+                  <p className="text-sm text-muted-foreground italic">
+                    Tidak ada bahan baku.
+                  </p>
                 )}
               </div>
 
@@ -141,7 +155,9 @@ export default function DetailRecipeModal({ isOpen, onClose, recipeId, onArchive
                       <thead className="bg-muted text-muted-foreground">
                         <tr>
                           <th className="px-4 py-2 font-medium">bahan</th>
-                          <th className="px-4 py-2 font-medium text-right">jumlah</th>
+                          <th className="px-4 py-2 font-medium text-right">
+                            jumlah
+                          </th>
                         </tr>
                       </thead>
                       <tbody className="divide-y">
@@ -149,7 +165,7 @@ export default function DetailRecipeModal({ isOpen, onClose, recipeId, onArchive
                           <tr key={idx} className="bg-background">
                             <td className="px-4 py-2">
                               {item.nameInventory}
-                              {item.inventoryStatus === 'deleted' && (
+                              {item.inventoryStatus === "deleted" && (
                                 <span className="ml-2 text-[10px] bg-neutral-200 text-neutral-600 px-1.5 py-0.5 rounded">
                                   Dihapus
                                 </span>
@@ -164,16 +180,22 @@ export default function DetailRecipeModal({ isOpen, onClose, recipeId, onArchive
                     </table>
                   </div>
                 ) : (
-                  <p className="text-sm text-muted-foreground italic">Tidak ada packaging.</p>
+                  <p className="text-sm text-muted-foreground italic">
+                    Tidak ada packaging.
+                  </p>
                 )}
               </div>
 
               {/* Summary Box */}
               <div className="bg-[#f5f1ed] dark:bg-muted p-4 rounded-lg flex flex-col gap-2">
                 <div className="flex justify-between items-center text-sm">
-                  <span className="text-muted-foreground font-medium">modal per resep</span>
+                  <span className="text-muted-foreground font-medium">
+                    modal per resep
+                  </span>
                   <span className="font-mono text-foreground">
-                    {recipe.costComplete ? formatCurrency(recipe.currentCostEstimate) : 'Rp -'}
+                    {recipe.costComplete
+                      ? formatCurrency(recipe.currentCostEstimate)
+                      : "Rp -"}
                   </span>
                 </div>
                 <div className="flex justify-between items-center text-sm font-bold">
@@ -183,7 +205,6 @@ export default function DetailRecipeModal({ isOpen, onClose, recipeId, onArchive
                   </span>
                 </div>
               </div>
-
             </div>
 
             <DialogFooter className="mt-8 border-t pt-4 flex justify-end gap-3">
@@ -197,7 +218,7 @@ export default function DetailRecipeModal({ isOpen, onClose, recipeId, onArchive
               </Button>
               <Button
                 className="bg-[#F97316] hover:bg-[#F97316]/90 text-white h-10 text-sm font-semibold px-6 shadow-sm"
-                onClick={() => onEdit(recipe._id)}
+                onClick={() => onEdit(recipe.id)}
               >
                 <Edit2 className="w-4 h-4 mr-2" />
                 edit

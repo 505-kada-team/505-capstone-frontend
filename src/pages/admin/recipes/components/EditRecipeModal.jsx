@@ -1,0 +1,129 @@
+import { useEffect } from "react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
+import { useRecipeForm } from "@/hooks/menu/useRecipeForm";
+import { useMenuDetail } from "@/hooks/menu/useMenuDetail";
+import { useUpdateMenu } from "@/hooks/menu/useUpdateMenu";
+import { useInventoryOptions } from "@/hooks/inventory/useInventoryOptions";
+import RecipeFormFields from "./RecipeFormFields";
+
+export default function EditRecipeModal({
+  isOpen,
+  onClose,
+  recipeId,
+  onSuccess,
+}) {
+  const { recipe, isLoading: isLoadingRecipe } = useMenuDetail(recipeId, {
+    enabled: isOpen,
+  });
+  const {
+    inventories,
+    isLoading: isLoadingInv,
+    fetchInventories,
+  } = useInventoryOptions();
+  const { updateRecipe, isUpdating } = useUpdateMenu();
+
+  const formState = useRecipeForm(
+    recipe
+      ? {
+          name: recipe.name,
+          description: recipe.description,
+          image: recipe.image,
+          sellingPrice: recipe.sellingPrice,
+          ingredients: recipe.ingredients.map((ing) => ({
+            inventoryId: ing.inventoryId,
+            quantityNeeded: ing.quantityNeeded,
+          })),
+        }
+      : undefined,
+  );
+
+  useEffect(() => {
+    if (isOpen) fetchInventories();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen]);
+
+  const onSubmit = async (data) => {
+    try {
+      // toUpdateMenuPayload: ingredients selalu full-replace kalau disertakan,
+      // dan di sini selalu disertakan karena berasal dari useFieldArray.
+      const res = await updateRecipe(recipeId, data);
+      if (res.success) {
+        toast.success(res.message);
+        onSuccess();
+        onClose();
+      }
+    } catch (err) {
+      const apiErrors = err?.response?.data?.errors;
+      if (apiErrors) {
+        apiErrors.forEach((e) => {
+          const field = e.field.startsWith("ingredients")
+            ? "ingredients"
+            : e.field;
+          formState.form.setError(field, { message: e.message });
+        });
+      } else {
+        toast.error("Gagal memperbarui resep");
+      }
+    }
+  };
+
+  if (!isOpen) return null;
+
+  return (
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      <DialogContent className="w-full sm:max-w-5xl max-h-[95vh] flex flex-col p-0 overflow-hidden rounded-2xl border bg-background shadow-2xl">
+        <DialogHeader className="p-6 pb-4 border-b bg-muted/20">
+          <DialogTitle className="text-xl font-bold font-heading text-foreground">
+            Edit Recipe
+          </DialogTitle>
+        </DialogHeader>
+
+        {isLoadingRecipe || !recipe ? (
+          <div className="py-16 flex items-center justify-center">
+            <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+          </div>
+        ) : (
+          <form
+            onSubmit={formState.form.handleSubmit(onSubmit)}
+            className="flex-1 flex flex-col min-h-0 overflow-hidden"
+          >
+            <div className="flex-1 overflow-y-auto lg:overflow-hidden p-6 min-h-0 flex flex-col">
+              <RecipeFormFields
+                formState={formState}
+                inventories={inventories}
+                isLoadingInv={isLoadingInv}
+              />
+            </div>
+
+            <DialogFooter className="p-6 border-t bg-muted/15 flex justify-end gap-3 shrink-0">
+              <Button
+                type="button"
+                variant="outline"
+                className="h-10 text-sm font-semibold px-5"
+                onClick={onClose}
+                disabled={isUpdating}
+              >
+                Cancel
+              </Button>
+              <Button
+                type="submit"
+                className="bg-[#F97316] hover:bg-[#F97316]/90 text-white h-10 text-sm font-semibold px-6 shadow-sm shadow-[#F97316]/20 transition-all active:scale-[0.98]"
+                disabled={isUpdating}
+              >
+                {isUpdating ? "Saving..." : "Save Changes"}
+              </Button>
+            </DialogFooter>
+          </form>
+        )}
+      </DialogContent>
+    </Dialog>
+  );
+}
