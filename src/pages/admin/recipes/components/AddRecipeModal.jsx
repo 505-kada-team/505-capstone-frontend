@@ -140,7 +140,7 @@ export default function AddRecipeModal({ isOpen, onClose, onSuccess }) {
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="w-full sm:max-w-7xl max-h-[95vh] flex flex-col p-0 overflow-hidden rounded-2xl border bg-background shadow-2xl">
+      <DialogContent className="w-full sm:max-w-5xl max-h-[95vh] flex flex-col p-0 overflow-hidden rounded-2xl border bg-background shadow-2xl">
         <DialogHeader className="p-6 pb-4 border-b bg-muted/20">
           <DialogTitle className="text-xl font-bold font-heading text-foreground">Add New Recipe</DialogTitle>
         </DialogHeader>
@@ -163,7 +163,7 @@ export default function AddRecipeModal({ isOpen, onClose, onSuccess }) {
                     <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Cost Estimate</label>
                     <div className="h-10 flex items-center bg-muted/35 px-3 rounded-lg border border-border/40 font-mono text-sm text-foreground/80">
                       <span className="text-muted-foreground mr-1">Rp</span>
-                      <span className="font-semibold text-base">{calculateTotalCost().toLocaleString('id-ID')}</span>
+                      <span className="font-semibold text-sm">{calculateTotalCost().toLocaleString('id-ID')}</span>
                     </div>
                   </div>
 
