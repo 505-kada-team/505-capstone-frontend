@@ -123,8 +123,8 @@ export default function InvoicePage() {
     {
       key: 'actions',
       header: 'Aksi',
-      headerClass: 'text-right',
-      cellClass: 'text-right',
+      headerClass: 'text-center',
+      cellClass: 'text-center',
       render: (row) => (
         <button
           type="button"

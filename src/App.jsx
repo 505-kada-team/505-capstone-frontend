@@ -94,9 +94,9 @@ export default function App() {
         <Route index element={<Navigate to="cashier" replace />} />
         <Route path="cashier" element={<CashierPage />} />
         <Route path="invoice" element={<InvoicePage />} />
-        <Route path="invoice/:id" element={<ComingSoon name="Detail Invoice" />} />
-        <Route path="barang" element={<ComingSoon name="Barang" />} />
-        <Route path="report-issue" element={<ComingSoon name="Report Issue" />} />
+        {/* <Route path="invoice/:id" element={<ComingSoon name="Detail Invoice" />} /> */}
+        <Route path="overview" element={< OverviewPage />} />
+        <Route path="report-issue" element={<ReportIssue />} />
         <Route path="report-issue/create" element={<ComingSoon name="Form Report Issue" />} />
         <Route path="report-issue/:id" element={<ComingSoon name="Detail Report Issue" />} />
       </Route>

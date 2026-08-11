@@ -1,6 +1,6 @@
 import { X } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { formatCurrency } from "@/lib/FormatCurrency";
+import { formatCurrency } from "@/lib/formatCurrency";
 
 /**
  * Panel keranjang di sisi kiri halaman transaksi kasir.
