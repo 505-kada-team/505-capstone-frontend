@@ -21,9 +21,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import {  Plus,
-  ListFilter,
-} from 'lucide-react';
+import {  Plus } from 'lucide-react';
 
 // Shared components
 import PageHeader    from '@/components/shared/PageHeader';
@@ -50,6 +48,7 @@ import {
   getInventoryList,
   archiveInventory,
 } from '@/services/api';
+import { useSortable } from '@/hooks/useSortable';
 
 // ============================================================
 // Constants — opsi filter dan form
@@ -116,7 +115,7 @@ export default function InventoryPage() {
   // ── Filter state ──────────────────────────────────────────
   const [search,   setSearch]   = useState('');
   const [category, setCategory] = useState('all');
-  const [sort]                  = useState('latest');
+  const { sortBy, setSortBy } = useSortable('name_asc');
   const [page,     setPage]     = useState(1);
 
   // ── Dialog state ──────────────────────────────────────────
@@ -133,7 +132,7 @@ export default function InventoryPage() {
         limit: LIMIT,
         ...(search            && { search }),
         ...(category !== 'all' && { category }),
-        ...(sort              && { sort }),
+        ...(sortBy            && { sort: sortBy }),
       };
       const res = await getInventoryList(params);
       setInventoryList(res.data.data ?? []);
@@ -143,10 +142,10 @@ export default function InventoryPage() {
     } finally {
       setLoading(false);
     }
-  }, [page, search, category, sort]);
+  }, [page, search, category, sortBy]);
 
   useEffect(() => {
-    // eslint-disable-next-line
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchInventory();
   }, [fetchInventory]);
 
@@ -277,11 +276,20 @@ export default function InventoryPage() {
             </SelectContent>
           </Select>
 
-          {/* More Filters button */}
-          <Button variant="outline" className="gap-2 h-9 text-muted-foreground font-normal">
-            <ListFilter size={16} />
-            Filter
-          </Button>
+          {/* Sort By Dropdown */}
+          <Select value={sortBy} onValueChange={setSortBy}>
+            <SelectTrigger className="w-[160px] gap-2 h-9 text-muted-foreground font-normal">
+              <SelectValue placeholder="Sort By" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="name_asc">Nama (A-Z)</SelectItem>
+              <SelectItem value="name_desc">Nama (Z-A)</SelectItem>
+              <SelectItem value="stock_high">Stok Tertinggi</SelectItem>
+              <SelectItem value="stock_low">Stok Terendah</SelectItem>
+              <SelectItem value="cost_high">Nilai Tertinggi</SelectItem>
+              <SelectItem value="cost_low">Nilai Terendah</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
       </div>
 

@@ -116,6 +116,57 @@ const api = axios.create({ baseURL: import.meta.env.VITE_API_URL });
 // ---------------------------------------------------------------------------
 const USE_MOCK = true;
 
+// Helper untuk sorting dan paginasi mock data
+const processMockList = (mockObj, params) => {
+  if (!params || !mockObj.data) return Promise.resolve({ data: mockObj });
+  
+  let result = [...mockObj.data];
+  
+  // Filter search jika ada
+  if (params.search) {
+    const q = params.search.toLowerCase();
+    result = result.filter(item => (item.name && item.name.toLowerCase().includes(q)) || (item._id && item._id.toLowerCase().includes(q)));
+  }
+
+  // Sorting
+  if (params.sort) {
+    result.sort((a, b) => {
+      switch (params.sort) {
+        case 'name_asc': return (a.name || '').localeCompare(b.name || '');
+        case 'name_desc': return (b.name || '').localeCompare(a.name || '');
+        case 'stock_high': return (b.currentStock || b.quantity || 0) - (a.currentStock || a.quantity || 0);
+        case 'stock_low': return (a.currentStock || a.quantity || 0) - (b.currentStock || b.quantity || 0);
+        case 'cost_high': return (b.cost || b.price || b.estimatedCost || 0) - (a.cost || a.price || a.estimatedCost || 0);
+        case 'cost_low': return (a.cost || a.price || a.estimatedCost || 0) - (b.cost || b.price || b.estimatedCost || 0);
+        case 'date_newest': return new Date(b.createdAt || b.incidentAt || b.date || b.updatedAt || 0) - new Date(a.createdAt || a.incidentAt || a.date || a.updatedAt || 0);
+        case 'date_oldest': return new Date(a.createdAt || a.incidentAt || a.date || a.updatedAt || 0) - new Date(b.createdAt || b.incidentAt || b.date || b.updatedAt || 0);
+        default: return 0;
+      }
+    });
+  }
+
+  // Paginasi simulasi (hanya berlaku jika endpoint mengirim pagination logic, asumsikan default 10)
+  const page = parseInt(params.page) || 1;
+  const limit = parseInt(params.limit) || 10;
+  const startIndex = (page - 1) * limit;
+  const endIndex = startIndex + limit;
+  
+  const slicedData = result.slice(startIndex, endIndex);
+
+  return Promise.resolve({
+    data: {
+      ...mockObj,
+      data: slicedData,
+      pagination: {
+        currentPage: page,
+        totalPage: Math.ceil(result.length / limit),
+        totalData: result.length,
+        limit: limit
+      }
+    }
+  });
+};
+
 // =============================================================================
 // ENDPOINT 1 — POST /api/inventory
 // Buat inventory baru
@@ -128,7 +179,7 @@ export const createInventory = (payload) => (USE_MOCK ? Promise.resolve({ data: 
 // List semua inventory (paginated, halaman manajemen)
 // Params opsional: { category, search, page, limit, includeDeleted }
 // =============================================================================
-export const getInventoryList = (params) => (USE_MOCK ? Promise.resolve({ data: mockInventoryList }) : api.get('/api/inventory', { params }));
+export const getInventoryList = (params) => (USE_MOCK ? processMockList(mockInventoryList, params) : api.get('/api/inventory', { params }));
 
 // =============================================================================
 // ENDPOINT 3 — GET /api/inventory/dropdown
@@ -242,7 +293,7 @@ export const createMenu = (payload) => (USE_MOCK ? Promise.resolve({ data: mockM
 //   includeDeleted default false — hanya menu active yang muncul
 // Response: data ringkas per item (tanpa ingredients[], dengan totalIngredients)
 // =============================================================================
-export const getMenuList = (params) => (USE_MOCK ? Promise.resolve({ data: mockMenuList }) : api.get('/api/menu', { params }));
+export const getMenuList = (params) => (USE_MOCK ? processMockList(mockMenuList, params) : api.get('/api/menu', { params }));
 
 // =============================================================================
 // ENDPOINT 3 — GET /api/menu/:id
@@ -305,7 +356,7 @@ export const createPlan = (payload) => (USE_MOCK ? Promise.resolve({ data: mockC
 // List semua plan (filter status)
 // Params opsional: { status, search, tags, page, limit }
 // =============================================================================
-export const getPlanList = (params) => (USE_MOCK ? Promise.resolve({ data: mockPlanList }) : api.get('/api/plan', { params }));
+export const getPlanList = (params) => (USE_MOCK ? processMockList(mockPlanList, params) : api.get('/api/plan', { params }));
 
 // =============================================================================
 // ENDPOINT A3 — GET /api/plan/:id
@@ -413,7 +464,7 @@ export const createPlanReport = (payload) =>
 // List laporan
 // Params opsional: { planId, status, category }
 // =============================================================================
-export const getPlanReportList = (params) => (USE_MOCK ? Promise.resolve({ data: mockPlanReportList }) : api.get('/api/plan-reports', { params }));
+export const getPlanReportList = (params) => (USE_MOCK ? processMockList(mockPlanReportList, params) : api.get('/api/plan-reports', { params }));
 
 // =============================================================================
 // ENDPOINT C3 — PUT /api/plan-reports/:id/review

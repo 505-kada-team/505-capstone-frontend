@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
-import { Calendar, Plus, TriangleAlert, ChevronLeft, ChevronRight, StopCircle, ListFilter } from 'lucide-react';
+import { Calendar, Plus, TriangleAlert, ChevronLeft, ChevronRight, StopCircle } from 'lucide-react';
 
 import StatusBadge from '@/components/shared/StatusBadge';
 import ConfirmDialog from '@/components/shared/ConfirmDialog';
@@ -9,10 +9,10 @@ import PlanReportBanner from '@/components/shared/admin/PlanReportBanner';
 import { Card, CardContent } from '@/components/ui/card';
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
 import { Button } from '@/components/ui/button';
-import PageHeader from '@/components/shared/PageHeader';
 import SearchInput from '@/components/shared/SearchInput';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { getPlanList, getPlanDetail, stopPlan } from '@/services/api';
+import { useSortable } from '@/hooks/useSortable';
 
 function formatDate(dateStr) {
   if (!dateStr) return '-';
@@ -45,17 +45,18 @@ export default function ActivePlanPage() {
   const [plans, setPlans] = useState([]);
   const [searchHistory, setSearchHistory] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
+  const { sortBy, setSortBy, sortData } = useSortable('date_newest');
   const [activePlanDetail, setActivePlanDetail] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   
   const [isStopDialogOpen, setIsStopDialogOpen] = useState(false);
   const [isStopping, setIsStopping] = useState(false);
 
-  const filteredPlans = plans.filter(plan => {
+  const filteredPlans = sortData(plans.filter(plan => {
     const matchSearch = plan.name.toLowerCase().includes(searchHistory.toLowerCase());
     const matchStatus = filterStatus === 'all' || plan.status === filterStatus;
     return matchSearch && matchStatus;
-  });
+  }));
 
   const fetchData = async () => {
       setIsLoading(true);
@@ -297,10 +298,16 @@ export default function ActivePlanPage() {
               </SelectContent>
             </Select>
 
-            <Button variant="outline" className="gap-2 h-9 text-muted-foreground font-normal">
-              <ListFilter size={16} />
-              Filter
-            </Button>
+            {/* Sort By Dropdown */}
+            <Select value={sortBy} onValueChange={setSortBy}>
+              <SelectTrigger className="w-[160px] gap-2 h-9 text-muted-foreground font-normal">
+                <SelectValue placeholder="Sort By" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="date_newest">Terbaru</SelectItem>
+                <SelectItem value="date_oldest">Terlama</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
         </div>
 

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
-import { Clock, Plus, ListFilter } from 'lucide-react';
+import { Clock, Plus } from 'lucide-react';
 import PageHeader from '@/components/shared/PageHeader';
 import DataTable from '@/components/shared/DataTable';
 import StatusBadge from '@/components/shared/StatusBadge';
@@ -8,6 +8,7 @@ import SearchInput from '@/components/shared/SearchInput';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { getPlanReportList } from '@/services/api';
+import { useSortable } from '@/hooks/useSortable';
 
 import ReviewReportModal from './components/ReviewReportModal';
 import ReplacementModal from './components/ReplacementModal';
@@ -16,6 +17,7 @@ import AddReportModal from './components/AddReportModal';
 export default function PlanReportPage() {
   const [reports, setReports] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+  const { sortBy, setSortBy } = useSortable('date_newest');
 
   // Filters state
   const [filterStatus, setFilterStatus] = useState('all');
@@ -27,13 +29,15 @@ export default function PlanReportPage() {
   const [replaceReport, setReplaceReport] = useState(null);
   const [isAddOpen, setIsAddOpen] = useState(false);
 
+
   const fetchData = async () => {
     setIsLoading(true);
     try {
       const params = {
         ...(filterStatus !== 'all' && { status: filterStatus }),
         ...(filterCategory !== 'all' && { category: filterCategory }),
-        ...(search && { search })
+        ...(search && { search }),
+        ...(sortBy && { sort: sortBy })
       };
 
       const res = await getPlanReportList(params);
@@ -53,7 +57,7 @@ export default function PlanReportPage() {
     }, 300);
     return () => clearTimeout(delay);
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [filterStatus, filterCategory, search]);
+  }, [filterStatus, filterCategory, search, sortBy]);
 
   const columns = [
     {
@@ -142,7 +146,7 @@ export default function PlanReportPage() {
     <div className="flex flex-col gap-6">
       <PageHeader 
         title="Plan Report" 
-        actions={
+        action={
           <Button onClick={() => setIsAddOpen(true)} className="bg-[#F97316] hover:bg-[#F97316]/90 text-white gap-2">
             <Plus size={18} strokeWidth={2} /> Add Report
           </Button>
@@ -160,13 +164,14 @@ export default function PlanReportPage() {
           className="w-[400px]"
         />
 
+
         <div className="flex items-center gap-3">
           <Select value={filterStatus} onValueChange={setFilterStatus}>
             <SelectTrigger className="w-[160px] h-9 text-muted-foreground font-normal">
               <SelectValue placeholder="Status" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All Status</SelectItem>
+              <SelectItem value="all">Semua Status</SelectItem>
               <SelectItem value="pending">Pending</SelectItem>
               <SelectItem value="approved">Approved</SelectItem>
               <SelectItem value="rejected">Rejected</SelectItem>
@@ -175,12 +180,23 @@ export default function PlanReportPage() {
 
           <Select value={filterCategory} onValueChange={setFilterCategory}>
             <SelectTrigger className="w-[160px] h-9 text-muted-foreground font-normal">
-              <SelectValue placeholder="Category" />
+              <SelectValue placeholder="Kategori" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All Category</SelectItem>
+              <SelectItem value="all">Semua Kategori</SelectItem>
               <SelectItem value="menu">Menu</SelectItem>
               <SelectItem value="ingredient">Ingredient</SelectItem>
+            </SelectContent>
+          </Select>
+
+          {/* Sort By Dropdown */}
+          <Select value={sortBy} onValueChange={setSortBy}>
+            <SelectTrigger className="w-[160px] gap-2 h-9 text-muted-foreground font-normal">
+              <SelectValue placeholder="Sort By" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="date_newest">Terbaru</SelectItem>
+              <SelectItem value="date_oldest">Terlama</SelectItem>
             </SelectContent>
           </Select>
         </div>

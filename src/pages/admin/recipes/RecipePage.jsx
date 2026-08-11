@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { getMenuList, archiveMenu } from '@/services/api';
+import { useSortable } from '@/hooks/useSortable';
 import PageHeader from '@/components/shared/PageHeader';
 import SearchInput from '@/components/shared/SearchInput';
 import Pagination from '@/components/shared/Pagination';
@@ -9,7 +10,6 @@ import DetailRecipeModal from './components/DetailRecipeModal';
 import ConfirmDialog from '@/components/shared/ConfirmDialog';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { ListFilter } from 'lucide-react';
 import { toast } from 'sonner';
 
 export default function RecipePage() {
@@ -17,6 +17,7 @@ export default function RecipePage() {
   const [pagination, setPagination] = useState({ currentPage: 1, totalPage: 1 });
   const [search, setSearch] = useState('');
   const [filterStatus, setFilterStatus] = useState('active');
+  const { sortBy, setSortBy } = useSortable('name_asc');
   const [isLoading, setIsLoading] = useState(true);
 
   // Modal states
@@ -26,10 +27,17 @@ export default function RecipePage() {
   // Archive Confirmation
   const [archiveTarget, setArchiveTarget] = useState(null);
 
-  const fetchRecipes = async (page = 1, searchQuery = '', status = 'active') => {
+  const fetchRecipes = async (page = 1, searchQuery = '', status = 'active', sort = 'name_asc') => {
     setIsLoading(true);
     try {
-      const res = await getMenuList({ page, limit: 12, search: searchQuery, status });
+      const params = { 
+        page, 
+        limit: 12, 
+        search: searchQuery, 
+        status,
+        sort 
+      };
+      const res = await getMenuList(params);
       if (res.data.success) {
         setRecipes(res.data.data);
         setPagination(res.data.pagination);
@@ -43,14 +51,14 @@ export default function RecipePage() {
 
   useEffect(() => {
     const delay = setTimeout(() => {
-      fetchRecipes(1, search, filterStatus);
+      fetchRecipes(1, search, filterStatus, sortBy);
     }, 300);
     return () => clearTimeout(delay);
-  }, [search, filterStatus]);
+  }, [search, filterStatus, sortBy]);
 
   const handlePageChange = (newPage) => {
     if (newPage > 0 && newPage <= pagination.totalPage) {
-      fetchRecipes(newPage, search, filterStatus);
+      fetchRecipes(newPage, search, filterStatus, sortBy);
     }
   };
 
@@ -103,10 +111,18 @@ export default function RecipePage() {
               </SelectContent>
             </Select>
 
-            <Button variant="outline" className="gap-2 h-9 text-muted-foreground font-normal">
-              <ListFilter size={16} />
-              Filter
-            </Button>
+            {/* Sort By Dropdown */}
+            <Select value={sortBy} onValueChange={setSortBy}>
+              <SelectTrigger className="w-[160px] gap-2 h-9 text-muted-foreground font-normal">
+                <SelectValue placeholder="Sort By" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="name_asc">Nama (A-Z)</SelectItem>
+                <SelectItem value="name_desc">Nama (Z-A)</SelectItem>
+                <SelectItem value="cost_high">Modal Tertinggi</SelectItem>
+                <SelectItem value="cost_low">Modal Terendah</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
         </div>
 
