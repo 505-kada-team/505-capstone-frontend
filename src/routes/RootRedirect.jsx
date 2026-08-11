@@ -1,5 +1,6 @@
 import { Navigate } from "react-router-dom"
 import { useAuth } from "@/context/AuthContext"
+import { getRoleHomePath } from "@/lib/roleRedirect"
 
 /**
  * Redirect "/" berdasarkan status auth, bukan statis ke /login.
@@ -21,6 +22,6 @@ export default function RootRedirect() {
     return <Navigate to="/login" replace />
   }
 
-  const target = getRoleHomePath(role) ?? '/login'
+ const target = getRoleHomePath(role) ?? '/login'
   return <Navigate to={target} replace />
 }
