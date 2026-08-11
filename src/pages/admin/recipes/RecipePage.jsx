@@ -38,6 +38,10 @@ export default function RecipePage() {
   const [editTargetId, setEditTargetId] = useState(null);
   const [archiveTarget, setArchiveTarget] = useState(null);
 
+  const displayedRecipes = filters.includeDeleted
+    ? recipes.filter((recipe) => recipe.status === "deleted")
+    : recipes;
+
   const handleArchive = async () => {
     if (!archiveTarget) return;
     try {
@@ -78,9 +82,11 @@ export default function RecipePage() {
           />
           <div className="flex items-center gap-3">
             {/* includeDeleted: false -> "Active", true -> "Archived" (backend cuma punya param ini, bukan status string) */}
-            <Select
+          <Select
               value={filters.includeDeleted ? "archived" : "active"}
-              onValueChange={(val) => setIncludeDeleted(val === "archived")}
+              onValueChange={(val) =>
+                setIncludeDeleted(val === "archived")
+              }
             >
               <SelectTrigger className="w-[160px] h-9 text-muted-foreground font-normal">
                 <SelectValue placeholder="Status" />
@@ -106,42 +112,52 @@ export default function RecipePage() {
           </div>
         </div>
 
-        <div className="flex-1 relative">
+<div className="flex-1 relative">
           {isLoading ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
               {[...Array(8)].map((_, i) => (
                 <div
                   key={i}
                   className="h-72 bg-muted/20 animate-pulse rounded-lg border"
-                ></div>
+                />
               ))}
             </div>
-          ) : recipes.length === 0 ? (
+          ) : displayedRecipes.length === 0 ? (
             <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
               <div className="w-12 h-12 rounded-full bg-muted/50 flex items-center justify-center mb-4">
-                <span className="text-muted-foreground text-xl">🍽️</span>
+                <span className="text-muted-foreground text-xl">
+                  🍽️
+                </span>
               </div>
+
               <h3 className="text-lg font-semibold text-foreground">
-                Tidak ada resep
+                {filters.includeDeleted
+                  ? "Belum ada resep yang diarsipkan"
+                  : "Tidak ada resep"}
               </h3>
+
               <p className="text-sm text-muted-foreground">
-                Silakan tambah resep baru atau coba pencarian lain.
+                {filters.includeDeleted
+                  ? "Resep yang sudah diarsipkan akan muncul di sini."
+                  : "Silakan tambah resep baru atau coba pencarian lain."}
               </p>
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-              {recipes.map((recipe) => (
+              {displayedRecipes.map((recipe) => (
                 <RecipeCard
                   key={recipe.id}
                   recipe={recipe}
-                  onDetail={() => setDetailModalId(recipe.id)}
+                  onDetail={() =>
+                    setDetailModalId(recipe.id)
+                  }
                 />
               ))}
             </div>
           )}
         </div>
 
-        {recipes.length > 0 && pagination && pagination.totalPage > 1 && (
+        {displayedRecipes.length > 0 && pagination && pagination.totalPage > 1 && (
           <div className="mt-auto">
             <Pagination
               currentPage={pagination.currentPage}
