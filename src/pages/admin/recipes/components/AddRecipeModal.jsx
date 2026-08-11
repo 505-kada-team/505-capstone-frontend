@@ -48,8 +48,8 @@ export default function AddRecipeModal({ isOpen, onClose, onSuccess }) {
       if (res.data.success) {
         setInventories(res.data.data);
       }
-    } catch (err) {
-      toast.error('Failed to load data inventory');
+    } catch {
+      toast.error('Gagal mengambil daftar inventory');
     } finally {
       setIsLoadingInv(false);
     }

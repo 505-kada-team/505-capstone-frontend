@@ -1719,6 +1719,24 @@ export const mockPlanReportList = {
       valuation: null,
       createdAt: '2026-08-09T02:30:00.000Z',
     },
+    {
+      _id: 'report_013',
+      planId: 'plan_001',
+      category: 'menu',
+      refId: 'menu_002',
+      nameRef: 'Ayam Bakar Madu',
+      quantityLost: 1,
+      incidentAt: '2026-08-10T11:00:00.000Z',
+      isLateReport: true,
+      status: 'approved',
+      valuation: {
+        costLoss: 15000,
+        lostRevenueEstimate: 35000,
+      },
+      reason: 'Tumpah saat akan dihidangkan ke meja pelanggan (oleh waiter baru).',
+      adminNote: 'Sudah di-acc, mohon lebih hati-hati lain kali.',
+      createdAt: '2026-08-11T09:00:00.000Z',
+    },
   ],
 };
 

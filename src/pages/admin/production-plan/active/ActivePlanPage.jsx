@@ -5,6 +5,7 @@ import { Calendar, Plus, TriangleAlert, ChevronLeft, ChevronRight, StopCircle } 
 
 import StatusBadge from '@/components/shared/StatusBadge';
 import ConfirmDialog from '@/components/shared/ConfirmDialog';
+import PlanReportBanner from '@/components/shared/admin/PlanReportBanner';
 import { Card, CardContent } from '@/components/ui/card';
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
 import { Button } from '@/components/ui/button';
@@ -104,16 +105,28 @@ export default function ActivePlanPage() {
           <h1 className="text-2xl font-bold font-heading">Active Plan</h1>
           <div className="flex items-center gap-3">
             <div className="relative">
-              <Button 
-                variant="outline" 
-                size="icon" 
-                className={`w-8 h-8 rounded-md ${hasActive && (activePlanDetail.hasPendingLossReplacement || activePlanDetail.checkResultStale) ? 'border-[#C4441F] text-[#C4441F] bg-[#C4441F]/10' : 'text-muted-foreground bg-white'}`} 
-                disabled={!hasActive}
-              >
-                <TriangleAlert className="w-4 h-4" />
-              </Button>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button 
+                    variant="outline" 
+                    size="icon" 
+                    className={`w-8 h-8 rounded-md ${hasActive && (activePlanDetail.hasPendingLossReplacement || activePlanDetail.checkResultStale) ? 'border-[#C4441F] text-[#C4441F] bg-[#C4441F]/10 hover:bg-[#C4441F]/20' : 'text-muted-foreground bg-white'}`} 
+                    disabled={!hasActive || !(activePlanDetail.hasPendingLossReplacement || activePlanDetail.checkResultStale)}
+                  >
+                    <TriangleAlert className="w-4 h-4" />
+                  </Button>
+                </PopoverTrigger>
+                {hasActive && activePlanDetail.hasPendingLossReplacement && (
+                  <PopoverContent className="w-[320px] p-3" align="end">
+                    <PlanReportBanner 
+                      pendingCount={activePlanDetail.pendingLossReplacementCount || 1} 
+                      planId={activePlanDetail._id} 
+                    />
+                  </PopoverContent>
+                )}
+              </Popover>
               {hasActive && (activePlanDetail.hasPendingLossReplacement || activePlanDetail.checkResultStale) && (
-                <div className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-white" />
+                <div className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-white pointer-events-none" />
               )}
             </div>
             

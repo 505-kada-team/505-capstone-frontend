@@ -6,8 +6,8 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { reviewPlanReport } from '@/services/api';
 
-export default function ReviewReportModal({ open, report, onClose, onRefresh }) {
-  const [adminNote, setAdminNote] = useState('');
+export default function ReviewReportModal({ open, report, onClose, onRefresh, readOnly = false }) {
+  const [adminNote, setAdminNote] = useState(report?.adminNote || '');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   if (!report) return null;
@@ -38,8 +38,10 @@ export default function ReviewReportModal({ open, report, onClose, onRefresh }) 
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
-          <DialogTitle>Review Laporan Insiden</DialogTitle>
-          <DialogDescription>Tinjau detail kejadian dan berikan keputusan.</DialogDescription>
+          <DialogTitle>{readOnly ? 'Detail Laporan Insiden' : 'Review Laporan Insiden'}</DialogTitle>
+          <DialogDescription>
+            {readOnly ? 'Tinjau detail kejadian laporan insiden ini.' : 'Tinjau detail kejadian dan berikan keputusan.'}
+          </DialogDescription>
         </DialogHeader>
 
         <div className="grid gap-4 py-4 text-sm">
@@ -85,28 +87,40 @@ export default function ReviewReportModal({ open, report, onClose, onRefresh }) 
           )}
 
           <div className="grid gap-2 mt-2">
-            <Label htmlFor="adminNote">Catatan Admin (Opsional)</Label>
-            <Textarea
-              id="adminNote"
-              placeholder="Tambahkan catatan untuk pelapor..."
-              value={adminNote}
-              onChange={(e) => setAdminNote(e.target.value)}
-            />
+            <Label htmlFor="adminNote">Catatan Admin {readOnly ? '' : '(Opsional)'}</Label>
+            {readOnly ? (
+              <p className="text-foreground bg-muted/20 p-2 rounded-md border border-border min-h-10">
+                {report.adminNote || '-'}
+              </p>
+            ) : (
+              <Textarea
+                id="adminNote"
+                placeholder="Tambahkan catatan untuk pelapor..."
+                value={adminNote}
+                onChange={(e) => setAdminNote(e.target.value)}
+              />
+            )}
           </div>
         </div>
 
         <DialogFooter className="gap-2 sm:gap-0">
-          <Button variant="outline" onClick={onClose} disabled={isSubmitting}>
-            Batal
-          </Button>
-          <div className="flex gap-2">
-            <Button variant="destructive" onClick={() => handleReview('rejected')} disabled={isSubmitting}>
-              Tolak
+          {readOnly ? (
+            <Button variant="outline" onClick={onClose} className="w-full sm:w-auto">
+              Tutup
             </Button>
-            <Button className="bg-green-600 hover:bg-green-700 text-white" onClick={() => handleReview('approved')} disabled={isSubmitting}>
-              Setujui
-            </Button>
-          </div>
+          ) : (
+            <>
+              <Button variant="outline" onClick={onClose} disabled={isSubmitting}>
+                Batal
+              </Button>
+              <Button variant="destructive" onClick={() => handleReview('rejected')} disabled={isSubmitting}>
+                Reject
+              </Button>
+              <Button variant="default" className="bg-green-600 hover:bg-green-700" onClick={() => handleReview('approved')} disabled={isSubmitting}>
+                Approve
+              </Button>
+            </>
+          )}
         </DialogFooter>
       </DialogContent>
     </Dialog>

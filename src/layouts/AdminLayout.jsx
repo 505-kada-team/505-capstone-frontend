@@ -167,13 +167,16 @@ export default function AdminLayout() {
             
             {/* Sub-menus */}
             {isSidebarOpen && (
-              <div className={`overflow-hidden transition-all duration-300 ease-in-out ${isProductionPlanOpen ? 'max-h-40 mt-1' : 'max-h-0 mt-0'}`}>
+              <div className={`overflow-hidden transition-all duration-300 ease-in-out ${isProductionPlanOpen ? 'max-h-60 mt-1' : 'max-h-0 mt-0'}`}>
                 <div className="space-y-1">
                   <NavLink to="/admin/production-plan/draft" className={subNavLinkStyle}>
                     <span className="whitespace-nowrap">Draft Plan</span>
                   </NavLink>
                   <NavLink to="/admin/production-plan/active" className={subNavLinkStyle}>
                     <span className="whitespace-nowrap">Active Plan</span>
+                  </NavLink>
+                  <NavLink to="/admin/production-plan/report" className={subNavLinkStyle}>
+                    <span className="whitespace-nowrap">Plan Report</span>
                   </NavLink>
                 </div>
               </div>

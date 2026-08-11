@@ -1,28 +1,65 @@
 import { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router';
 import { toast } from 'sonner';
-import { AlertTriangle, Clock } from 'lucide-react';
+import { Clock, Plus, ListFilter } from 'lucide-react';
 import PageHeader from '@/components/shared/PageHeader';
 import DataTable from '@/components/shared/DataTable';
 import StatusBadge from '@/components/shared/StatusBadge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { getPlanReportList } from '@/services/api';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { getPlanReportList, getPlanList } from '@/services/api';
 
 import ReviewReportModal from './components/ReviewReportModal';
 import ReplacementModal from './components/ReplacementModal';
+import AddReportModal from './components/AddReportModal';
 
 export default function PlanReportPage() {
+  const [searchParams, setSearchParams] = useSearchParams();
   const [reports, setReports] = useState([]);
+  const [plans, setPlans] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+
+  // Filters state
+  const [filterPlan, setFilterPlan] = useState(searchParams.get('planId') || 'all');
+  const [filterStatus, setFilterStatus] = useState('all');
+  const [filterCategory, setFilterCategory] = useState('all');
 
   // Modals state
   const [reviewReport, setReviewReport] = useState(null);
   const [replaceReport, setReplaceReport] = useState(null);
+  const [isAddOpen, setIsAddOpen] = useState(false);
+
+  useEffect(() => {
+    // Sync filterPlan if URL changes
+    const pid = searchParams.get('planId');
+    if (pid && pid !== filterPlan) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setFilterPlan(pid);
+    }
+  }, [searchParams, filterPlan]);
+
+  useEffect(() => {
+    async function loadPlans() {
+      try {
+        const res = await getPlanList();
+        setPlans(res.data?.data || []);
+      } catch {
+        console.error('Failed to load plans for filter');
+      }
+    }
+    loadPlans();
+  }, []);
 
   const fetchData = async () => {
     setIsLoading(true);
     try {
-      const res = await getPlanReportList();
+      const params = {};
+      if (filterPlan !== 'all') params.planId = filterPlan;
+      if (filterStatus !== 'all') params.status = filterStatus;
+      if (filterCategory !== 'all') params.category = filterCategory;
+
+      const res = await getPlanReportList(params);
       if (res.data?.success) {
         setReports(res.data.data || []);
       }
@@ -36,9 +73,8 @@ export default function PlanReportPage() {
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchData();
-  }, []);
-
-  const pendingReplacements = reports.filter(r => r.category === 'ingredient' && r.status === 'approved' && !r.replacementDeducted);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filterPlan, filterStatus, filterCategory]);
 
   const columns = [
     {
@@ -62,7 +98,6 @@ export default function PlanReportPage() {
       render: (row) => (
         <div className="flex flex-col">
           <span className="font-semibold capitalize text-foreground">{row.category}</span>
-          {/* Note: mockData refId is just ID. In real app, API should populate the item name. We just show refId or a placeholder if name isn't there */}
           <span className="text-sm text-muted-foreground truncate max-w-[150px]">{row.refId}</span>
         </div>
       ),
@@ -88,7 +123,6 @@ export default function PlanReportPage() {
       key: 'status',
       header: 'Status',
       render: (row) => {
-        // Map status to variants
         const varMap = { pending: 'low stock', approved: 'active', rejected: 'deleted' };
         return <StatusBadge variant={varMap[row.status] || 'deleted'} label={row.status} />;
       },
@@ -106,57 +140,113 @@ export default function PlanReportPage() {
             </Button>
           );
         }
-        if (row.category === 'ingredient' && row.status === 'approved' && !row.replacementDeducted) {
-          return (
-            <Button size="sm" variant="default" className="bg-orange-600 hover:bg-orange-700" onClick={() => setReplaceReport(row)}>
-              Tarik Stok
+
+        const isTarikStok = row.category === 'ingredient' && row.status === 'approved' && !row.replacementDeducted;
+
+        return (
+          <div className="flex items-center justify-end gap-2">
+            <Button size="sm" variant="secondary" onClick={() => setReviewReport(row)}>
+              Detail
             </Button>
-          );
-        }
-        return <span className="text-xs text-muted-foreground">Selesai</span>;
+            {isTarikStok && (
+              <Button size="sm" variant="default" className="bg-orange-600 hover:bg-orange-700" onClick={() => setReplaceReport(row)}>
+                Tarik Stok
+              </Button>
+            )}
+          </div>
+        );
       },
     }
   ];
 
   return (
     <div className="flex flex-col gap-6">
-      <PageHeader title="Plan Report" />
+      <PageHeader 
+        title="Plan Report" 
+        actions={
+          <Button onClick={() => setIsAddOpen(true)} className="bg-[#F97316] hover:bg-[#F97316]/90 text-white gap-2">
+            <Plus size={18} strokeWidth={2} /> Add Report
+          </Button>
+        }
+      />
 
-      {pendingReplacements.length > 0 && (
-        <Card className="border-orange-200 bg-orange-50 shadow-sm">
-          <CardContent className="p-4 flex items-center justify-between">
-            <div className="flex items-center gap-3 text-orange-800">
-              <AlertTriangle className="w-5 h-5 text-orange-600" />
-              <div>
-                <h3 className="font-semibold">Menunggu Penarikan Stok</h3>
-                <p className="text-sm opacity-90">Ada {pendingReplacements.length} laporan bahan mentah (ingredient) yang sudah di-ACC namun stok penggantinya belum ditarik.</p>
-              </div>
-            </div>
-            {/* Can add a bulk action here later, or rely on individual table buttons */}
-          </CardContent>
-        </Card>
-      )}
+      {/* Filter Bar */}
+      <div className="flex items-center justify-between gap-2 mb-2">
+        <div className="flex items-center gap-3 flex-1">
+          <Select value={filterPlan} onValueChange={val => {
+              setFilterPlan(val);
+              setSearchParams(val === 'all' ? {} : { planId: val });
+            }}>
+            <SelectTrigger className="w-[300px] h-9 text-muted-foreground font-normal">
+              <SelectValue placeholder="Filter Plan" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Semua Plan</SelectItem>
+              {plans.map(p => (
+                <SelectItem key={p._id} value={p._id}>{p.name}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
 
-      <Card className="shadow-sm">
+        <div className="flex items-center gap-3">
+          <Select value={filterStatus} onValueChange={setFilterStatus}>
+            <SelectTrigger className="w-[160px] h-9 text-muted-foreground font-normal">
+              <SelectValue placeholder="Status" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Semua Status</SelectItem>
+              <SelectItem value="pending">Pending</SelectItem>
+              <SelectItem value="approved">Approved</SelectItem>
+              <SelectItem value="rejected">Rejected</SelectItem>
+            </SelectContent>
+          </Select>
+
+          <Select value={filterCategory} onValueChange={setFilterCategory}>
+            <SelectTrigger className="w-[160px] h-9 text-muted-foreground font-normal">
+              <SelectValue placeholder="Kategori" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Semua Kategori</SelectItem>
+              <SelectItem value="menu">Menu</SelectItem>
+              <SelectItem value="ingredient">Ingredient</SelectItem>
+            </SelectContent>
+          </Select>
+
+          <Button variant="outline" className="gap-2 h-9 text-muted-foreground font-normal">
+            <ListFilter size={16} />
+            Filter
+          </Button>
+        </div>
+      </div>
+
+      <div className="rounded-lg border border-border bg-card shadow-sm overflow-hidden">
         <DataTable
           columns={columns}
           data={reports}
           loading={isLoading}
           emptyMessage="Tidak ada riwayat laporan insiden."
         />
-      </Card>
+      </div>
 
       <ReviewReportModal 
         open={!!reviewReport} 
         report={reviewReport} 
         onClose={() => setReviewReport(null)}
         onRefresh={fetchData}
+        readOnly={reviewReport?.status !== 'pending'}
       />
       
       <ReplacementModal 
         open={!!replaceReport} 
         report={replaceReport} 
         onClose={() => setReplaceReport(null)}
+        onRefresh={fetchData}
+      />
+
+      <AddReportModal
+        open={isAddOpen}
+        onClose={() => setIsAddOpen(false)}
         onRefresh={fetchData}
       />
     </div>
