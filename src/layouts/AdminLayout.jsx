@@ -197,13 +197,6 @@ export default function AdminLayout() {
         {/* Footer Navigation */}
         <div className="p-3 border-t border-sidebar-border space-y-1">
           <button 
-            title={!isSidebarOpen ? "Support" : undefined}
-            className={`w-full flex items-center gap-3 rounded-md py-2 text-sidebar-foreground hover:bg-sidebar-accent transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${!isSidebarOpen ? 'justify-center px-0' : 'px-3'}`}
-          >
-            <CircleHelp size={20} className="shrink-0" />
-            <span className={`whitespace-nowrap transition-opacity duration-300 ${isSidebarOpen ? 'opacity-100' : 'opacity-0 hidden'}`}>Support</span>
-          </button>
-          <button 
             onClick={logout}
             title={!isSidebarOpen ? "Logout" : undefined}
             className={`w-full flex items-center gap-3 rounded-md py-2 text-destructive hover:bg-destructive/10 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${!isSidebarOpen ? 'justify-center px-0' : 'px-3'}`}
