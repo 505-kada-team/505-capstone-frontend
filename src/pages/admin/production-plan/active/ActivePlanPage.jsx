@@ -1,12 +1,14 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
-import { Calendar, Plus, MessageSquareWarning, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Calendar, Plus, TriangleAlert, ChevronLeft, ChevronRight, StopCircle } from 'lucide-react';
 
 import StatusBadge from '@/components/shared/StatusBadge';
+import ConfirmDialog from '@/components/shared/ConfirmDialog';
 import { Card, CardContent } from '@/components/ui/card';
+import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
 import { Button } from '@/components/ui/button';
-import { getPlanList, getPlanDetail } from '@/services/api';
+import { getPlanList, getPlanDetail, stopPlan } from '@/services/api';
 
 function formatDate(dateStr) {
   if (!dateStr) return '-';
@@ -39,9 +41,11 @@ export default function ActivePlanPage() {
   const [plans, setPlans] = useState([]);
   const [activePlanDetail, setActivePlanDetail] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
+  
+  const [isStopDialogOpen, setIsStopDialogOpen] = useState(false);
+  const [isStopping, setIsStopping] = useState(false);
 
-  useEffect(() => {
-    const fetchData = async () => {
+  const fetchData = async () => {
       setIsLoading(true);
       try {
         // Fetch all plans for history
@@ -66,8 +70,27 @@ export default function ActivePlanPage() {
         setIsLoading(false);
       }
     };
+    
+  useEffect(() => {
     fetchData();
-  }, []);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const handleStopPlan = async () => {
+    setIsStopping(true);
+    try {
+      const res = await stopPlan(activePlanDetail._id, { reason: 'Dihentikan manual' });
+      if (res.data?.success) {
+        toast.success('Plan berhasil dihentikan');
+        setIsStopDialogOpen(false);
+        setActivePlanDetail(null);
+        fetchData();
+      }
+    } catch {
+      toast.error('Gagal menghentikan plan');
+    } finally {
+      setIsStopping(false);
+    }
+  };
 
   const hasActive = !!activePlanDetail;
 
@@ -79,18 +102,51 @@ export default function ActivePlanPage() {
         <div className="flex items-start justify-between">
           <h1 className="text-2xl font-bold font-heading">Active Plan</h1>
           <div className="flex items-center gap-3">
-            <Button 
-              variant="outline" 
-              size="icon" 
-              className="w-9 h-9 text-muted-foreground bg-white" 
-              disabled={!hasActive || !(activePlanDetail.hasPendingLossReplacement || activePlanDetail.checkResultStale)}
-            >
-              <MessageSquareWarning className="w-4 h-4" />
-            </Button>
-            <div className={`flex items-center gap-2 px-3 py-1.5 rounded-full border bg-white ${hasActive ? 'border-green-200 text-green-700' : 'border-border text-muted-foreground'}`}>
-              <div className={`w-2 h-2 rounded-full ${hasActive ? 'bg-green-500' : 'bg-muted-foreground'}`} />
-              <span className="text-xs font-medium">{hasActive ? 'Active' : 'None'}</span>
+            <div className="relative">
+              <Button 
+                variant="outline" 
+                size="icon" 
+                className={`w-8 h-8 rounded-md ${hasActive && (activePlanDetail.hasPendingLossReplacement || activePlanDetail.checkResultStale) ? 'border-[#C4441F] text-[#C4441F] bg-[#C4441F]/10' : 'text-muted-foreground bg-white'}`} 
+                disabled={!hasActive}
+              >
+                <TriangleAlert className="w-4 h-4" />
+              </Button>
+              {hasActive && (activePlanDetail.hasPendingLossReplacement || activePlanDetail.checkResultStale) && (
+                <div className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-white" />
+              )}
             </div>
+            
+            {hasActive ? (
+              <Popover>
+                {/* PopoverPrimitive.Trigger inside uses cloneElement so child shouldn't be another custom component without forwardRef, button is safe */}
+                <PopoverTrigger asChild>
+                  <Button variant="outline" className="flex items-center gap-2 px-3 py-1.5 rounded-md border bg-white border-green-400 text-green-700 hover:bg-green-50 transition-colors cursor-pointer outline-none">
+                    <div className="relative flex h-2 w-2">
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-md bg-green-400 opacity-75"></span>
+                      <span className="relative inline-flex rounded-md h-2 w-2 bg-green-500"></span>
+                    </div>
+                    <span className="text-xs font-medium">Active</span>
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-2" align="end">
+                  <Button 
+                    variant="outline" 
+                    className="text-destructive border-destructive hover:bg-destructive/10 w-full justify-start"
+                    onClick={() => setIsStopDialogOpen(true)}
+                  >
+                    <StopCircle className="w-4 h-4" />
+                    <span className="text-xs font-medium">Stop Plan</span>
+                  </Button>
+                </PopoverContent>
+              </Popover>
+            ) : (
+              <div className="flex items-center gap-2 px-3 py-1.5 rounded-full border bg-white border-border text-muted-foreground">
+                <div className="relative flex h-2 w-2">
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-muted-foreground"></span>
+                </div>
+                <span className="text-xs font-medium">None</span>
+              </div>
+            )}
           </div>
         </div>
         <div className="flex items-center gap-6 text-sm font-medium">
@@ -134,10 +190,10 @@ export default function ActivePlanPage() {
                 <table className="w-full text-sm text-left">
                   <thead className="text-xs text-muted-foreground border-b border-border">
                     <tr>
-                      <th className="py-3 font-medium px-4 w-[30%]">Menu Name</th>
-                      <th className="py-3 font-medium px-4 min-w-[200px]">Sold / Quantity</th>
-                      <th className="py-3 font-medium px-4">Profit</th>
-                      <th className="py-3 font-medium px-4 text-center">Actions</th>
+                      <th className="py-3 font-medium px-4 w-[25%]">Menu Name</th>
+                      <th className="py-3 font-medium px-4 w-[35%]">Sold / Quantity</th>
+                      <th className="py-3 font-medium px-4 w-[25%]">Profit</th>
+                      <th className="py-3 font-medium px-4 w-[15%] text-center">Actions</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-border/50">
@@ -246,6 +302,20 @@ export default function ActivePlanPage() {
           </CardContent>
         </Card>
       </div>
+
+      {hasActive && (
+        <ConfirmDialog
+          open={isStopDialogOpen}
+          onClose={() => setIsStopDialogOpen(false)}
+          onConfirm={handleStopPlan}
+          title="Stop this plan?"
+          description="The active plan will be stopped permanently. No more production can be added to this plan."
+          confirmLabel="Stop Plan"
+          cancelLabel="Cancel"
+          loading={isStopping}
+          variant="destructive"
+        />
+      )}
     </div>
   );
 }
