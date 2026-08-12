@@ -1,20 +1,11 @@
-<<<<<<< Updated upstream
-
-import { Card } from '@/components/ui/card';
-import StatusBadge from '@/components/shared/StatusBadge';
-import { formatCurrency } from '@/lib/formatCurrency';
-import { ImageIcon } from 'lucide-react';
-=======
 import { Card } from "@/components/ui/card";
 import StatusBadge from "@/components/shared/StatusBadge";
 import { formatCurrency } from "@/lib/formatCurrency";
 import { ImageIcon } from "lucide-react";
->>>>>>> Stashed changes
 
 export default function RecipeCard({ recipe, onDetail }) {
   return (
     <Card className="overflow-hidden hover:shadow-md transition-shadow flex flex-col h-full">
-      {/* Image Section */}
       <div className="relative h-48 bg-muted w-full flex-shrink-0">
         <div className="absolute top-3 left-3 z-10">
           <StatusBadge variant={recipe.status} />
@@ -32,21 +23,25 @@ export default function RecipeCard({ recipe, onDetail }) {
         )}
       </div>
 
-      {/* Content Section */}
       <div className="p-4 flex flex-col flex-1">
         <h3 className="font-heading font-semibold text-lg text-foreground line-clamp-1 mb-1">
           {recipe.name}
         </h3>
-        <p className="text-sm text-muted-foreground line-clamp-2 mb-4 flex-1">
-          {recipe.description || 'Tidak ada deskripsi.'}
+        {/* getMenus() (list endpoint) tidak mengembalikan description — pakai field yang memang ada di mapMenuListItem */}
+        <p className="text-xs text-muted-foreground mb-4 flex-1">
+          {recipe.totalIngredients} bahan
+          {recipe.costComplete && typeof recipe.marginPercentage === "number"
+            ? ` · margin ${recipe.marginPercentage.toFixed(0)}%`
+            : ""}
         </p>
 
-        {/* Footer info & Actions */}
         <div className="flex items-end justify-between mt-auto">
           <div>
             <p className="text-xs text-muted-foreground mb-0.5">Ext. Cost</p>
             <p className="font-mono text-sm text-foreground">
-              {recipe.costComplete ? formatCurrency(recipe.currentCostEstimate) : 'Rp -'}
+              {recipe.costComplete
+                ? formatCurrency(recipe.currentCostEstimate)
+                : "Rp -"}
             </p>
           </div>
           <button
