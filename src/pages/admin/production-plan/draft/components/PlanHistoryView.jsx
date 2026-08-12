@@ -1,12 +1,16 @@
-import { useState, useMemo } from 'react';
-import { RefreshCw, PlusCircle, Filter, ClipboardList } from 'lucide-react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
+import { RefreshCw, PlusCircle, ClipboardList } from 'lucide-react';
+import { toast } from 'sonner';
 
 import PageHeader from '@/components/shared/PageHeader';
 import PlanListCard from '@/components/shared/PlanListCard';
 import PlanDetailPane from '@/pages/admin/production-plan/components/PlanDetailPane';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import { getPlanList } from '@/services/api';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import Pagination from '@/components/shared/Pagination';
+import { usePagination } from '@/hooks/usePagination';
+import { Input } from '@/components/ui/input';
 import { usePlanList } from '@/hooks/plan/usePlanList';
 
 // ─── Empty state for the right pane when no plan is selected ─────────────────
@@ -34,8 +38,35 @@ function ListSkeleton() {
 export default function PlanHistoryView({ onNavigateToCreate }) {
   const { plans, isLoading: isLoadingList, refetch } = usePlanList();
   const [selectedPlanId, setSelectedPlanId] = useState(null);
-  const [search, setSearch] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
+  const [sortBy, setSortBy] = useState('date_newest');
+
+  const filteredAndSortedPlans = useMemo(() => {
+    let result = [...plans];
+    
+    // Apply filter
+    if (filterStatus !== 'all') {
+      result = result.filter(plan => plan.status === filterStatus);
+    }
+    
+    // Apply sort
+    if (sortBy === 'date_newest') {
+      return result.sort((a, b) => new Date(b.createdAt || b.startDate || 0) - new Date(a.createdAt || a.startDate || 0));
+    }
+    if (sortBy === 'date_oldest') {
+      return result.sort((a, b) => new Date(a.createdAt || a.startDate || 0) - new Date(b.createdAt || b.startDate || 0));
+    }
+    return result;
+  }, [plans, filterStatus, sortBy]);
+
+  const { currentPage, totalPages, paginatedItems: paginatedPlans, setPage, resetPage } = usePagination(
+    filteredAndSortedPlans,
+    5
+  );
+
+  useEffect(() => {
+    resetPage();
+  }, [filterStatus, sortBy, plans, resetPage]);
 
   const filteredPlans = useMemo(() => {
     return plans.filter(plan => {
@@ -84,37 +115,38 @@ export default function PlanHistoryView({ onNavigateToCreate }) {
       <div className="flex gap-6 flex-1 min-h-0">
 
         {/* ── Left: Plan History List ───────────────────────────────────── */}
-        <aside className="w-72 shrink-0 flex flex-col gap-3">
+        <aside className="w-86 shrink-0 flex flex-col gap-3">
           {/* List header */}
-          <div className="flex items-center justify-between">
-            <h2 className="text-base font-semibold font-heading">Plan History</h2>
-          </div>
-
-          {/* Filter controls */}
           <div className="flex flex-col gap-2">
-            <Input
-              placeholder="Search plan..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="h-8 text-sm"
-            />
-            <Select value={filterStatus} onValueChange={setFilterStatus}>
-              <SelectTrigger className="h-8 text-xs text-muted-foreground">
-                <SelectValue placeholder="Filter status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Semua Status</SelectItem>
-                <SelectItem value="draft">Draft</SelectItem>
-                <SelectItem value="active">Active</SelectItem>
-                <SelectItem value="completed">Completed</SelectItem>
-                <SelectItem value="stopped">Stopped</SelectItem>
-                <SelectItem value="cancelled">Cancelled</SelectItem>
-              </SelectContent>
-            </Select>
+            <h2 className="text-base font-semibold font-heading">Plan History</h2>
+            <div className="flex flex-wrap items-center gap-2">
+              <Select value={filterStatus} onValueChange={setFilterStatus}>
+                <SelectTrigger className="w-[110px] h-7 gap-1 text-muted-foreground text-xs font-normal">
+                  <SelectValue placeholder="Status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Statuses</SelectItem>
+                  <SelectItem value="draft">Draft</SelectItem>
+                  <SelectItem value="active">Active</SelectItem>
+                  <SelectItem value="completed">Completed</SelectItem>
+                  <SelectItem value="stopped">Stopped</SelectItem>
+                  <SelectItem value="cancelled">Cancelled</SelectItem>
+                </SelectContent>
+              </Select>
+              <Select value={sortBy} onValueChange={setSortBy}>
+                <SelectTrigger className="w-[100px] h-7 gap-1 text-muted-foreground text-xs font-normal">
+                  <SelectValue placeholder="Sort" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="date_newest">Newest</SelectItem>
+                  <SelectItem value="date_oldest">Oldest</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
 
           {/* List content */}
-          <div className="flex flex-col gap-2 overflow-y-auto pr-1">
+          <div className="flex flex-col gap-2 overflow-y-auto pr-1 flex-1">
             {isLoadingList ? (
               <ListSkeleton />
             ) : filteredPlans.length === 0 ? (
@@ -122,8 +154,13 @@ export default function PlanHistoryView({ onNavigateToCreate }) {
                 <ClipboardList className="w-8 h-8 text-muted-foreground/40" strokeWidth={1.5} />
                 <p className="text-xs text-center">No plans found</p>
               </div>
+            ) : filteredAndSortedPlans.length === 0 ? (
+              <div className="flex flex-col items-center gap-2 py-12 text-muted-foreground">
+                <ClipboardList className="w-8 h-8 text-muted-foreground/40" strokeWidth={1.5} />
+                <p className="text-xs text-center">No plans found for selected status</p>
+              </div>
             ) : (
-              filteredPlans.map((plan) => (
+              paginatedPlans.map((plan) => (
                 <PlanListCard
                   key={plan._id}
                   plan={plan}
@@ -133,7 +170,18 @@ export default function PlanHistoryView({ onNavigateToCreate }) {
               ))
             )}
           </div>
+
+          {paginatedPlans.length > 0 && (
+            <Pagination
+              currentPage={currentPage}
+              totalPage={totalPages}
+              totalData={filteredAndSortedPlans.length}
+              limit={4}
+              onPageChange={setPage}
+            />
+          )}
         </aside>
+
 
         {/* ── Divider ──────────────────────────────────────────────────── */}
         <div className="w-px bg-border shrink-0 self-stretch" />

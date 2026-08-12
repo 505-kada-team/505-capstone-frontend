@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useCallback } from 'react';
 
 /**
  * usePagination.js — hooks/
@@ -40,7 +40,7 @@ export function usePagination(items, pageSize) {
     [items, currentPage, pageSize]
   );
 
-  const resetPage = () => setPage(1);
+  const resetPage = useCallback(() => setPage(1), []);
 
   return { currentPage, totalPages, paginatedItems, setPage, resetPage };
 }

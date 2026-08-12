@@ -13,13 +13,15 @@ import SearchInput from '@/components/shared/SearchInput';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useActivePlanOverview } from '@/hooks/plan/usePlanOverview';
 import { useSortable } from '@/hooks/useSortable';
+import Pagination from '@/components/shared/Pagination';
+import { usePagination } from '@/hooks/usePagination';
 import PlanDetailPane from '@/pages/admin/production-plan/components/PlanDetailPane';
 
 function formatDate(dateStr) {
   if (!dateStr) return '-';
   const date = new Date(dateStr);
   return `${String(date.getDate()).padStart(2, '0')} ${
-    ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'][date.getMonth()]
+    ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][date.getMonth()]
   } ${date.getFullYear()}`;
 }
 
@@ -63,7 +65,47 @@ export default function ActivePlanPage() {
     const matchSearch = plan.name?.toLowerCase().includes(searchHistory.toLowerCase());
     const matchStatus = filterStatus === 'all' || plan.status === filterStatus;
     return matchSearch && matchStatus;
-  }), 'date_newest');
+  }));
+
+  const { currentPage, totalPages, paginatedItems: paginatedPlans, setPage, resetPage } = usePagination(
+    filteredPlans,
+    5
+  );
+
+  useEffect(() => {
+    resetPage();
+  }, [searchHistory, filterStatus, sortBy, resetPage]);
+
+  const fetchData = async () => {
+      setIsLoading(true);
+      try {
+        // Fetch all plans for history
+        const listRes = await getPlanList();
+        if (listRes.data?.success) {
+          const fetchedPlans = listRes.data.data || [];
+          setPlans(fetchedPlans);
+          
+          // Check if there is an active plan
+          const active = fetchedPlans.find(p => p.status === 'active');
+          if (active) {
+            // Fetch detailed active plan to get menus tracking
+            const detailRes = await getPlanDetail(active._id);
+            if (detailRes.data?.success) {
+              setActivePlanDetail(detailRes.data.data);
+            }
+          }
+        }
+      } catch {
+        toast.error('Failed to fetch plan data');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    fetchData();
+  }, []);
 
   const handleStopPlan = async () => {
     const result = await stopActivePlan({ reason: 'Dihentikan manual oleh admin', stoppedBy: 'Admin Dapur' });
@@ -257,10 +299,9 @@ export default function ActivePlanPage() {
                 <SelectValue placeholder="Status" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">Semua Status</SelectItem>
-                <SelectItem value="draft">Draft</SelectItem>
-                <SelectItem value="active">Active</SelectItem>
-                <SelectItem value="completed">Completed</SelectItem>
+                <SelectItem value="all">All Statuses</SelectItem>
+                <SelectItem value="completed">Executed</SelectItem>
+                <SelectItem value="cancelled">Cancelled</SelectItem>
                 <SelectItem value="stopped">Stopped</SelectItem>
                 <SelectItem value="cancelled">Cancelled</SelectItem>
               </SelectContent>
@@ -272,8 +313,8 @@ export default function ActivePlanPage() {
                 <SelectValue placeholder="Sort By" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="date_newest">Terbaru</SelectItem>
-                <SelectItem value="date_oldest">Terlama</SelectItem>
+                <SelectItem value="date_newest">Newest</SelectItem>
+                <SelectItem value="date_oldest">Oldest</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -294,10 +335,10 @@ export default function ActivePlanPage() {
                 <tbody className="divide-y divide-border/50">
                   {isLoading ? (
                     <tr><td colSpan="4" className="py-10 text-center text-muted-foreground">Loading data...</td></tr>
-                  ) : filteredPlans.length === 0 ? (
+                  ) : paginatedPlans.length === 0 ? (
                     <tr><td colSpan="4" className="py-10 text-center text-muted-foreground">No plan history</td></tr>
                   ) : (
-                    filteredPlans.map((p) => {
+                    paginatedPlans.map((p) => {
                       // Status mapping to match UI
                       let displayStatus = p.status;
                       if (p.status === 'completed') displayStatus = 'Executed';
@@ -329,7 +370,18 @@ export default function ActivePlanPage() {
             </div>
           </CardContent>
         </Card>
+
+        {paginatedPlans.length > 0 && (
+          <Pagination
+            currentPage={currentPage}
+            totalPage={totalPages}
+            totalData={filteredPlans.length}
+            limit={5}
+            onPageChange={setPage}
+          />
+        )}
       </div>
+
 
       {hasActive && (
         <ConfirmDialog

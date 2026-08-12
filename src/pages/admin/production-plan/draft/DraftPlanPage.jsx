@@ -4,7 +4,7 @@ import { toast } from 'sonner';
 import { History, ArrowLeft } from 'lucide-react';
 
 import PageHeader from '@/components/shared/PageHeader';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -119,17 +119,20 @@ export default function DraftPlanPage() {
 
   const handleAddToCart = () => {
     if (!selectedMenu || !quantity || Number(quantity) <= 0) return;
-    const menu = availableMenus.find(m => m._id === selectedMenu);
+    const menu = availableMenus.find((m) => m._id === selectedMenu);
     if (!menu) return;
 
-    setCart([...cart, {
-      _id: menu._id,
-      name: menu.name,
-      price: menu.sellingPrice,
-      qty: Number(quantity),
-      subtotal: menu.sellingPrice * Number(quantity)
-    }]);
-    
+    setCart([
+      ...cart,
+      {
+        _id: menu._id,
+        name: menu.name,
+        price: menu.sellingPrice,
+        qty: Number(quantity),
+        subtotal: menu.sellingPrice * Number(quantity),
+      },
+    ]);
+
     setSelectedMenu('');
     setQuantity('1');
   };
@@ -149,22 +152,22 @@ export default function DraftPlanPage() {
       toast.error('Choose at least one menu');
       return;
     }
-    
+
     setIsSubmitting(true);
     try {
       const start = new Date(startDate);
       const end = new Date(endDate);
       const duration = Math.max(1, Math.ceil((end - start) / (1000 * 60 * 60 * 24)));
-      
+
       const payload = {
         name: planName,
         tags: [],
         startDate: new Date(startDate).toISOString(),
         duration,
-        menus: cart.map(item => ({
+        menus: cart.map((item) => ({
           menuId: item._id,
-          quantityPlanned: item.qty
-        }))
+          quantityPlanned: item.qty,
+        })),
       };
       
       if (editPlanId) {
@@ -246,24 +249,13 @@ export default function DraftPlanPage() {
           </Button>
       </div>
 
-      <Card className="w-full shadow-sm">
-        <CardHeader className="pb-4">
-          <CardTitle className="text-xl">Draft Plan</CardTitle>
-          <CardDescription>Plan your selling and estimate the flow</CardDescription>
-        </CardHeader>
-        
-        <CardContent>
-          {step === 1 && (
-            <div className="border border-border/80 rounded-xl p-6 mt-4 flex flex-col gap-6 bg-background">
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-foreground capitalize">Plan Title</label>
-                <Input 
-                  placeholder="Enter plan title" 
-                  value={planName}
-                  onChange={(e) => setPlanName(e.target.value)}
-                />
-              </div>
-
+      <CardContent>
+        {step === 1 && (
+          <div className="border border-border/80 rounded-xl p-6 flex flex-col gap-6 bg-background">
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-foreground capitalize">Plan Title</label>
+              <Input placeholder="Enter plan title" value={planName} onChange={(e) => setPlanName(e.target.value)} />
+            </div>
               <div className="grid grid-cols-2 gap-6">
                 <div className="space-y-2">
                   <label className="text-sm font-medium text-foreground capitalize">Start Date</label>
@@ -284,17 +276,18 @@ export default function DraftPlanPage() {
                   />
                 </div>
               </div>
-
-              <div className="flex justify-end gap-4 mt-6">
-                <Button variant="outline" className="border-border hover:bg-muted" onClick={handleForecast}>
-                  Create from Forecast
-                </Button>
-                <Button className="bg-[#F97316] hover:bg-[#F97316]/90 text-white font-medium px-6" onClick={handleNext}>
-                  Next
-                </Button>
-              </div>
             </div>
-          )}
+
+            <div className="flex justify-end gap-4 mt-6">
+              <Button variant="outline" className="border-border hover:bg-muted" onClick={handleForecast}>
+                Create from Forecast
+              </Button>
+              <Button className="bg-[#F97316] hover:bg-[#F97316]/90 text-white font-medium px-6" onClick={handleNext}>
+                Next
+              </Button>
+            </div>
+          </div>
+        )}
 
           {step === 2 && (
             <div className="border border-border/80 rounded-xl p-6 mt-4 flex flex-col gap-6 bg-background">
@@ -333,70 +326,70 @@ export default function DraftPlanPage() {
                   Add
                 </Button>
               </div>
-
-              {/* Tabel Menu */}
-              <div className="border rounded-md overflow-hidden mt-2">
-                <table className="w-full text-sm">
-                  <thead className="bg-muted text-muted-foreground">
-                    <tr>
-                      <th className="py-3 px-4 text-left font-medium capitalize">Menu</th>
-                      <th className="py-3 px-4 text-center font-medium capitalize">Quantity</th>
-                      <th className="py-3 px-4 text-left font-medium capitalize">Subtotal</th>
-                      <th className="py-3 px-4 text-center font-medium capitalize">Action</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y">
-                    {cart.map((item, index) => (
-                      <tr key={index}>
-                        <td className="py-3 px-4 text-foreground capitalize">{item.name}</td>
-                        <td className="py-3 px-4 text-center font-mono">{item.qty}</td>
-                        <td className="py-3 px-4 font-mono">{formatRp(item.subtotal)}</td>
-                        <td className="py-3 px-4 text-center">
-                          <button 
-                            className="text-destructive text-sm hover:underline"
-                            onClick={() => handleRemoveFromCart(index)}
-                          >
-                            Remove
-                          </button>
-                        </td>
-                      </tr>
-                    ))}
-                    {cart.length === 0 && (
-                      <tr>
-                        <td colSpan={4} className="py-8 text-center text-muted-foreground">
-                          No menu added yet
-                        </td>
-                      </tr>
-                    )}
-                  </tbody>
-                </table>
+              <div className="w-32 space-y-2">
+                <label className="text-sm font-medium text-foreground capitalize">Quantity</label>
+                <Input type="number" value={quantity} onChange={(e) => setQuantity(e.target.value)} />
               </div>
+              <Button variant="secondary" onClick={handleAddToCart} className="bg-[#E6D5C3] text-primary hover:bg-[#E6D5C3]/80 border border-[#E6D5C3]/40 px-6 font-medium">
+                Add
+              </Button>
+            </div>
 
-              {/* Total Summary */}
-              <div className="flex justify-between items-end mt-4">
-                <div className="flex flex-col gap-1">
-                  <span className="text-xs text-muted-foreground capitalize font-medium">Total Estimated (Selling Price)</span>
-                  <span className="text-2xl font-bold font-mono text-foreground">{formatRp(totalEstimated)}</span>
-                </div>
-                <div className="flex gap-4">
-                  <Button variant="outline" className="border-border hover:bg-muted" onClick={() => setStep(1)} disabled={isSubmitting}>
-                    Back
-                  </Button>
-                  <Button className="bg-[#F97316] hover:bg-[#F97316]/90 text-white font-medium px-6" onClick={handleCreatePlan} disabled={isSubmitting}>
-                    {isSubmitting ? 'Processing...' : (editPlanId ? 'Update Plan' : 'Create Plan')}
-                  </Button>
-                </div>
+            {/* Tabel Menu */}
+            <div className="border rounded-md overflow-hidden mt-2">
+              <table className="w-full text-sm">
+                <thead className="bg-muted text-muted-foreground">
+                  <tr>
+                    <th className="py-3 px-4 text-left font-medium capitalize">Menu</th>
+                    <th className="py-3 px-4 text-center font-medium capitalize">Quantity</th>
+                    <th className="py-3 px-4 text-left font-medium capitalize">Subtotal</th>
+                    <th className="py-3 px-4 text-center font-medium capitalize">Action</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y">
+                  {cart.map((item, index) => (
+                    <tr key={index}>
+                      <td className="py-3 px-4 text-foreground capitalize">{item.name}</td>
+                      <td className="py-3 px-4 text-center font-mono">{item.qty}</td>
+                      <td className="py-3 px-4 font-mono">{formatRp(item.subtotal)}</td>
+                      <td className="py-3 px-4 text-center">
+                        <button className="text-destructive text-sm hover:underline" onClick={() => handleRemoveFromCart(index)}>
+                          Remove
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                  {cart.length === 0 && (
+                    <tr>
+                      <td colSpan={4} className="py-8 text-center text-muted-foreground">
+                        No menu added yet
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Total Summary */}
+            <div className="flex justify-between items-end mt-4">
+              <div className="flex flex-col gap-1">
+                <span className="text-xs text-muted-foreground capitalize font-medium">Total Estimated (Selling Price)</span>
+                <span className="text-2xl font-bold font-mono text-foreground">{formatRp(totalEstimated)}</span>
+              </div>
+              <div className="flex gap-4">
+                <Button variant="outline" className="border-border hover:bg-muted" onClick={() => setStep(1)} disabled={isSubmitting}>
+                  Back
+                </Button>
+                <Button className="bg-[#F97316] hover:bg-[#F97316]/90 text-white font-medium px-6" onClick={handleCreatePlan} disabled={isSubmitting}>
+                  {isSubmitting ? 'Prosessing...' : 'Create Plan'}
+                </Button>
               </div>
             </div>
-          )}
-        </CardContent>
-      </Card>
+          </div>
+        )}
+      </CardContent>
 
-      <PlanDetailModal 
-        isOpen={!!createdPlanId} 
-        onClose={() => setCreatedPlanId(null)}
-        planId={createdPlanId}
-      />
+      <PlanDetailModal isOpen={!!createdPlanId} onClose={() => setCreatedPlanId(null)} planId={createdPlanId} />
     </div>
   );
 }

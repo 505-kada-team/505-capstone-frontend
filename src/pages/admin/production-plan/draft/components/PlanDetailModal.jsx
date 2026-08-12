@@ -87,7 +87,7 @@ export default function PlanDetailModal({ isOpen, onClose, planId }) {
                     icon={<Lightbulb className="w-5 h-5" />}
                     action={
                       <Button variant="outline" size="sm" onClick={() => setIsDetailModalOpen(true)}>
-                        <Link className="w-4 h-4 mr-2" /> Lihat Diskon
+                        <Link className="w-4 h-4 mr-2" /> View Discount
                       </Button>
                     }
                   />
@@ -99,7 +99,7 @@ export default function PlanDetailModal({ isOpen, onClose, planId }) {
                     icon={<Lightbulb className="w-5 h-5" />}
                     action={
                       <Button size="sm" onClick={() => { setEditPromo(null); setIsDiscountModalOpen(true); }}>
-                        <PlusCircle className="w-4 h-4 mr-2" /> Tambah Diskon
+                        <PlusCircle className="w-4 h-4 mr-2" /> Add Discount
                       </Button>
                     }
                   />

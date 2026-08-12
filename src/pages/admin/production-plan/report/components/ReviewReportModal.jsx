@@ -17,12 +17,12 @@ export default function ReviewReportModal({ open, report, onClose, onRefresh, re
     try {
       const res = await reviewPlanReport(report._id, { decision, adminNote });
       if (res.data?.success) {
-        toast.success(`Laporan berhasil di-${decision === 'approved' ? 'setujui' : 'tolak'}`);
+        toast.success(`Report successfully ${decision === 'approved' ? 'approved' : 'rejected'}`);
         onRefresh();
         onClose();
       }
     } catch {
-      toast.error('Gagal memproses laporan');
+      toast.error('Failed to process report');
     } finally {
       setIsSubmitting(false);
     }
@@ -38,56 +38,58 @@ export default function ReviewReportModal({ open, report, onClose, onRefresh, re
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
-          <DialogTitle>{readOnly ? 'Detail Laporan Insiden' : 'Review Laporan Insiden'}</DialogTitle>
+          <DialogTitle className="text-lg font-bold font-heading">
+            {readOnly ? 'Incident Report Details' : 'Review Incident Report'}
+          </DialogTitle>
           <DialogDescription>
-            {readOnly ? 'Tinjau detail kejadian laporan insiden ini.' : 'Tinjau detail kejadian dan berikan keputusan.'}
+            {readOnly ? 'Review the incident details of this report.' : 'Review the incident details and make a decision.'}
           </DialogDescription>
         </DialogHeader>
 
         <div className="grid gap-4 py-4 text-sm">
           <div className="grid grid-cols-2 gap-2">
             <div>
-              <span className="font-semibold text-muted-foreground block mb-1">Pelapor</span>
+              <span className="font-semibold text-muted-foreground block mb-1">Reporter</span>
               {report.reportedBy} ({report.reportedByRole})
             </div>
             <div>
-              <span className="font-semibold text-muted-foreground block mb-1">Waktu Kejadian</span>
+              <span className="font-semibold text-muted-foreground block mb-1">Incident Time</span>
               {formatTime(report.incidentAt)}
             </div>
           </div>
 
           <div className="bg-muted/30 p-3 rounded-md grid grid-cols-2 gap-2">
             <div>
-              <span className="font-semibold text-muted-foreground block mb-1">Kategori / Item</span>
+              <span className="font-semibold text-muted-foreground block mb-1">Category / Item</span>
               <span className="capitalize">{report.category}</span>
             </div>
             <div>
-              <span className="font-semibold text-muted-foreground block mb-1">Kuantitas Rusak</span>
+              <span className="font-semibold text-muted-foreground block mb-1">Quantity Lost</span>
               <span className="text-destructive font-semibold">{report.quantityLost}</span>
             </div>
           </div>
 
           <div>
-            <span className="font-semibold text-muted-foreground block mb-1">Alasan Insiden</span>
+            <span className="font-semibold text-muted-foreground block mb-1">Incident Reason</span>
             <p className="text-foreground">{report.reason || '-'}</p>
           </div>
 
           {isMenu && val && (
             <div className="border border-border rounded-md p-3 flex flex-col gap-2">
-              <span className="font-semibold mb-1">Valuasi Kerugian (Estimasi)</span>
+              <span className="font-semibold mb-1">Estimated Loss Valuation</span>
               <div className="flex justify-between items-center">
-                <span className="text-muted-foreground">Cost Bahan (Cost Loss):</span>
+                <span className="text-muted-foreground">Material Cost (Cost Loss):</span>
                 <span className="font-semibold">{formatRupiah(val.costLoss)}</span>
               </div>
               <div className="flex justify-between items-center">
-                <span className="text-muted-foreground">Potensi Pendapatan:</span>
+                <span className="text-muted-foreground">Potential Revenue:</span>
                 <span className="font-semibold text-orange-600">{formatRupiah(val.lostRevenueEstimate)}</span>
               </div>
             </div>
           )}
 
           <div className="grid gap-2 mt-2">
-            <Label htmlFor="adminNote">Catatan Admin {readOnly ? '' : '(Opsional)'}</Label>
+            <Label htmlFor="adminNote">Admin Notes {readOnly ? '' : '(Optional)'}</Label>
             {readOnly ? (
               <p className="text-foreground bg-muted/20 p-2 rounded-md border border-border min-h-10">
                 {report.adminNote || '-'}
@@ -95,7 +97,7 @@ export default function ReviewReportModal({ open, report, onClose, onRefresh, re
             ) : (
               <Textarea
                 id="adminNote"
-                placeholder="Tambahkan catatan untuk pelapor..."
+                placeholder="Add notes for the reporter..."
                 value={adminNote}
                 onChange={(e) => setAdminNote(e.target.value)}
               />
@@ -106,17 +108,17 @@ export default function ReviewReportModal({ open, report, onClose, onRefresh, re
         <DialogFooter className="gap-2 sm:gap-0">
           {readOnly ? (
             <Button variant="outline" onClick={onClose} className="w-full sm:w-auto">
-              Tutup
+              Close
             </Button>
           ) : (
             <>
               <Button variant="outline" onClick={onClose} disabled={isSubmitting}>
-                Batal
+                Cancel
               </Button>
               <Button variant="destructive" onClick={() => handleReview('rejected')} disabled={isSubmitting}>
                 Reject
               </Button>
-              <Button variant="default" className="bg-green-600 hover:bg-green-700" onClick={() => handleReview('approved')} disabled={isSubmitting}>
+              <Button className="bg-[#4E6A3E] hover:bg-[#4E6A3E]/90 text-white" onClick={() => handleReview('approved')} disabled={isSubmitting}>
                 Approve
               </Button>
             </>

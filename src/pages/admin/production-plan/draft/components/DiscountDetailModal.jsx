@@ -15,8 +15,16 @@ export default function DiscountDetailModal({ isOpen, onClose, planId, promo, on
   if (!isOpen || !promo) return null;
 
   const handleDelete = async () => {
-    if (confirm('Apakah Anda yakin ingin menghapus promo diskon ini dari semua menu terkait?')) {
-      await deletePromo(promo);
+    if (confirm('Are you sure you want to delete this discount promo from all related menus?')) {
+      setIsDeleting(true);
+      try {
+        await onDelete(promo);
+        onClose();
+      } catch (err) {
+        toast.error('Failed to delete discount');
+      } finally {
+        setIsDeleting(false);
+      }
     }
   };
 
@@ -24,20 +32,20 @@ export default function DiscountDetailModal({ isOpen, onClose, planId, promo, on
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-2xl">
         <DialogHeader>
-          <DialogTitle className="text-lg font-bold">Detail Diskon</DialogTitle>
+          <DialogTitle className="text-lg font-bold font-heading">Discount Details</DialogTitle>
         </DialogHeader>
 
         <div className="space-y-6 mt-2">
-          {/* Informasi Utama */}
+          {/* Key Information */}
           <div className="space-y-2">
-            <h4 className="text-xs font-bold text-muted-foreground tracking-wider uppercase">Informasi Utama</h4>
+            <h4 className="text-xs font-bold text-muted-foreground tracking-wider uppercase">Key Information</h4>
             <div className="grid grid-cols-2 gap-4 bg-muted/20 p-4 rounded-xl border">
               <div className="space-y-1">
-                <span className="text-xs text-muted-foreground">Nama Promo</span>
+                <span className="text-xs text-muted-foreground">Promo Name</span>
                 <p className="font-semibold text-sm">{promo.reason}</p>
               </div>
               <div className="space-y-1">
-                <span className="text-xs text-muted-foreground">Periode</span>
+                <span className="text-xs text-muted-foreground">Period</span>
                 <div className="flex items-center text-sm font-medium gap-1.5">
                   <CalendarIcon className="w-3.5 h-3.5 text-muted-foreground" />
                   {format(new Date(promo.startDate), 'd MMM yyyy')} – {format(new Date(promo.endDate), 'd MMM yyyy')}
@@ -46,21 +54,21 @@ export default function DiscountDetailModal({ isOpen, onClose, planId, promo, on
             </div>
           </div>
 
-          {/* Daftar Menu */}
+          {/* Menus List */}
           <div className="space-y-2">
             <div className="flex justify-between items-center">
-              <h4 className="text-xs font-bold text-muted-foreground tracking-wider uppercase">Daftar Menu Diskon</h4>
-              <span className="text-xs bg-muted px-2 py-0.5 rounded-full font-semibold">{promo.menus.length} Menu</span>
+              <h4 className="text-xs font-bold text-muted-foreground tracking-wider uppercase">Discounted Menus List</h4>
+              <span className="text-xs bg-muted px-2 py-0.5 rounded-full font-semibold">{promo.menus.length} Menus</span>
             </div>
 
             <div className="border rounded-xl overflow-hidden">
               <table className="w-full text-sm text-left">
                 <thead className="bg-muted/40 text-xs text-muted-foreground">
                   <tr>
-                    <th className="px-4 py-2.5 font-medium">Nama Menu</th>
-                    <th className="px-4 py-2.5 font-medium text-right">Harga Asli</th>
-                    <th className="px-4 py-2.5 font-medium text-center">Diskon</th>
-                    <th className="px-4 py-2.5 font-medium text-right">Harga Promo</th>
+                    <th className="px-4 py-2.5 font-medium">Menu Name</th>
+                    <th className="px-4 py-2.5 font-medium text-right">Original Price</th>
+                    <th className="px-4 py-2.5 font-medium text-center">Discount</th>
+                    <th className="px-4 py-2.5 font-medium text-right">Promo Price</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-border">
@@ -102,11 +110,11 @@ export default function DiscountDetailModal({ isOpen, onClose, planId, promo, on
             disabled={isDeleting}
           >
             <Trash2 className="w-4 h-4 mr-2" />
-            Hapus Promo
+            Delete Promo
           </Button>
           <Button type="button" onClick={() => { onClose(); onEdit(promo); }}>
             <Pencil className="w-4 h-4 mr-2" />
-            Edit Diskon
+            Edit Discount
           </Button>
         </DialogFooter>
       </DialogContent>
