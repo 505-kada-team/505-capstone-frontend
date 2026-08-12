@@ -76,12 +76,12 @@ export default function DiscountModal({ isOpen, onClose, plan, initialSelectedMe
     e.preventDefault();
     if (!plan?._id) return;
     if (!date?.from || !date?.to) {
-      toast.error('Pilih rentang waktu diskon terlebih dahulu');
+      toast.error('Please select a discount date range first');
       return;
     }
     const selectedMenuIds = Object.keys(selectedMenus).filter(id => selectedMenus[id]);
     if (selectedMenuIds.length === 0) {
-      toast.error('Pilih minimal satu menu untuk didiskon');
+      toast.error('Please select at least one menu to discount');
       return;
     }
     setIsSubmitting(true);
@@ -105,12 +105,12 @@ export default function DiscountModal({ isOpen, onClose, plan, initialSelectedMe
       });
 
       await Promise.all(promises);
-      toast.success('Aturan diskon berhasil disimpan');
+      toast.success('Discount rules successfully saved');
       onApply();
       onClose();
     } catch (err) {
       console.error(err);
-      toast.error('Terjadi kesalahan saat menyimpan diskon');
+      toast.error('An error occurred while saving discount');
     } finally {
       setIsSubmitting(false);
     }
@@ -128,27 +128,27 @@ export default function DiscountModal({ isOpen, onClose, plan, initialSelectedMe
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-xl">
         <DialogHeader>
-          <DialogTitle className="text-lg font-bold">
-            {editPromo ? 'Edit Aturan Diskon' : 'Tambah Aturan Diskon'}
+          <DialogTitle className="text-lg font-bold font-heading">
+            {editPromo ? 'Edit Discount Rules' : 'Add Discount Rules'}
           </DialogTitle>
         </DialogHeader>
 
         <form onSubmit={handleSubmit}>
           <div className="space-y-5 mt-2 max-h-[65vh] overflow-y-auto pr-1">
 
-            {/* Nama Promo + Rentang Waktu */}
+            {/* Promo Name + Date Range */}
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
-                <label className="text-sm font-semibold">Nama Promo</label>
+                <label className="text-sm font-semibold">Promo Name</label>
                 <Input
                   value={reason}
                   onChange={e => setReason(e.target.value)}
-                  placeholder="Masukkan nama promo"
+                  placeholder="Enter promo name"
                   required
                 />
               </div>
               <div className="space-y-1.5">
-                <label className="text-sm font-semibold">Rentang Waktu</label>
+                <label className="text-sm font-semibold">Date Range</label>
                 <Popover>
                   <PopoverTrigger asChild>
                     <Button
@@ -161,7 +161,7 @@ export default function DiscountModal({ isOpen, onClose, plan, initialSelectedMe
                           ? date.to
                             ? `${format(date.from, 'dd/MM/yy')} – ${format(date.to, 'dd/MM/yy')}`
                             : format(date.from, 'dd MMM yyyy')
-                          : 'Pilih tanggal'}
+                          : 'Pick a date'}
                       </span>
                     </Button>
                   </PopoverTrigger>
@@ -185,20 +185,20 @@ export default function DiscountModal({ isOpen, onClose, plan, initialSelectedMe
               </div>
             </div>
 
-            {/* Skema Diskon */}
+            {/* Discount Scheme */}
             <div className="space-y-3">
-              <label className="text-sm font-semibold block">Skema Diskon</label>
+              <label className="text-sm font-semibold block">Discount Scheme</label>
               <Tabs value={mode} onValueChange={setMode} className="w-full">
                 <TabsList className="grid w-full grid-cols-2">
-                  <TabsTrigger value="sama_rata">Sama Rata</TabsTrigger>
-                  <TabsTrigger value="beda_per_menu">Beda Per Menu</TabsTrigger>
+                  <TabsTrigger value="sama_rata">Flat Rate</TabsTrigger>
+                  <TabsTrigger value="beda_per_menu">Vary per Menu</TabsTrigger>
                 </TabsList>
               </Tabs>
 
               {mode === 'sama_rata' && (
                 <div className="flex gap-4 items-start bg-muted/20 p-3 rounded-xl border">
                   <div className="space-y-1.5 shrink-0">
-                    <label className="text-xs font-semibold text-muted-foreground">Besar Diskon</label>
+                    <label className="text-xs font-semibold text-muted-foreground">Discount Amount</label>
                     <div className="relative w-28">
                       <Input
                         type="number" min="1" max="100"
@@ -212,19 +212,19 @@ export default function DiscountModal({ isOpen, onClose, plan, initialSelectedMe
                   </div>
                   <div className="flex-1 bg-amber-500/10 text-amber-600 p-3 rounded-lg flex gap-2 items-start border border-amber-500/20 mt-5">
                     <Lightbulb className="w-4 h-4 shrink-0 mt-0.5" />
-                    <p className="text-xs leading-relaxed">Pastikan besaran diskon masih menutupi HPP agar plan tidak merugi.</p>
+                    <p className="text-xs leading-relaxed">Ensure the discount amount still covers the cost price (HPP) to avoid plan losses.</p>
                   </div>
                 </div>
               )}
             </div>
 
-            {/* Daftar Menu */}
+            {/* Menu List */}
             <div className="space-y-2">
               <div className="flex items-center justify-between">
-                <label className="text-sm font-semibold">Daftar Menu</label>
+                <label className="text-sm font-semibold">Menu List</label>
                 <div className="flex items-center space-x-2">
                   <Checkbox id="selectAll" checked={allSelected} onCheckedChange={toggleSelectAll} />
-                  <label htmlFor="selectAll" className="text-xs font-medium cursor-pointer select-none">Pilih Semua</label>
+                  <label htmlFor="selectAll" className="text-xs font-medium cursor-pointer select-none">Select All</label>
                 </div>
               </div>
 
@@ -268,9 +268,13 @@ export default function DiscountModal({ isOpen, onClose, plan, initialSelectedMe
           </div>
 
           <DialogFooter className="mt-2">
-            <Button type="button" variant="outline" onClick={onClose} disabled={isSubmitting}>Batal</Button>
-            <Button type="submit" disabled={isSubmitting}>
-              {isSubmitting ? 'Menyimpan...' : (editPromo ? 'Simpan Perubahan' : 'Tambah Diskon')}
+            <Button type="button" variant="outline" onClick={onClose} disabled={isSubmitting}>Cancel</Button>
+            <Button 
+              type="submit" 
+              disabled={isSubmitting}
+              className="bg-[#F97316] hover:bg-[#F97316]/90 text-white"
+            >
+              {isSubmitting ? 'Saving...' : (editPromo ? 'Save Changes' : 'Add Discount')}
             </Button>
           </DialogFooter>
         </form>

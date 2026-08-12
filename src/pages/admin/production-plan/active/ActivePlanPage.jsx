@@ -291,7 +291,7 @@ export default function ActivePlanPage() {
                 <SelectValue placeholder="Status" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">Semua Status</SelectItem>
+                <SelectItem value="all">All Statuses</SelectItem>
                 <SelectItem value="completed">Executed</SelectItem>
                 <SelectItem value="cancelled">Cancelled</SelectItem>
                 <SelectItem value="stopped">Stopped</SelectItem>
@@ -304,8 +304,8 @@ export default function ActivePlanPage() {
                 <SelectValue placeholder="Sort By" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="date_newest">Terbaru</SelectItem>
-                <SelectItem value="date_oldest">Terlama</SelectItem>
+                <SelectItem value="date_newest">Newest</SelectItem>
+                <SelectItem value="date_oldest">Oldest</SelectItem>
               </SelectContent>
             </Select>
           </div>

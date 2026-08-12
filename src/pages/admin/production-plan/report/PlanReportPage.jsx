@@ -171,7 +171,7 @@ export default function PlanReportPage() {
               <SelectValue placeholder="Status" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">Semua Status</SelectItem>
+              <SelectItem value="all">All Statuses</SelectItem>
               <SelectItem value="pending">Pending</SelectItem>
               <SelectItem value="approved">Approved</SelectItem>
               <SelectItem value="rejected">Rejected</SelectItem>
@@ -180,10 +180,10 @@ export default function PlanReportPage() {
 
           <Select value={filterCategory} onValueChange={setFilterCategory}>
             <SelectTrigger className="w-[160px] h-9 text-muted-foreground font-normal">
-              <SelectValue placeholder="Kategori" />
+              <SelectValue placeholder="Category" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">Semua Kategori</SelectItem>
+              <SelectItem value="all">All Categories</SelectItem>
               <SelectItem value="menu">Menu</SelectItem>
               <SelectItem value="ingredient">Ingredient</SelectItem>
             </SelectContent>
@@ -195,8 +195,8 @@ export default function PlanReportPage() {
               <SelectValue placeholder="Sort By" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="date_newest">Terbaru</SelectItem>
-              <SelectItem value="date_oldest">Terlama</SelectItem>
+              <SelectItem value="date_newest">Newest</SelectItem>
+              <SelectItem value="date_oldest">Oldest</SelectItem>
             </SelectContent>
           </Select>
         </div>

@@ -139,6 +139,14 @@ const sortItems = (items, sortBy) => {
       return sorted.sort(
         (a, b) => (a.lastCostBatch ?? Infinity) - (b.lastCostBatch ?? Infinity),
       );
+    case "newest":
+      return sorted.sort(
+        (a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0),
+      );
+    case "oldest":
+      return sorted.sort(
+        (a, b) => new Date(a.createdAt || 0) - new Date(b.createdAt || 0),
+      );
     default:
       return sorted;
   }
@@ -167,7 +175,7 @@ export default function InventoryPage() {
   // ── Filter state ──────────────────────────────────────────
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState("all");
-  const { sortBy, setSortBy } = useSortable("name_asc");
+  const { sortBy, setSortBy } = useSortable("newest");
   const [page, setPage] = useState(1);
 
   // ── Dialog state ──────────────────────────────────────────
@@ -322,12 +330,14 @@ export default function InventoryPage() {
               <SelectValue placeholder="Sort By" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="name_asc">Nama (A-Z)</SelectItem>
-              <SelectItem value="name_desc">Nama (Z-A)</SelectItem>
-              <SelectItem value="stock_high">Stok Tertinggi</SelectItem>
-              <SelectItem value="stock_low">Stok Terendah</SelectItem>
-              <SelectItem value="cost_high">Nilai Tertinggi</SelectItem>
-              <SelectItem value="cost_low">Nilai Terendah</SelectItem>
+              <SelectItem value="newest">Newest Added</SelectItem>
+              <SelectItem value="oldest">Oldest Added</SelectItem>
+              <SelectItem value="name_asc">Name (A-Z)</SelectItem>
+              <SelectItem value="name_desc">Name (Z-A)</SelectItem>
+              <SelectItem value="stock_high">Highest Stock</SelectItem>
+              <SelectItem value="stock_low">Lowest Stock</SelectItem>
+              <SelectItem value="cost_high">Highest Cost</SelectItem>
+              <SelectItem value="cost_low">Lowest Cost</SelectItem>
             </SelectContent>
           </Select>
         </div>

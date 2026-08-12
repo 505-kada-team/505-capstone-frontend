@@ -97,16 +97,18 @@ export default function RecipePage() {
               </SelectContent>
             </Select>
 
-            {/* Sort ini client-side, hanya untuk item di halaman saat ini */}
+            {/* Sort is client-side, only for items on the current page */}
             <Select value={filters.sort} onValueChange={setSort}>
               <SelectTrigger className="w-[160px] gap-2 h-9 text-muted-foreground font-normal">
                 <SelectValue placeholder="Sort By" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="name_asc">Nama (A-Z)</SelectItem>
-                <SelectItem value="name_desc">Nama (Z-A)</SelectItem>
-                <SelectItem value="cost_high">Modal Tertinggi</SelectItem>
-                <SelectItem value="cost_low">Modal Terendah</SelectItem>
+                <SelectItem value="newest">Newest Added</SelectItem>
+                <SelectItem value="oldest">Oldest Added</SelectItem>
+                <SelectItem value="name_asc">Name (A-Z)</SelectItem>
+                <SelectItem value="name_desc">Name (Z-A)</SelectItem>
+                <SelectItem value="cost_high">Highest Cost</SelectItem>
+                <SelectItem value="cost_low">Lowest Cost</SelectItem>
               </SelectContent>
             </Select>
           </div>
