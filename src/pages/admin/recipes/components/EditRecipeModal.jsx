@@ -43,7 +43,7 @@ export default function EditRecipeModal({
     return {
       name: recipe.name,
       description: recipe.description,
-      image: recipe.image,
+      image: recipe.image ?? undefined,
       sellingPrice: recipe.sellingPrice,
       ingredients: recipe.ingredients.map((ing) => ({
         inventoryId: ing.inventoryId,
@@ -64,20 +64,21 @@ export default function EditRecipeModal({
   }, [isOpen]);
 
   const onSubmit = async (data) => {
-    const { resolved, errors } = resolveIngredientsForSubmit(
-      data.ingredients,
-      inventoryOptions,
-    );
-    if (errors.length > 0) {
-      errors.forEach((e) =>
-        formState.form.setError(`ingredients.${e.index}.quantityNeeded`, {
-          message: e.message,
-        }),
-      );
-      toast.error("Ada bahan dengan unit yang tidak dikenali, cek kembali.");
-      return;
-    }
     try {
+      const { resolved, errors } = resolveIngredientsForSubmit(
+        data.ingredients,
+        inventoryOptions,
+      );
+      if (errors.length > 0) {
+        errors.forEach((e) =>
+          formState.form.setError(`ingredients.${e.index}.quantityNeeded`, {
+            message: e.message,
+          }),
+        );
+        toast.error("Ada bahan dengan unit yang tidak dikenali, cek kembali.");
+        return;
+      }
+
       const res = await updateRecipe(recipeId, {
         ...data,
         ingredients: resolved,
@@ -97,9 +98,17 @@ export default function EditRecipeModal({
           formState.form.setError(field, { message: e.message });
         });
       } else {
+        console.error("EditRecipeModal onSubmit error:", err);
         toast.error("Gagal memperbarui resep");
       }
     }
+  };
+
+  const onInvalid = (errors) => {
+    // Fallback supaya submit yang diblok oleh validasi RHF/Zod tidak diam
+    // total — ini biasanya penyebab "tombol save tidak bekerja tanpa error".
+    console.warn("Form validation blocked submit:", errors);
+    toast.error("Ada isian yang belum valid, cek kembali form-nya.");
   };
 
   if (!isOpen) return null;
@@ -119,7 +128,7 @@ export default function EditRecipeModal({
           </div>
         ) : (
           <form
-            onSubmit={formState.form.handleSubmit(onSubmit)}
+            onSubmit={formState.form.handleSubmit(onSubmit, onInvalid)}
             className="flex-1 flex flex-col min-h-0 overflow-hidden"
           >
             <div className="flex-1 overflow-y-auto lg:overflow-hidden p-6 min-h-0 flex flex-col">
