@@ -12,6 +12,9 @@ export default defineConfig({
     },
     // Force single React instance — mencegah "Invalid hook call" dari @base-ui/react
     // yang terjadi saat Base UI memuat copy React-nya sendiri terpisah dari app
-    dedupe: ['react', 'react-dom'],
+    dedupe: ['react', 'react-dom', 'react-is'],
+  },
+  optimizeDeps: {
+    include: ['recharts', 'react-is'],
   },
 })
