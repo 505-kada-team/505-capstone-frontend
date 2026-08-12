@@ -1,5 +1,5 @@
-import { useState, useEffect, useCallback } from 'react';
-import { RefreshCw, PlusCircle, Filter, ClipboardList } from 'lucide-react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
+import { RefreshCw, PlusCircle, ClipboardList } from 'lucide-react';
 import { toast } from 'sonner';
 
 import PageHeader from '@/components/shared/PageHeader';
@@ -7,6 +7,9 @@ import PlanListCard from '@/components/shared/PlanListCard';
 import PlanDetailPane from '@/pages/admin/production-plan/components/PlanDetailPane';
 import { Button } from '@/components/ui/button';
 import { getPlanList } from '@/services/api';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import Pagination from '@/components/shared/Pagination';
+import { usePagination } from '@/hooks/usePagination';
 
 // ─── Empty state for the right pane when no plan is selected ─────────────────
 function RightPaneEmpty() {
@@ -35,6 +38,27 @@ export default function PlanHistoryView({ onNavigateToCreate }) {
   const [plans, setPlans] = useState([]);
   const [isLoadingList, setIsLoadingList] = useState(false);
   const [selectedPlanId, setSelectedPlanId] = useState(null);
+  const [sortBy, setSortBy] = useState('date_newest');
+
+  const sortedPlans = useMemo(() => {
+    const sorted = [...plans];
+    if (sortBy === 'date_newest') {
+      return sorted.sort((a, b) => new Date(b.createdAt || b.startDate || 0) - new Date(a.createdAt || a.startDate || 0));
+    }
+    if (sortBy === 'date_oldest') {
+      return sorted.sort((a, b) => new Date(a.createdAt || a.startDate || 0) - new Date(b.createdAt || b.startDate || 0));
+    }
+    return sorted;
+  }, [plans, sortBy]);
+
+  const { currentPage, totalPages, paginatedItems: paginatedPlans, setPage, resetPage } = usePagination(
+    sortedPlans,
+    5
+  );
+
+  useEffect(() => {
+    resetPage();
+  }, [sortBy, plans, resetPage]);
 
   // ── Fetch plan list ──────────────────────────────────────────────────────
   const fetchPlans = useCallback(async (showLoading = true) => {
@@ -105,14 +129,19 @@ export default function PlanHistoryView({ onNavigateToCreate }) {
           {/* List header */}
           <div className="flex items-center justify-between">
             <h2 className="text-base font-semibold font-heading">Plan History</h2>
-            <Button variant="ghost" size="sm" className="gap-1.5 text-muted-foreground text-xs h-7 px-2">
-              <Filter className="w-3.5 h-3.5" />
-              Filter
-            </Button>
+            <Select value={sortBy} onValueChange={setSortBy}>
+              <SelectTrigger className="w-[100px] h-7 gap-1 text-muted-foreground text-xs border-none bg-transparent hover:bg-muted font-normal px-2">
+                <SelectValue placeholder="Sort" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="date_newest">Newest</SelectItem>
+                <SelectItem value="date_oldest">Oldest</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
 
           {/* List content */}
-          <div className="flex flex-col gap-2 overflow-y-auto pr-1">
+          <div className="flex flex-col gap-2 overflow-y-auto pr-1 flex-1">
             {isLoadingList ? (
               <ListSkeleton />
             ) : plans.length === 0 ? (
@@ -121,7 +150,7 @@ export default function PlanHistoryView({ onNavigateToCreate }) {
                 <p className="text-xs text-center">No plans found</p>
               </div>
             ) : (
-              plans.map((plan) => (
+              paginatedPlans.map((plan) => (
                 <PlanListCard
                   key={plan._id}
                   plan={plan}
@@ -131,7 +160,18 @@ export default function PlanHistoryView({ onNavigateToCreate }) {
               ))
             )}
           </div>
+
+          {paginatedPlans.length > 0 && (
+            <Pagination
+              currentPage={currentPage}
+              totalPage={totalPages}
+              totalData={sortedPlans.length}
+              limit={4}
+              onPageChange={setPage}
+            />
+          )}
         </aside>
+
 
         {/* ── Divider ──────────────────────────────────────────────────── */}
         <div className="w-px bg-border shrink-0 self-stretch" />
