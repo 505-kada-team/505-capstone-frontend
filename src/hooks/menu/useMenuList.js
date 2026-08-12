@@ -25,11 +25,12 @@ const SORTERS = {
 
 export function useMenuList({
   initialSearch = "",
-  initialStatus = "all",
+  initialIncludeDeleted = false,
+  // Ubah default sort menjadi "newest" agar otomatis menampilkan yang terbaru di awal
   initialSort = "newest",
 } = {}) {
   const [search, setSearch] = useState(initialSearch);
-  const [status, setStatus] = useState(initialStatus);
+  const [includeDeleted, setIncludeDeleted] = useState(initialIncludeDeleted);
   const [sort, setSort] = useState(initialSort);
   const [page, setPageState] = useState(1);
 
@@ -42,28 +43,10 @@ export function useMenuList({
     setIsLoading(true);
     setError(null);
     try {
-      // Map status to includeDeleted
-      const apiParams = { ...params };
-      if (apiParams.status === 'all' || apiParams.status === 'archived') {
-        apiParams.includeDeleted = true;
-      } else {
-        apiParams.includeDeleted = false;
-      }
-      delete apiParams.status; // Remove status from apiParams just in case
-
-      const res = await menuApi.list(toGetMenusParams(apiParams));
+      const res = await menuApi.list(toGetMenusParams(params));
       if (res.success) {
-        let fetchedData = (res.data ?? []).map(mapMenuListItem);
-        
-        // If they explicitly want ONLY archived, and backend returned all, we might need to client-side filter
-        // But since we can't reliably paginate that, we'll just show what the backend returns.
-        // Actually, we can filter it here, though it might reduce items per page.
-        if (params.status === 'archived') {
-          fetchedData = fetchedData.filter(item => item.status !== 'active');
-        }
-
-        setRawRecipes(fetchedData);
-        setPagination(mapPagination(res.pagination ?? res.meta?.pagination));
+        setRawRecipes((res.data ?? []).map(mapMenuListItem));
+        setPagination(mapPagination(res.pagination));
       }
     } catch (err) {
       setError(
@@ -74,16 +57,18 @@ export function useMenuList({
     }
   }, []);
 
-  // Hanya search & status yang trigger request baru ke backend.
+  // Hanya search & includeDeleted yang trigger request baru ke backend.
   useEffect(() => {
-    setPageState(1);
-    const timeoutId = setTimeout(() => {
-      fetchList({ page: 1, limit: DEFAULT_LIMIT, search, status });
-    }, 300);
-
-    return () => clearTimeout(timeoutId);
+    const delay = setTimeout(
+      () => {
+        setPageState(1);
+        fetchList({ page: 1, limit: DEFAULT_LIMIT, search, includeDeleted });
+      },
+      search ? 300 : 0,
+    );
+    return () => clearTimeout(delay);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [search, status]);
+  }, [search, includeDeleted]);
 
   const goToPage = useCallback(
     (newPage) => {
@@ -93,15 +78,15 @@ export function useMenuList({
         page: newPage,
         limit: DEFAULT_LIMIT,
         search,
-        status,
+        includeDeleted,
       });
     },
-    [pagination, search, status, fetchList],
+    [pagination, search, includeDeleted, fetchList],
   );
 
   const refetch = useCallback(
-    () => fetchList({ page, limit: DEFAULT_LIMIT, search, status }),
-    [page, search, status, fetchList],
+    () => fetchList({ page, limit: DEFAULT_LIMIT, search, includeDeleted }),
+    [page, search, includeDeleted, fetchList],
   );
 
   const recipes = useMemo(() => {
@@ -113,13 +98,13 @@ export function useMenuList({
   return {
     recipes,
     pagination,
+    filters: { search, includeDeleted, sort, page, limit: DEFAULT_LIMIT },
     isLoading,
     error,
-    filters: { search, status, sort },
     setSearch,
-    setStatus,
+    setIncludeDeleted,
     setSort,
-    goToPage,
+    setPage: goToPage,
     refetch,
   };
 }

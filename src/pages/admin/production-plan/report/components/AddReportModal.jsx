@@ -8,14 +8,14 @@ export default function AddReportModal({ open, onClose, onRefresh }) {
     try {
       const res = await createPlanReport(payload);
       if (res.data?.success) {
-        toast.success(res.data.message || 'Report successfully created');
+        toast.success(res.data.message || 'Laporan berhasil dibuat');
         onRefresh();
         onClose();
       } else {
-        toast.error(res.data?.message || 'Failed to create report');
+        toast.error(res.data?.message || 'Gagal membuat laporan');
       }
     } catch (err) {
-      toast.error(err.response?.data?.message || 'Failed to connect to server');
+      toast.error(err.response?.data?.message || 'Gagal menghubungi server');
     }
   };
 
@@ -23,9 +23,9 @@ export default function AddReportModal({ open, onClose, onRefresh }) {
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[550px]">
         <DialogHeader>
-          <DialogTitle className="text-lg font-bold font-heading">Add Incident Report</DialogTitle>
+          <DialogTitle>Tambah Laporan Insiden</DialogTitle>
           <DialogDescription>
-            Record raw material or menu losses that occurred during production.
+            Catat kerugian bahan baku atau menu yang terjadi selama produksi.
           </DialogDescription>
         </DialogHeader>
         <PlanReportForm onSubmit={handleSubmit} />

@@ -8,7 +8,6 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogFooter,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -84,7 +83,7 @@ export default function AddInventoryModal({ open, onClose, onSuccess }) {
         if (!isOpen) onClose();
       }}
     >
-      <DialogContent className="sm:max-w-md" id="add-inventory-dialog">
+      <DialogContent className="max-w-[500px] p-6" id="add-inventory-dialog">
         <DialogHeader>
           <DialogTitle className="font-heading text-xl font-semibold">
             Add New Inventory Item
@@ -95,7 +94,7 @@ export default function AddInventoryModal({ open, onClose, onSuccess }) {
           {/* Item Name */}
           <div className="space-y-1.5">
             <Label htmlFor="inv-name" className="text-sm font-medium">
-              Item Name <span className="text-destructive">*</span>
+              Nama Item <span className="text-destructive">*</span>
             </Label>
             <Input
               id="inv-name"
@@ -113,7 +112,7 @@ export default function AddInventoryModal({ open, onClose, onSuccess }) {
           {/* Item Code */}
           <div className="space-y-1.5">
             <Label htmlFor="inv-code" className="text-sm font-medium">
-              Item Code <span className="text-destructive">*</span>
+              Kode Item <span className="text-destructive">*</span>
             </Label>
             <Input
               id="inv-code"
@@ -187,7 +186,7 @@ export default function AddInventoryModal({ open, onClose, onSuccess }) {
           {/* Description */}
           <div className="space-y-1.5">
             <Label htmlFor="inv-desc" className="text-sm font-medium">
-              Description
+              Deskripsi
             </Label>
             <Textarea
               id="inv-desc"
@@ -206,25 +205,26 @@ export default function AddInventoryModal({ open, onClose, onSuccess }) {
             </div>
           )}
 
-          <DialogFooter className="mt-2">
+          <div className="flex w-full justify-end gap-3 pt-2">
             <Button
               id="add-inventory-cancel"
               type="button"
               variant="outline"
               onClick={onClose}
               disabled={isCreating}
+              className="px-6"
             >
-              Cancel
+              Batal
             </Button>
             <Button
               id="add-inventory-submit"
               type="submit"
               disabled={isCreating}
-              className="bg-[#F97316] text-white hover:bg-[#F97316]/90"
+              className="px-6 bg-[#F97316] text-white hover:bg-[#F97316]/90"
             >
-              {isCreating ? "Saving..." : "Save"}
+              {isCreating ? "Menyimpan..." : "Simpan"}
             </Button>
-          </DialogFooter>
+          </div>
         </form>
       </DialogContent>
     </Dialog>

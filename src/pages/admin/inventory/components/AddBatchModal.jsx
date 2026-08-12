@@ -8,7 +8,6 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogFooter,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -62,7 +61,7 @@ export default function AddBatchModal({
   const onSubmit = async (data) => {
     if (parentInventory?.category === "ingredients" && !data.expired) {
       setError("expired", {
-        message: "Expiry date is required for ingredients category",
+        message: "Kadaluarsa wajib diisi untuk kategori ingredients",
       });
       return;
     }
@@ -85,9 +84,9 @@ export default function AddBatchModal({
         if (!isOpen) onClose();
       }}
     >
-      <DialogContent className="sm:max-w-sm" id="add-batch-dialog">
+      <DialogContent className="max-w-[425px] p-6" id="add-batch-dialog">
         <DialogHeader>
-          <DialogTitle className="font-heading text-lg font-bold">
+          <DialogTitle className="font-heading text-xl font-semibold">
             Add New Inventory Batch
           </DialogTitle>
         </DialogHeader>
@@ -95,7 +94,7 @@ export default function AddBatchModal({
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6 pt-2">
           {/* Readonly Item Name */}
           <div className="space-y-1.5">
-            <Label className="text-sm font-medium">Item Name</Label>
+            <Label className="text-sm font-medium">Nama Item</Label>
             <Input
               value={parentInventory.name}
               disabled
@@ -105,7 +104,7 @@ export default function AddBatchModal({
               <span className="inline-block w-3 h-3 rounded-full border border-current opacity-50 flex items-center justify-center text-[8px]">
                 i
               </span>
-              Category:{" "}
+              Kategori:{" "}
               {parentInventory.category === "packaging"
                 ? "Packaging"
                 : "Ingredient"}
@@ -116,7 +115,7 @@ export default function AddBatchModal({
             {/* Quantity */}
             <div className="space-y-1.5 relative">
               <Label htmlFor="batch-qty" className="text-sm font-medium">
-                Quantity <span className="text-destructive">*</span>
+                Jumlah <span className="text-destructive">*</span>
               </Label>
               <div className="relative">
                 <Input
@@ -144,7 +143,7 @@ export default function AddBatchModal({
             {/* Cost Price */}
             <div className="space-y-1.5 relative">
               <Label htmlFor="batch-cost" className="text-sm font-medium">
-                Price per Unit <span className="text-destructive">*</span>
+                Harga per Unit <span className="text-destructive">*</span>
               </Label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
@@ -173,7 +172,7 @@ export default function AddBatchModal({
           {/* Expired Date */}
           <div className="space-y-1.5">
             <Label htmlFor="batch-expired" className="text-sm font-medium">
-              Expiry Date{" "}
+              Kadaluarsa{" "}
               {parentInventory.category === "ingredients" && (
                 <span className="text-destructive">*</span>
               )}
@@ -194,7 +193,7 @@ export default function AddBatchModal({
             />
             {isPackaging && (
               <p className="text-xs text-muted-foreground italic">
-                Packaging items do not require an expiry date.
+                Item packaging tidak memerlukan tanggal kadaluarsa.
               </p>
             )}
             {errors.expired && !isPackaging && (
@@ -212,25 +211,26 @@ export default function AddBatchModal({
             </div>
           )}
 
-          <DialogFooter className="mt-2">
+          <div className="flex w-full justify-end gap-3 pt-2">
             <Button
               id="add-batch-cancel"
               type="button"
               variant="outline"
               onClick={onClose}
               disabled={isAddingBatch}
+              className="px-6"
             >
-              Cancel
+              Batal
             </Button>
             <Button
               id="add-batch-submit"
               type="submit"
               disabled={isAddingBatch}
-              className="bg-[#F97316] text-white hover:bg-[#F97316]/90"
+              className="px-6 bg-[#F97316] text-white hover:bg-[#F97316]/90"
             >
-              {isAddingBatch ? "Saving..." : "Save"}
+              {isAddingBatch ? "Menyimpan..." : "Simpan"}
             </Button>
-          </DialogFooter>
+          </div>
         </form>
       </DialogContent>
     </Dialog>
