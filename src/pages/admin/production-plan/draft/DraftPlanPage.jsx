@@ -34,13 +34,15 @@ export default function DraftPlanPage() {
   useEffect(() => {
     if (step === 2 && availableMenus.length === 0) {
       getMenuDropdown().then(res => {
-        // Handle both raw API envelope and mapped response
-        const data = res.data?.data ?? res.data;
+        // getMenuDropdown returns Axios response: { data: envelope }
+        // envelope = { success: true, data: [...] }
+        const envelope = res.data;
+        const data = envelope?.data ?? res.data;
         if (Array.isArray(data)) {
-          // Normalize: ensure each item has _id field
           setAvailableMenus(data.map(m => ({
             ...m,
             _id: m._id || m.id,
+            name: m.name || m.menuName || 'Unnamed Menu',
           })));
         }
       }).catch(() => toast.error('Failed to load menu'));
@@ -50,6 +52,10 @@ export default function DraftPlanPage() {
   const handleNext = () => {
     if (!planName || !startDate || !endDate) {
       toast.error('Please complete plan name and period');
+      return;
+    }
+    if (new Date(endDate) < new Date(startDate)) {
+      toast.error('End date cannot be before start date');
       return;
     }
     setStep(2);
@@ -126,8 +132,9 @@ export default function DraftPlanPage() {
       } else {
         toast.error(res?.message || 'Failed to create draft plan');
       }
-    } catch {
-      toast.error('System error');
+    } catch (err) {
+      const msg = err?.response?.data?.message || err?.message || 'System error';
+      toast.error(msg);
     } finally {
       setIsSubmitting(false);
     }
@@ -178,6 +185,7 @@ export default function DraftPlanPage() {
                     type="date"
                     value={startDate}
                     onChange={(e) => setStartDate(e.target.value)}
+                    min={new Date().toISOString().split('T')[0]}
                   />
                 </div>
                 <div className="space-y-2">
@@ -186,6 +194,7 @@ export default function DraftPlanPage() {
                     type="date"
                     value={endDate}
                     onChange={(e) => setEndDate(e.target.value)}
+                    min={startDate || new Date().toISOString().split('T')[0]}
                   />
                 </div>
               </div>
