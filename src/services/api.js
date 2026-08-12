@@ -386,7 +386,7 @@ export default api;
 // ---------------------------------------------------------------------------
 // Flag mock global — ubah ke false saat backend sudah siap
 // ---------------------------------------------------------------------------
-const USE_MOCK = true;
+const USE_MOCK = false;
 
 // Helper untuk sorting dan paginasi mock data
 const processMockList = (mockObj, params) => {
