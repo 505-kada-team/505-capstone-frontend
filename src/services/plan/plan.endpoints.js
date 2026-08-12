@@ -10,6 +10,7 @@
  */
 
 const BASE = "/plan";
+const REPORT_BASE = '/plan-reports';
 
 export const planEndpoints = {
   // A1 - POST /plan
@@ -41,4 +42,13 @@ export const planEndpoints = {
 
   // A10 - DELETE /plan/:id/menus/:menuId/discount
   removeDiscount: (id, menuId) => `${BASE}/${id}/menus/${menuId}/discount`,
+
+  // =========================
+  // Plan Report
+  // =========================
+
+  createReport: () => REPORT_BASE,
+  listReports: () => REPORT_BASE,
+  reviewReport: (reportId) => `${REPORT_BASE}/${reportId}/review`,
+  addReportInventory: (reportId) => `${REPORT_BASE}/${reportId}/add-inventory`,
 };
