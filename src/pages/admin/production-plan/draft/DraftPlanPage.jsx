@@ -303,7 +303,12 @@ export default function DraftPlanPage() {
                   <label className="text-sm font-medium text-foreground capitalize">Choose Menu</label>
                   <Select value={selectedMenu} onValueChange={setSelectedMenu}>
                     <SelectTrigger className="w-full">
-                      <SelectValue placeholder="Select menu item..." />
+                      <SelectValue placeholder="Select menu item...">
+                        {(value) => {
+                          const found = availableMenus.find(m => m._id === value);
+                          return found ? found.name : value;
+                        }}
+                      </SelectValue>
                     </SelectTrigger>
                     <SelectContent>
                       {availableMenus.map(m => (
