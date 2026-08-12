@@ -1,75 +1,95 @@
-import { useState, useEffect, useCallback } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { Plus, TriangleAlert, ArrowLeft } from 'lucide-react';
+import { useEffect, useState } from "react";
+import { useParams, useNavigate } from "react-router-dom";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { Plus, TriangleAlert, ArrowLeft } from "lucide-react";
 
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 
-import DataTable from '@/components/shared/DataTable';
-import StatusBadge from '@/components/shared/StatusBadge';
-import ConfirmDialog from '@/components/shared/ConfirmDialog';
-import AddBatchModal from './components/AddBatchModal';
+import DataTable from "@/components/shared/DataTable";
+import StatusBadge from "@/components/shared/StatusBadge";
+import ConfirmDialog from "@/components/shared/ConfirmDialog";
+import AddBatchModal from "./components/AddBatchModal";
 
-import { getInventoryDetail, updateInventory, archiveSubInventory, archiveInventory } from '@/services/api';
-import { updateInventorySchema } from '@/schemas/inventorySchema';
+import { useInventoryDetail } from "@/hooks/inventory/useInventoryDetail";
+import { useInventoryMutations } from "@/hooks/inventory/useInventoryMutations";
+import { useBatchMutations } from "@/hooks/inventory/useBatchMutations";
+import { updateInventorySchema } from "@/schemas/inventorySchema";
 
 const formatCurrency = (amount) => {
-  if (amount === null || amount === undefined) return '—';
-  return new Intl.NumberFormat('id-ID', {
-    style: 'currency',
-    currency: 'IDR',
+  if (amount === null || amount === undefined) return "—";
+  return new Intl.NumberFormat("id-ID", {
+    style: "currency",
+    currency: "IDR",
     minimumFractionDigits: 0,
   }).format(amount);
 };
 
 const formatQuantity = (quantity, unit) => {
-  if (quantity === null || quantity === undefined) return '—';
-  if (unit === 'gr' && quantity >= 1000) {
-    const val = (quantity / 1000).toLocaleString('id-ID', { maximumFractionDigits: 2 });
+  if (quantity === null || quantity === undefined) return "—";
+  if (unit === "gr" && quantity >= 1000) {
+    const val = (quantity / 1000).toLocaleString("id-ID", {
+      maximumFractionDigits: 2,
+    });
     return `${val} Kg`;
   }
-  if (unit === 'ml' && quantity >= 1000) {
-    const val = (quantity / 1000).toLocaleString('id-ID', { maximumFractionDigits: 2 });
+  if (unit === "ml" && quantity >= 1000) {
+    const val = (quantity / 1000).toLocaleString("id-ID", {
+      maximumFractionDigits: 2,
+    });
     return `${val} Ltr`;
   }
-  const uMap = { gr: 'gr', ml: 'ml', pcs: 'pcs' };
-  return `${quantity.toLocaleString('id-ID')} ${uMap[unit] ?? unit}`;
+  const uMap = { gr: "gr", ml: "ml", pcs: "pcs" };
+  return `${quantity.toLocaleString("id-ID")} ${uMap[unit] ?? unit}`;
 };
 
-const formatDate = (dateString) => {
-  if (!dateString) return '—';
-  try {
-    const d = new Date(dateString);
-    return new Intl.DateTimeFormat('id-ID', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric'
-    }).format(d);
-  } catch {
-    return dateString;
-  }
+// row.inDate / row.expired sudah Date object hasil mapBatch() — format
+// langsung, gak perlu `new Date(...)` lagi.
+const formatDate = (date) => {
+  if (!date) return "—";
+  return new Intl.DateTimeFormat("id-ID", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+  }).format(date);
 };
 
 export default function DetailInventoryPage() {
   const { id: inventoryId } = useParams();
   const navigate = useNavigate();
 
-  const [data, setData] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
-  
-  const [submittingEdit, setSubmittingEdit] = useState(false);
-  const [showAddBatch, setShowAddBatch] = useState(false);
-  
-  const [deleteBatchTarget, setDeleteBatchTarget] = useState(null);
-  const [deletingBatch, setDeletingBatch] = useState(false);
+  const {
+    inventory: data,
+    isLoading: loading,
+    error: detailError,
+    fetchInventoryDetail,
+    refetch,
+  } = useInventoryDetail();
 
+  const {
+    updateInventory,
+    isUpdating: submittingEdit,
+    updateError,
+    resetUpdateError,
+    archiveInventory,
+    isArchiving: archivingItem,
+    archiveError,
+    resetArchiveError,
+  } = useInventoryMutations();
+
+  const {
+    archiveBatch,
+    isArchivingBatch: deletingBatch,
+    archiveBatchError,
+    resetArchiveBatchError,
+  } = useBatchMutations();
+
+  const [showAddBatch, setShowAddBatch] = useState(false);
+  const [deleteBatchTarget, setDeleteBatchTarget] = useState(null);
   const [archiveItemTarget, setArchiveItemTarget] = useState(false);
-  const [archivingItem, setArchivingItem] = useState(false);
 
   const {
     register,
@@ -78,120 +98,89 @@ export default function DetailInventoryPage() {
     formState: { errors, isDirty },
   } = useForm({
     resolver: zodResolver(updateInventorySchema),
-    defaultValues: { nameInventory: '', description: '' },
+    defaultValues: { name: "", description: "" },
   });
 
-  const fetchData = useCallback(async () => {
-    if (!inventoryId) return;
-    setLoading(true);
-    setError('');
-    try {
-      const res = await getInventoryDetail(inventoryId);
-      const inventory = res.data.data;
-      setData(inventory);
-      reset({
-        nameInventory: inventory.nameInventory,
-        description: inventory.description || '',
-      });
-    } catch (err) {
-      setError(err?.response?.data?.message || 'Gagal memuat detail inventory.');
-    } finally {
-      setLoading(false);
-    }
-  }, [inventoryId, reset]);
+  useEffect(() => {
+    if (inventoryId) fetchInventoryDetail(inventoryId);
+  }, [inventoryId, fetchInventoryDetail]);
 
   useEffect(() => {
-    // eslint-disable-next-line
-    fetchData();
-  }, [fetchData]);
+    if (data) {
+      reset({ name: data.name, description: data.description || "" });
+    }
+  }, [data, reset]);
+
+  const error = detailError || updateError || archiveError || archiveBatchError;
 
   const handleEditSubmit = async (formData) => {
     if (!data) return;
-    setSubmittingEdit(true);
-    setError('');
     try {
       await updateInventory(inventoryId, formData);
-      fetchData();
-    } catch (err) {
-      setError(err?.response?.data?.message || 'Gagal memperbarui inventory.');
-    } finally {
-      setSubmittingEdit(false);
+      refetch();
+    } catch {
+      // updateError sudah di-set di dalam hook
     }
   };
 
   const handleDeleteBatch = async () => {
     if (!deleteBatchTarget) return;
-    setDeletingBatch(true);
     try {
-      await archiveSubInventory(deleteBatchTarget._id, {
-        deletedBy: 'Admin', // default
-        reason: 'Dihapus manual dari form detail',
-      });
+      await archiveBatch(deleteBatchTarget.id);
       setDeleteBatchTarget(null);
-      fetchData();
-    } catch (err) {
-      console.error(err);
-      setError('Gagal menghapus batch.');
-    } finally {
-      setDeletingBatch(false);
+      refetch();
+    } catch {
+      // archiveBatchError sudah di-set di dalam hook
     }
   };
 
   const handleArchiveItem = async () => {
-    setArchivingItem(true);
     try {
       await archiveInventory(inventoryId);
-      navigate('/admin/inventory', { replace: true });
-    } catch (err) {
-      console.error(err);
-      setError('Gagal mengarsipkan item.');
+      navigate("/admin/inventory", { replace: true });
+    } catch {
+      // archiveError sudah di-set di dalam hook
     } finally {
-      setArchivingItem(false);
       setArchiveItemTarget(false);
     }
   };
 
   const columns = [
     {
-      key: 'inDate',
-      header: 'Diterima',
-      cellClass: 'font-mono text-xs',
+      key: "inDate",
+      header: "Diterima",
+      cellClass: "font-mono text-xs",
       render: (row) => formatDate(row.inDate),
     },
     {
-      key: 'createdAt',
-      header: 'Dibuat',
-      cellClass: 'font-mono text-xs text-muted-foreground',
-      render: (row) => formatDate(row.createdAt || row.inDate),
-    },
-    {
-      key: 'costPrices',
-      header: 'Harga per Unit',
-      cellClass: 'font-mono text-sm',
+      key: "costPrices",
+      header: "Harga per Unit",
+      cellClass: "font-mono text-sm",
       render: (row) => formatCurrency(row.costPrices),
     },
     {
-      key: 'quantity',
-      header: 'Jumlah',
-      cellClass: 'font-mono text-sm',
+      key: "quantity",
+      header: "Jumlah",
+      cellClass: "font-mono text-sm",
       render: (row) => formatQuantity(row.quantity, data?.unit),
     },
     {
-      key: 'expired',
-      header: 'Kadaluarsa',
-      cellClass: 'font-mono text-xs',
-      render: (row) => data?.category === 'packaging' ? '—' : formatDate(row.expired),
+      key: "expired",
+      header: "Kadaluarsa",
+      cellClass: "font-mono text-xs",
+      render: (row) =>
+        data?.category === "packaging" ? "—" : formatDate(row.expired),
     },
     {
-      key: 'status',
-      header: 'Status',
+      key: "status",
+      header: "Status",
       render: (row) => <StatusBadge variant={row.status} />,
     },
     {
-      key: 'aksi',
-      header: 'Aksi',
-      headerClass: 'text-right',
-      cellClass: 'text-right',
+      key: "aksi",
+      header: "Aksi",
+      headerClass: "text-right",
+      cellClass: "text-right",
       render: (row) => (
         <Button
           variant="ghost"
@@ -202,22 +191,20 @@ export default function DetailInventoryPage() {
           Hapus
         </Button>
       ),
-    }
+    },
   ];
 
   return (
     <div className="space-y-6">
-      {/* Header */}
       <div className="flex items-center gap-4">
-        <Button 
-          variant="link" 
-          size="lg" 
-          onClick={() => navigate('/admin/inventory')}
+        <Button
+          variant="link"
+          size="lg"
+          onClick={() => navigate("/admin/inventory")}
           className="text-[#F97316] hover:text-[#F97316]/80 shrink-0"
         >
           <ArrowLeft size={18} /> Back
         </Button>
-        
       </div>
 
       {error && (
@@ -228,41 +215,56 @@ export default function DetailInventoryPage() {
       )}
 
       <div>
-          <h3 className="font-heading text-lg font-bold">Inventory Item Detail</h3>
-        </div>
+        <h3 className="font-heading text-lg font-bold">
+          Inventory Item Detail
+        </h3>
+      </div>
 
       {loading && !data ? (
-        <div className="p-12 text-center text-muted-foreground bg-card rounded-lg border border-border">Memuat data...</div>
+        <div className="p-12 text-center text-muted-foreground bg-card rounded-lg border border-border">
+          Memuat data...
+        </div>
       ) : data ? (
         <div className="bg-card rounded-lg border border-border p-6 shadow-sm">
           <form onSubmit={handleSubmit(handleEditSubmit)} className="space-y-6">
-            
-            {/* Top Form Section */}
             <div className="grid grid-cols-12 gap-4">
               <div className="col-span-6 space-y-1.5">
-                <Label htmlFor="edit-name" className="text-sm text-muted-foreground font-normal">
+                <Label
+                  htmlFor="edit-name"
+                  className="text-sm text-muted-foreground font-normal"
+                >
                   Item Name
                 </Label>
                 <Input
                   id="edit-name"
-                  {...register('nameInventory')}
-                  aria-invalid={!!errors.nameInventory}
+                  {...register("name")}
+                  aria-invalid={!!errors.name}
                   className="bg-transparent border-border"
                 />
-                {errors.nameInventory && <p className="text-xs text-destructive">{errors.nameInventory.message}</p>}
+                {errors.name && (
+                  <p className="text-xs text-destructive">
+                    {errors.name.message}
+                  </p>
+                )}
               </div>
-              
+
               <div className="col-span-4 space-y-1.5">
-                <Label className="text-sm text-muted-foreground font-normal">Category</Label>
+                <Label className="text-sm text-muted-foreground font-normal">
+                  Category
+                </Label>
                 <Input
-                  value={data.category === 'packaging' ? 'Packaging' : 'Ingredient'}
+                  value={
+                    data.category === "packaging" ? "Packaging" : "Ingredient"
+                  }
                   disabled
                   className="bg-muted text-muted-foreground border-border"
                 />
               </div>
-              
+
               <div className="col-span-2 space-y-1.5">
-                <Label className="text-sm text-muted-foreground font-normal">Unit</Label>
+                <Label className="text-sm text-muted-foreground font-normal">
+                  Unit
+                </Label>
                 <Input
                   value={data.unit}
                   disabled
@@ -272,21 +274,25 @@ export default function DetailInventoryPage() {
             </div>
 
             <div className="space-y-1.5">
-              <Label htmlFor="edit-desc" className="text-sm text-muted-foreground font-normal">Description</Label>
+              <Label
+                htmlFor="edit-desc"
+                className="text-sm text-muted-foreground font-normal"
+              >
+                Description
+              </Label>
               <Textarea
                 id="edit-desc"
-                {...register('description')}
+                {...register("description")}
                 rows={3}
                 className="bg-transparent border-border resize-none"
               />
             </div>
 
-            {/* Action Buttons for Form */}
             <div className="flex justify-between items-center pt-2">
-              <Button 
+              <Button
                 type="button"
-                variant="outline" 
-                className="text-destructive hover:bg-destructive/10 hover:text-destructive h-9" 
+                variant="outline"
+                className="text-destructive hover:bg-destructive/10 hover:text-destructive h-9"
                 onClick={() => setArchiveItemTarget(true)}
               >
                 Archive Item
@@ -305,26 +311,25 @@ export default function DetailInventoryPage() {
                   disabled={!isDirty || submittingEdit}
                   className="bg-[#F97316] text-white hover:bg-[#F97316]/90" // brand orange
                 >
-                  {submittingEdit ? 'Saving...' : 'Save Changes'}
+                  {submittingEdit ? "Saving..." : "Save Changes"}
                 </Button>
               </div>
             </div>
-
           </form>
 
-          {/* Batch Table Section */}
           <div className="mt-12 space-y-3">
-            <h3 className="font-heading text-lg font-bold">Inventory Batches</h3>
+            <h3 className="font-heading text-lg font-bold">
+              Inventory Batches
+            </h3>
             <div className="rounded-lg border border-border shadow-sm overflow-hidden bg-background">
               <DataTable
                 columns={columns}
-                data={data.subInventories || []}
+                data={data.batches || []}
                 loading={false}
                 emptyMessage="No inventory batches found for this item."
               />
             </div>
           </div>
-
         </div>
       ) : null}
 
@@ -332,12 +337,15 @@ export default function DetailInventoryPage() {
         open={showAddBatch}
         onClose={() => setShowAddBatch(false)}
         parentInventory={data}
-        onSuccess={fetchData}
+        onSuccess={refetch}
       />
 
       <ConfirmDialog
         open={!!deleteBatchTarget}
-        onClose={() => setDeleteBatchTarget(null)}
+        onClose={() => {
+          setDeleteBatchTarget(null);
+          resetArchiveBatchError();
+        }}
         onConfirm={handleDeleteBatch}
         title="Delete Batch?"
         description="This batch will be archived. Are you sure?"
@@ -347,10 +355,13 @@ export default function DetailInventoryPage() {
 
       <ConfirmDialog
         open={archiveItemTarget}
-        onClose={() => setArchiveItemTarget(false)}
+        onClose={() => {
+          setArchiveItemTarget(false);
+          resetArchiveError();
+        }}
         onConfirm={handleArchiveItem}
         title="Archive Item?"
-        description={`Item "${data?.nameInventory}" will be archived permanently. Ensure stock is 0.`}
+        description={`Item "${data?.name}" will be archived permanently. Ensure stock is 0.`}
         confirmLabel="Archive"
         loading={archivingItem}
       />

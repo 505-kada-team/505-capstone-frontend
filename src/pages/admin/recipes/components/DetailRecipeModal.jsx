@@ -1,4 +1,3 @@
-import { useState, useEffect, useRef, useCallback } from "react";
 import {
   Dialog,
   DialogContent,
@@ -7,10 +6,11 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { getMenuDetail } from "@/services/api";
-import { formatCurrency } from "@/lib/FormatCurrency";
+import { formatCurrency } from "@/lib/formatCurrency";
 import { TriangleAlert, Trash2, Edit2 } from "lucide-react";
+import { useMenuDetail } from "@/hooks/menu/useMenuDetail";
 import { toast } from "sonner";
+import { useEffect } from "react";
 
 export default function DetailRecipeModal({
   isOpen,
@@ -19,43 +19,16 @@ export default function DetailRecipeModal({
   onArchive,
   onEdit,
 }) {
-  const [recipe, setRecipe] = useState(null);
-  const [isLoading, setIsLoading] = useState(true);
-
-  // Keep a ref to the latest onClose callback to prevent reference changes from re-triggering useEffect
-  const onCloseRef = useRef(onClose);
-  useEffect(() => {
-    onCloseRef.current = onClose;
-  }, [onClose]);
-
-  const fetchDetail = useCallback(async () => {
-    setIsLoading(true);
-    try {
-      const res = await getMenuDetail(recipeId);
-      if (res.data.success) {
-        setRecipe(res.data.data);
-      }
-    } catch (err) {
-      toast.error(err?.message || "Gagal memuat detail resep");
-      onCloseRef.current?.();
-    } finally {
-      setIsLoading(false);
-    }
-  }, [recipeId]);
+  const { recipe, isLoading, error } = useMenuDetail(recipeId, {
+    enabled: isOpen,
+  });
 
   useEffect(() => {
-    let active = true;
-    if (isOpen && recipeId) {
-      setTimeout(() => {
-        if (active) {
-          fetchDetail();
-        }
-      }, 0);
+    if (error) {
+      toast.error(error);
+      onClose?.();
     }
-    return () => {
-      active = false;
-    };
-  }, [isOpen, recipeId, fetchDetail]);
+  }, [error, onClose]);
 
   if (!isOpen) return null;
 
@@ -81,7 +54,6 @@ export default function DetailRecipeModal({
             </DialogHeader>
 
             <div className="space-y-6">
-              {/* Warning Banner */}
               {!recipe.costComplete && (
                 <div className="bg-warning/10 border-l-4 border-warning p-4 rounded-r-md flex items-start gap-3">
                   <TriangleAlert className="text-warning w-5 h-5 mt-0.5 flex-shrink-0" />
@@ -92,7 +64,6 @@ export default function DetailRecipeModal({
                 </div>
               )}
 
-              {/* Description */}
               <div>
                 <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
                   DESKRIPSI
@@ -102,7 +73,6 @@ export default function DetailRecipeModal({
                 </p>
               </div>
 
-              {/* Ingredients Table */}
               <div>
                 <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
                   INGREDIENT
@@ -144,7 +114,6 @@ export default function DetailRecipeModal({
                 )}
               </div>
 
-              {/* Packaging Table */}
               <div>
                 <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
                   PACKAGING
@@ -186,7 +155,6 @@ export default function DetailRecipeModal({
                 )}
               </div>
 
-              {/* Summary Box */}
               <div className="bg-[#f5f1ed] dark:bg-muted p-4 rounded-lg flex flex-col gap-2">
                 <div className="flex justify-between items-center text-sm">
                   <span className="text-muted-foreground font-medium">
@@ -211,7 +179,7 @@ export default function DetailRecipeModal({
               <Button
                 variant="outline"
                 className="border-destructive text-destructive hover:bg-destructive/10 h-10 text-sm font-semibold px-5"
-                onClick={() => onArchive(recipe._id)}
+                onClick={() => onArchive(recipe.id)}
               >
                 <Trash2 className="w-4 h-4 mr-2" />
                 hapus

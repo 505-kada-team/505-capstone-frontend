@@ -13,7 +13,7 @@
  * - Inventory Management Flow Documentation v4
  */
 
-import { z } from 'zod';
+import { z } from "zod";
 
 // =============================================================================
 // ENDPOINT 1 — POST /api/inventory
@@ -32,16 +32,16 @@ import { z } from 'zod';
  * - description: opsional
  */
 export const createInventorySchema = z.object({
-  name: z.string().trim().min(1, 'Nama inventory wajib diisi'),
+  name: z.string().trim().min(1, "Nama inventory wajib diisi"),
 
-  itemCode: z.string().trim().min(1, 'Kode inventory wajib diisi'),
+  itemCode: z.string().trim().min(1, "Kode inventory wajib diisi"),
 
-  category: z.enum(['ingredients', 'packaging'], {
-    error: 'Pilih kategori yang valid: ingredients atau packaging',
+  category: z.enum(["ingredients", "packaging"], {
+    error: "Pilih kategori yang valid: ingredients atau packaging",
   }),
 
-  unit: z.enum(['gr', 'ml', 'pcs'], {
-    error: 'Pilih satuan yang valid: gr, ml, atau pcs',
+  unit: z.enum(["gr", "ml", "pcs"], {
+    error: "Pilih satuan yang valid: gr, ml, atau pcs",
   }),
 
   description: z.string().trim().optional(),
@@ -65,12 +65,12 @@ export const createInventorySchema = z.object({
  */
 export const updateInventorySchema = z
   .object({
-    name: z.string().trim().min(1, 'Nama inventory wajib diisi').optional(),
+    name: z.string().trim().min(1, "Nama inventory wajib diisi").optional(),
     description: z.string().trim().optional(),
   })
   .refine((data) => data.name !== undefined || data.description !== undefined, {
-    message: 'Minimal satu field (nama atau deskripsi) harus diisi',
-    path: ['name'],
+    message: "Minimal satu field (nama atau deskripsi) harus diisi",
+    path: ["name"],
   });
 
 // =============================================================================
@@ -102,20 +102,18 @@ export const updateInventorySchema = z
  */
 export const addSubInventorySchema = z.object({
   quantity: z.coerce
-    .number({ error: 'Quantity harus berupa angka' })
-    .positive('Quantity harus lebih dari 0'),
+    .number({ error: "Quantity harus berupa angka" })
+    .positive("Quantity harus lebih dari 0"),
 
   costPrices: z.coerce
-    .number({ error: 'Harga per unit harus berupa angka' })
-    .positive('Harga per unit harus lebih dari 0'),
+    .number({ error: "Harga per unit harus berupa angka" })
+    .positive("Harga per unit harus lebih dari 0"),
 
-  inDate: z.string().min(1, 'Tanggal masuk batch wajib diisi'),
+  inDate: z.string().min(1, "Tanggal masuk batch wajib diisi"),
 
   // null = packaging
   // string ISO/date = ingredients
   expired: z.string().nullable(),
-
-  nameResponsible: z.string().trim().min(1, 'Nama penanggung jawab wajib diisi'),
 });
 
 // =============================================================================
@@ -133,8 +131,8 @@ export const addSubInventorySchema = z.object({
  * - keduanya tetap berguna untuk audit trail
  */
 export const deleteSubInventorySchema = z.object({
-  deletedBy: z.string().trim().min(1, 'Nama penghapus wajib diisi').optional(),
-  reason: z.string().trim().min(1, 'Alasan penghapusan wajib diisi').optional(),
+  deletedBy: z.string().trim().min(1, "Nama penghapus wajib diisi").optional(),
+  reason: z.string().trim().min(1, "Alasan penghapusan wajib diisi").optional(),
 });
 
 // =============================================================================
@@ -155,13 +153,13 @@ export const deleteSubInventorySchema = z.object({
  * batchSafetyStatus: safe / unsafe.
  */
 export const checkAvailabilitySchema = z.object({
-  inventoryId: z.string().min(1, 'inventoryId wajib diisi'),
+  inventoryId: z.string().min(1, "inventoryId wajib diisi"),
 
   quantityNeeded: z.coerce
-    .number({ error: 'Quantity harus berupa angka' })
-    .positive('Quantity yang dibutuhkan harus lebih dari 0'),
+    .number({ error: "Quantity harus berupa angka" })
+    .positive("Quantity yang dibutuhkan harus lebih dari 0"),
 
-  availableUntil: z.string().min(1, 'Tanggal akhir plan wajib diisi'),
+  availableUntil: z.string().min(1, "Tanggal akhir plan wajib diisi"),
 });
 
 // =============================================================================
@@ -183,13 +181,13 @@ export const checkAvailabilitySchema = z.object({
  * availableUntil perlu dikirim.
  */
 export const deductStockSchema = z.object({
-  inventoryId: z.string().min(1, 'inventoryId wajib diisi'),
+  inventoryId: z.string().min(1, "inventoryId wajib diisi"),
 
   quantityNeeded: z.coerce
-    .number({ error: 'Quantity harus berupa angka' })
-    .positive('Quantity yang dibutuhkan harus lebih dari 0'),
+    .number({ error: "Quantity harus berupa angka" })
+    .positive("Quantity yang dibutuhkan harus lebih dari 0"),
 
-  planId: z.string().min(1, 'planId wajib diisi'),
+  planId: z.string().min(1, "planId wajib diisi"),
 
   availableUntil: z.string().optional(),
 });
@@ -208,6 +206,6 @@ export const deductStockSchema = z.object({
  * - reason opsional
  */
 export const reverseDeductSchema = z.object({
-  planId: z.string().min(1, 'planId wajib diisi'),
+  planId: z.string().min(1, "planId wajib diisi"),
   reason: z.string().optional(),
 });

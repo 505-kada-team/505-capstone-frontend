@@ -10,6 +10,11 @@ const DEFAULT_LIMIT = 12;
 
 // Sort client-side saja — backend belum terima param `sort`.
 const SORTERS = {
+  // Tambahkan urutan berdasarkan waktu (Terbaru ke Terlama)
+  newest: (a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0),
+  // (Opsional) Terlama ke Terbaru
+  oldest: (a, b) => new Date(a.createdAt || 0) - new Date(b.createdAt || 0),
+
   name_asc: (a, b) => a.name.localeCompare(b.name),
   name_desc: (a, b) => b.name.localeCompare(a.name),
   cost_high: (a, b) =>
@@ -21,7 +26,8 @@ const SORTERS = {
 export function useMenuList({
   initialSearch = "",
   initialIncludeDeleted = false,
-  initialSort = "name_asc",
+  // Ubah default sort menjadi "newest" agar otomatis menampilkan yang terbaru di awal
+  initialSort = "newest",
 } = {}) {
   const [search, setSearch] = useState(initialSearch);
   const [includeDeleted, setIncludeDeleted] = useState(initialIncludeDeleted);
@@ -84,7 +90,8 @@ export function useMenuList({
   );
 
   const recipes = useMemo(() => {
-    const sorter = SORTERS[sort] ?? SORTERS.name_asc;
+    // Jika tidak ada sort yang cocok, default ke "newest"
+    const sorter = SORTERS[sort] ?? SORTERS.newest;
     return [...rawRecipes].sort(sorter);
   }, [rawRecipes, sort]);
 

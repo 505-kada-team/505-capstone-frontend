@@ -1,18 +1,25 @@
-import { useState, useCallback, useMemo } from "react";
-import { getInventoryList } from "@/services/api";
+import { useState, useCallback } from "react";
+import { inventoryApi } from "@/services/inventory/inventory.api";
+import { mapInventoryDropdownItem } from "@/services/inventory/inventory.mapper";
 
+/**
+ * GET /inventory/dropdown -> dropdownInventory() di inventory.service.js
+ * sudah filter status:'active' di level query (bukan asumsi FE), dan
+ * sengaja hanya select _id/name/itemCode/category/unit — tidak ada
+ * lastCostBatch, jadi cost estimate tidak bisa dihitung dari data ini.
+ */
 export function useInventoryOptions() {
-  const [inventories, setInventories] = useState([]);
+  const [inventoryOptions, setInventoryOptions] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  const fetchInventories = useCallback(async () => {
+  const fetchInventoryOptions = useCallback(async () => {
     setIsLoading(true);
     setError(null);
     try {
-      const res = await getInventoryList({ limit: 1000 });
-      if (res.data.success) {
-        setInventories(res.data.data);
+      const res = await inventoryApi.dropdown();
+      if (res.success) {
+        setInventoryOptions((res.data ?? []).map(mapInventoryDropdownItem));
       }
     } catch (err) {
       setError(
@@ -23,10 +30,5 @@ export function useInventoryOptions() {
     }
   }, []);
 
-  const activeIngredients = useMemo(
-    () => inventories.filter((i) => i.status === "active"),
-    [inventories],
-  );
-
-  return { inventories, activeIngredients, isLoading, error, fetchInventories };
+  return { inventoryOptions, isLoading, error, fetchInventoryOptions };
 }

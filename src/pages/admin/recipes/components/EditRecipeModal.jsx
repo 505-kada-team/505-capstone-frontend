@@ -1,4 +1,9 @@
-import { useEffect } from "react";
+import { useMemo, useEffect } from "react";
+import {
+  toDisplayQuantity,
+  resolveIngredientsForSubmit,
+} from "@/lib/inventoryUnit";
+
 import {
   Dialog,
   DialogContent,
@@ -24,37 +29,59 @@ export default function EditRecipeModal({
     enabled: isOpen,
   });
   const {
-    inventories,
+    inventoryOptions,
     isLoading: isLoadingInv,
-    fetchInventories,
+    fetchInventoryOptions,
   } = useInventoryOptions();
   const { updateRecipe, isUpdating } = useUpdateMenu();
 
-  const formState = useRecipeForm(
-    recipe
-      ? {
-          name: recipe.name,
-          description: recipe.description,
-          image: recipe.image,
-          sellingPrice: recipe.sellingPrice,
-          ingredients: recipe.ingredients.map((ing) => ({
-            inventoryId: ing.inventoryId,
-            quantityNeeded: ing.quantityNeeded,
-          })),
-        }
-      : undefined,
-  );
+  // recipe.ingredients dari mapMenuDetail sudah punya `unit`/`category` per
+  // baris (buildCostBreakdown backend), jadi konversi tampilan tidak perlu
+  // nunggu inventoryOptions selesai fetch — langsung pakai data recipe.
+  const initialValues = useMemo(() => {
+    if (!recipe) return undefined;
+    return {
+      name: recipe.name,
+      description: recipe.description,
+      image: recipe.image,
+      sellingPrice: recipe.sellingPrice,
+      ingredients: recipe.ingredients.map((ing) => ({
+        inventoryId: ing.inventoryId,
+        quantityNeeded: toDisplayQuantity({
+          unit: ing.unit,
+          category: ing.category,
+          amount: ing.quantityNeeded,
+        }),
+      })),
+    };
+  }, [recipe]);
+
+  const formState = useRecipeForm(initialValues);
 
   useEffect(() => {
-    if (isOpen) fetchInventories();
+    if (isOpen) fetchInventoryOptions();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen]);
 
   const onSubmit = async (data) => {
+    const { resolved, errors } = resolveIngredientsForSubmit(
+      data.ingredients,
+      inventoryOptions,
+    );
+    if (errors.length > 0) {
+      errors.forEach((e) =>
+        formState.form.setError(`ingredients.${e.index}.quantityNeeded`, {
+          message: e.message,
+        }),
+      );
+      toast.error("Ada bahan dengan unit yang tidak dikenali, cek kembali.");
+      return;
+    }
     try {
-      // toUpdateMenuPayload: ingredients selalu full-replace kalau disertakan,
-      // dan di sini selalu disertakan karena berasal dari useFieldArray.
-      const res = await updateRecipe(recipeId, data);
+      const res = await updateRecipe(recipeId, {
+        ...data,
+        ingredients: resolved,
+      });
       if (res.success) {
         toast.success(res.message);
         onSuccess();
@@ -98,8 +125,9 @@ export default function EditRecipeModal({
             <div className="flex-1 overflow-y-auto lg:overflow-hidden p-6 min-h-0 flex flex-col">
               <RecipeFormFields
                 formState={formState}
-                inventories={inventories}
+                inventoryOptions={inventoryOptions}
                 isLoadingInv={isLoadingInv}
+                mode="edit"
               />
             </div>
 

@@ -9,10 +9,11 @@ import {
 } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { UploadCloud, Trash2 } from "lucide-react";
+import { getRecipeUnitLabel } from "@/lib/inventoryUnit";
 
 export default function RecipeFormFields({
   formState,
-  inventories,
+  inventoryOptions,
   isLoadingInv,
 }) {
   const {
@@ -22,7 +23,6 @@ export default function RecipeFormFields({
     remove,
     previewImage,
     dragActive,
-    calculateTotalCost,
     handleDrag,
     handleDrop,
     handleChangeFile,
@@ -48,45 +48,32 @@ export default function RecipeFormFields({
           )}
         </div>
 
-        <div className="grid grid-cols-2 gap-4">
-          <div className="space-y-1">
-            <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-              Cost Estimate
-            </label>
-            <div className="h-10 flex items-center bg-muted/35 px-3 rounded-lg border border-border/40 font-mono text-sm text-foreground/80">
-              <span className="text-muted-foreground mr-1">Rp</span>
-              <span className="font-semibold text-sm">
-                {calculateTotalCost(inventories).toLocaleString("id-ID")}
-              </span>
-            </div>
+        {/* Cost Estimate DIHAPUS — dropdown inventory tidak mengirim lastCostBatch (lihat inventory.service.js dropdownInventory: select-nya hanya _id/name/itemCode/category/unit). */}
+        <div className="space-y-1">
+          <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+            Selling Price
+          </label>
+          <div className="relative">
+            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm font-mono">
+              Rp
+            </span>
+            <Input
+              type="number"
+              placeholder="0"
+              step="1"
+              onWheel={(e) => e.currentTarget.blur()}
+              onKeyDown={(e) => {
+                if (["-", "+", "e", "E"].includes(e.key)) e.preventDefault();
+              }}
+              className="pl-8 h-10 font-mono text-sm [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+              {...form.register("sellingPrice", { valueAsNumber: true })}
+            />
           </div>
-
-          <div className="space-y-1">
-            <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-              Selling Price
-            </label>
-            <div className="relative">
-              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm font-mono">
-                Rp
-              </span>
-              <Input
-                type="number"
-                placeholder="0"
-                step="1"
-                onWheel={(e) => e.currentTarget.blur()}
-                onKeyDown={(e) => {
-                  if (["-", "+", "e", "E"].includes(e.key)) e.preventDefault();
-                }}
-                className="pl-8 h-10 font-mono text-sm [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                {...form.register("sellingPrice", { valueAsNumber: true })}
-              />
-            </div>
-            {form.formState.errors.sellingPrice && (
-              <p className="text-destructive text-xs font-medium">
-                {form.formState.errors.sellingPrice.message}
-              </p>
-            )}
-          </div>
+          {form.formState.errors.sellingPrice && (
+            <p className="text-destructive text-xs font-medium">
+              {form.formState.errors.sellingPrice.message}
+            </p>
+          )}
         </div>
 
         <div className="grid grid-cols-2 gap-4">
@@ -188,7 +175,11 @@ export default function RecipeFormFields({
           ) : (
             fields.map((field, index) => {
               const watchInvId = form.watch(`ingredients.${index}.inventoryId`);
-              const selectedInv = inventories.find((i) => i._id === watchInvId);
+              const selectedInv = inventoryOptions.find(
+                (i) => i.id === watchInvId,
+              );
+              const unitLabel = getRecipeUnitLabel(selectedInv ?? {});
+
               return (
                 <div
                   key={field.id}
@@ -205,17 +196,23 @@ export default function RecipeFormFields({
                       value={watchInvId || ""}
                     >
                       <SelectTrigger className="w-full bg-muted/10 h-10">
-                        <SelectValue placeholder="Choose Ingredient" />
+                        {/* Children eksplisit -> tampilan tidak lagi bergantung pencocokan
+          otomatis Radix (yang butuh SelectItem pernah ter-mount). Kalau
+          selectedInv belum ketemu (misal inventoryOptions belum fetch),
+          fallback ke placeholder, BUKAN raw id. */}
+                        <SelectValue placeholder="Choose Ingredient">
+                          {selectedInv
+                            ? `${selectedInv.name} (${selectedInv.category === "packaging" ? "Pck" : "Ing"})`
+                            : undefined}
+                        </SelectValue>
                       </SelectTrigger>
                       <SelectContent>
-                        {inventories
-                          .filter((i) => i.status === "active")
-                          .map((inv) => (
-                            <SelectItem key={inv._id} value={inv._id}>
-                              {inv.nameInventory} (
-                              {inv.category === "packaging" ? "Pck" : "Ing"})
-                            </SelectItem>
-                          ))}
+                        {inventoryOptions.map((inv) => (
+                          <SelectItem key={inv.id} value={inv.id}>
+                            {inv.name} (
+                            {inv.category === "packaging" ? "Pck" : "Ing"})
+                          </SelectItem>
+                        ))}
                       </SelectContent>
                     </Select>
                     {form.formState.errors.ingredients?.[index]
@@ -245,7 +242,7 @@ export default function RecipeFormFields({
                       })}
                     />
                     <div className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-semibold text-muted-foreground/80 pointer-events-none">
-                      {selectedInv ? selectedInv.unit : "-"}
+                      {unitLabel}
                     </div>
                   </div>
 

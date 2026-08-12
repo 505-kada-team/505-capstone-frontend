@@ -12,27 +12,45 @@ import { useRecipeForm } from "@/hooks/menu/useRecipeForm";
 import { useCreateMenu } from "@/hooks/menu/useCreateMenu";
 import { useInventoryOptions } from "@/hooks/inventory/useInventoryOptions";
 import RecipeFormFields from "./RecipeFormFields";
+import { resolveIngredientsForSubmit } from "@/lib/inventoryUnit";
 
 export default function AddRecipeModal({ isOpen, onClose, onSuccess }) {
   const formState = useRecipeForm();
   const {
-    inventories,
+    inventoryOptions,
     isLoading: isLoadingInv,
-    fetchInventories,
+    fetchInventoryOptions,
   } = useInventoryOptions();
   const { createRecipe, isSubmitting } = useCreateMenu();
 
   useEffect(() => {
     if (isOpen) {
       formState.reset();
-      fetchInventories();
+      fetchInventoryOptions();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen]);
 
   const onSubmit = async (data) => {
+    // 1. Validasi unit bahan & konversi satuan
+    const { resolved, errors } = resolveIngredientsForSubmit(
+      data.ingredients,
+      inventoryOptions,
+    );
+
+    if (errors.length > 0) {
+      errors.forEach((e) =>
+        formState.form.setError(`ingredients.${e.index}.quantityNeeded`, {
+          message: e.message,
+        }),
+      );
+      toast.error("Ada bahan dengan unit yang tidak dikenali, cek kembali.");
+      return;
+    }
+
+    // 2. Kirim data yang sudah di‑resolve
     try {
-      const res = await createRecipe(data);
+      const res = await createRecipe({ ...data, ingredients: resolved });
       if (res.success) {
         toast.success(res.message);
         onSuccess();
@@ -41,9 +59,10 @@ export default function AddRecipeModal({ isOpen, onClose, onSuccess }) {
     } catch (err) {
       const apiErrors = err?.response?.data?.errors;
       if (apiErrors) {
+        // Menampilkan error spesifik ke field yang sesuai
         apiErrors.forEach((e) => {
           const field = e.field.startsWith("ingredients")
-            ? "ingredients"
+            ? e.field // langsung gunakan nama field dari server, misal `ingredients.0.inventoryId`
             : e.field;
           formState.form.setError(field, { message: e.message });
         });
@@ -71,8 +90,9 @@ export default function AddRecipeModal({ isOpen, onClose, onSuccess }) {
           <div className="flex-1 overflow-y-auto lg:overflow-hidden p-6 min-h-0 flex flex-col">
             <RecipeFormFields
               formState={formState}
-              inventories={inventories}
+              inventoryOptions={inventoryOptions}
               isLoadingInv={isLoadingInv}
+              mode="create"
             />
           </div>
 

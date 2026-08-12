@@ -35,20 +35,6 @@ export function useRecipeForm(initialValues) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initialValues]);
 
-  const calculateTotalCost = useCallback(
-    (inventories) => {
-      const currentIngredients = form.watch("ingredients");
-      return currentIngredients.reduce((total, item) => {
-        const inv = inventories.find((i) => i._id === item.inventoryId);
-        const qty = Number(item.quantityNeeded) || 0;
-        return inv && inv.lastCostBatch
-          ? total + inv.lastCostBatch * qty
-          : total;
-      }, 0);
-    },
-    [form],
-  );
-
   const handleDrag = (e) => {
     e.preventDefault();
     e.stopPropagation();
@@ -92,7 +78,6 @@ export function useRecipeForm(initialValues) {
     remove,
     previewImage,
     dragActive,
-    calculateTotalCost,
     handleDrag,
     handleDrop,
     handleChangeFile,
