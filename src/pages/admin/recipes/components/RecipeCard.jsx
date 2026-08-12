@@ -1,10 +1,6 @@
 import { Card } from "@/components/ui/card";
 import StatusBadge from "@/components/shared/StatusBadge";
-<<<<<<< HEAD
 import { formatCurrency } from "@/lib/formatCurrency";
-=======
-import { formatCurrency } from "@/lib/FormatCurrency";
->>>>>>> f9bcf2747526b3bcef7968793918086e241b1847
 import { ImageIcon } from "lucide-react";
 
 export default function RecipeCard({ recipe, onDetail }) {
@@ -31,11 +27,7 @@ export default function RecipeCard({ recipe, onDetail }) {
         <h3 className="font-heading font-semibold text-lg text-foreground line-clamp-1 mb-1">
           {recipe.name}
         </h3>
-<<<<<<< HEAD
         {/* getMenus() (list endpoint) tidak mengembalikan description — pakai field yang memang ada di mapMenuListItem */}
-=======
-        {/* getMenus() tidak mengembalikan description — pakai field yang memang ada di list response */}
->>>>>>> f9bcf2747526b3bcef7968793918086e241b1847
         <p className="text-xs text-muted-foreground mb-4 flex-1">
           {recipe.totalIngredients} bahan
           {recipe.costComplete && typeof recipe.marginPercentage === "number"

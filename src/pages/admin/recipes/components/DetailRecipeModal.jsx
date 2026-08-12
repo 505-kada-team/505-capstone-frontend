@@ -1,7 +1,3 @@
-<<<<<<< HEAD
-=======
-import { useState, useEffect, useRef, useCallback } from "react";
->>>>>>> f9bcf2747526b3bcef7968793918086e241b1847
 import {
   Dialog,
   DialogContent,
@@ -10,18 +6,11 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-<<<<<<< HEAD
 import { formatCurrency } from "@/lib/formatCurrency";
 import { TriangleAlert, Trash2, Edit2 } from "lucide-react";
 import { useMenuDetail } from "@/hooks/menu/useMenuDetail";
 import { toast } from "sonner";
 import { useEffect } from "react";
-=======
-import { getMenuDetail } from "@/services/api";
-import { formatCurrency } from "@/lib/FormatCurrency";
-import { TriangleAlert, Trash2, Edit2 } from "lucide-react";
-import { toast } from "sonner";
->>>>>>> f9bcf2747526b3bcef7968793918086e241b1847
 
 export default function DetailRecipeModal({
   isOpen,
@@ -30,35 +19,9 @@ export default function DetailRecipeModal({
   onArchive,
   onEdit,
 }) {
-<<<<<<< HEAD
   const { recipe, isLoading, error } = useMenuDetail(recipeId, {
     enabled: isOpen,
   });
-=======
-  const [recipe, setRecipe] = useState(null);
-  const [isLoading, setIsLoading] = useState(true);
-
-  // Keep a ref to the latest onClose callback to prevent reference changes from re-triggering useEffect
-  const onCloseRef = useRef(onClose);
-  useEffect(() => {
-    onCloseRef.current = onClose;
-  }, [onClose]);
-
-  const fetchDetail = useCallback(async () => {
-    setIsLoading(true);
-    try {
-      const res = await getMenuDetail(recipeId);
-      if (res.data.success) {
-        setRecipe(res.data.data);
-      }
-    } catch (err) {
-      toast.error(err?.message || "Gagal memuat detail resep");
-      onCloseRef.current?.();
-    } finally {
-      setIsLoading(false);
-    }
-  }, [recipeId]);
->>>>>>> f9bcf2747526b3bcef7968793918086e241b1847
 
   useEffect(() => {
     if (error) {

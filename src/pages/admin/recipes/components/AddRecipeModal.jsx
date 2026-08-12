@@ -30,8 +30,6 @@ export default function AddRecipeModal({ isOpen, onClose, onSuccess }) {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen]);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isOpen]);
 
   const onSubmit = async (data) => {
     // 1. Validasi unit bahan & konversi satuan
@@ -99,13 +97,6 @@ export default function AddRecipeModal({ isOpen, onClose, onSuccess }) {
           </div>
 
           <DialogFooter className="p-6 border-t bg-muted/15 flex justify-end gap-3 shrink-0">
-            <Button
-              type="button"
-              variant="outline"
-              className="h-10 text-sm font-semibold px-5"
-              onClick={onClose}
-              disabled={isSubmitting}
-            >
             <Button
               type="button"
               variant="outline"
