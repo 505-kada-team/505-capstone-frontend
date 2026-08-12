@@ -51,7 +51,7 @@ export default function RecipePage() {
         refetch();
       }
     } catch (err) {
-      toast.error(err?.response?.data?.message || "Gagal mengarsipkan resep");
+      toast.error(err?.response?.data?.message || "Failed to archive recipe");
     } finally {
       setArchiveTarget(null);
     }
@@ -72,7 +72,7 @@ export default function RecipePage() {
         }
       />
 
-      <div className="p-6 flex-1 flex flex-col gap-6">
+      <div className="flex-1 flex flex-col gap-6">
         <div className="flex justify-between items-center gap-2">
           <SearchInput
             placeholder="Search by name or ingredient..."
@@ -81,12 +81,10 @@ export default function RecipePage() {
             className="w-[400px]"
           />
           <div className="flex items-center gap-3">
-            {/* includeDeleted: false -> "Active", true -> "Archived" (backend cuma punya param ini, bukan status string) */}
-          <Select
+            {/* includeDeleted: false -> "Active", true -> "Archived" */}
+            <Select
               value={filters.includeDeleted ? "archived" : "active"}
-              onValueChange={(val) =>
-                setIncludeDeleted(val === "archived")
-              }
+              onValueChange={(val) => setIncludeDeleted(val === "archived")}
             >
               <SelectTrigger className="w-[160px] h-9 text-muted-foreground font-normal">
                 <SelectValue placeholder="Status" />
@@ -97,22 +95,22 @@ export default function RecipePage() {
               </SelectContent>
             </Select>
 
-            {/* Sort ini client-side, hanya untuk item di halaman saat ini */}
+            {/* Sort is client-side, only for items on the current page */}
             <Select value={filters.sort} onValueChange={setSort}>
               <SelectTrigger className="w-[160px] gap-2 h-9 text-muted-foreground font-normal">
                 <SelectValue placeholder="Sort By" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="name_asc">Nama (A-Z)</SelectItem>
-                <SelectItem value="name_desc">Nama (Z-A)</SelectItem>
-                <SelectItem value="cost_high">Modal Tertinggi</SelectItem>
-                <SelectItem value="cost_low">Modal Terendah</SelectItem>
+                <SelectItem value="name_asc">Name (A-Z)</SelectItem>
+                <SelectItem value="name_desc">Name (Z-A)</SelectItem>
+                <SelectItem value="cost_high">Highest Cost</SelectItem>
+                <SelectItem value="cost_low">Lowest Cost</SelectItem>
               </SelectContent>
             </Select>
           </div>
         </div>
 
-<div className="flex-1 relative">
+        <div className="flex-1 relative">
           {isLoading ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
               {[...Array(8)].map((_, i) => (
@@ -125,21 +123,19 @@ export default function RecipePage() {
           ) : displayedRecipes.length === 0 ? (
             <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
               <div className="w-12 h-12 rounded-full bg-muted/50 flex items-center justify-center mb-4">
-                <span className="text-muted-foreground text-xl">
-                  🍽️
-                </span>
+                <span className="text-muted-foreground text-xl">🍽️</span>
               </div>
 
               <h3 className="text-lg font-semibold text-foreground">
                 {filters.includeDeleted
-                  ? "Belum ada resep yang diarsipkan"
-                  : "Tidak ada resep"}
+                  ? "No archived recipes yet"
+                  : "No recipes found"}
               </h3>
 
               <p className="text-sm text-muted-foreground">
                 {filters.includeDeleted
-                  ? "Resep yang sudah diarsipkan akan muncul di sini."
-                  : "Silakan tambah resep baru atau coba pencarian lain."}
+                  ? "Archived recipes will appear here."
+                  : "Please add a new recipe or try a different search."}
               </p>
             </div>
           ) : (
@@ -148,26 +144,26 @@ export default function RecipePage() {
                 <RecipeCard
                   key={recipe.id}
                   recipe={recipe}
-                  onDetail={() =>
-                    setDetailModalId(recipe.id)
-                  }
+                  onDetail={() => setDetailModalId(recipe.id)}
                 />
               ))}
             </div>
           )}
         </div>
 
-        {displayedRecipes.length > 0 && pagination && pagination.totalPage > 1 && (
-          <div className="mt-auto">
-            <Pagination
-              currentPage={pagination.currentPage}
-              totalPage={pagination.totalPage}
-              totalData={pagination.totalData}
-              limit={pagination.limit}
-              onPageChange={setPage}
-            />
-          </div>
-        )}
+        {displayedRecipes.length > 0 &&
+          pagination &&
+          pagination.totalPage > 1 && (
+            <div className="mt-auto">
+              <Pagination
+                currentPage={pagination.currentPage}
+                totalPage={pagination.totalPage}
+                totalData={pagination.totalData}
+                limit={pagination.limit}
+                onPageChange={setPage}
+              />
+            </div>
+          )}
       </div>
 
       <AddRecipeModal
@@ -203,10 +199,10 @@ export default function RecipePage() {
 
       <ConfirmDialog
         open={!!archiveTarget}
-        title="Arsipkan Resep?"
-        description="Resep yang diarsipkan tidak akan muncul di daftar utama, tapi tetap dapat dilihat di riwayat plan."
-        confirmLabel="Arsipkan"
-        cancelLabel="Batal"
+        title="Archive Recipe?"
+        description="Archived recipes will not appear in the main list, but can still be viewed in plan history."
+        confirmLabel="Archive"
+        cancelLabel="Cancel"
         onConfirm={handleArchive}
         onClose={() => setArchiveTarget(null)}
         variant="destructive"
