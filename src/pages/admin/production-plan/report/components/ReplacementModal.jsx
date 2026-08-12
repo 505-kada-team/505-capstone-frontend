@@ -32,7 +32,7 @@ export default function ReplacementModal({ open, report, onClose, onRefresh }) {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!replacementQuantity || isNaN(replacementQuantity) || Number(replacementQuantity) <= 0) {
-      toast.error('Replacement quantity must be greater than 0');
+      toast.error('Kuantitas pengganti harus lebih besar dari 0');
       return;
     }
 
@@ -47,12 +47,12 @@ export default function ReplacementModal({ open, report, onClose, onRefresh }) {
       
       const res = await addInventoryReplacement(report._id, payload);
       if (res.data?.success) {
-        toast.success('Replacement stock successfully pulled');
+        toast.success('Penggantian stok berhasil ditarik');
         onRefresh();
         onClose();
       }
     } catch {
-      toast.error('Failed to pull replacement stock');
+      toast.error('Gagal menarik stok pengganti');
     } finally {
       setIsSubmitting(false);
     }
@@ -62,45 +62,45 @@ export default function ReplacementModal({ open, report, onClose, onRefresh }) {
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle className="text-lg font-bold font-heading">Pull Replacement Stock</DialogTitle>
+          <DialogTitle>Tarik Stok Pengganti</DialogTitle>
           <DialogDescription>
-            Determine the quantity of stock to pull from the warehouse (Inventory) to replace this damaged/lost raw material.
+            Tentukan berapa kuantitas stok yang ingin ditarik dari gudang (Inventory) untuk mengganti bahan baku yang rusak/hilang ini.
           </DialogDescription>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="grid gap-4 py-4">
           <div className="bg-orange-50 text-orange-800 p-3 rounded-md text-sm">
-            <div className="font-semibold mb-1">Loss Information:</div>
-            There is a loss/damage of <span className="font-bold">{report.quantityLost}</span> portions/units.
+            <div className="font-semibold mb-1">Informasi Kerugian:</div>
+            Terdapat kehilangan/kerusakan sebanyak <span className="font-bold">{report.quantityLost}</span> porsi/unit.
           </div>
 
           {!isLoading && !isPlanActive && planStatus !== null && (
             <div className="bg-red-50 text-red-800 p-3 rounded-md text-sm mb-2">
-              <span className="font-semibold block">Plan Inactive</span>
-              The parent plan for this report is not active (current status: {planStatus}). You cannot pull replacement stock for a plan that is completed or stopped.
+              <span className="font-semibold block">Plan Tidak Aktif</span>
+              Plan induk untuk laporan ini tidak berstatus aktif (saat ini: {planStatus}). Anda tidak dapat menarik stok pengganti untuk plan yang sudah selesai atau berhenti.
             </div>
           )}
 
           <div className="grid gap-2">
-            <Label htmlFor="replacementQuantity">Replacement Quantity to Pull</Label>
+            <Label htmlFor="replacementQuantity">Kuantitas Pengganti yang Ditarik</Label>
             <Input
               id="replacementQuantity"
               type="number"
-              placeholder={`Recommended minimum: ${report.quantityLost}`}
+              placeholder={`Disarankan minimal: ${report.quantityLost}`}
               value={replacementQuantity}
               onChange={(e) => setReplacementQuantity(e.target.value)}
               required
               min="1"
               disabled={isLoading || !isPlanActive}
             />
-            <p className="text-xs text-muted-foreground">You can pull less or more than the damaged amount based on actual needs.</p>
+            <p className="text-xs text-muted-foreground">Anda dapat menarik lebih sedikit atau lebih banyak dari jumlah yang rusak sesuai kebutuhan aktual.</p>
           </div>
 
           <div className="grid gap-2">
-            <Label htmlFor="varianceNote">Variance Note (Optional)</Label>
+            <Label htmlFor="varianceNote">Catatan Varians (Opsional)</Label>
             <Textarea
               id="varianceNote"
-              placeholder="Example: Pull less because remaining kitchen stock is sufficient..."
+              placeholder="Misal: Tarik lebih sedikit karena stok sisa di dapur masih cukup..."
               value={varianceNote}
               onChange={(e) => setVarianceNote(e.target.value)}
               disabled={isLoading || !isPlanActive}
@@ -109,14 +109,10 @@ export default function ReplacementModal({ open, report, onClose, onRefresh }) {
 
           <DialogFooter className="mt-2">
             <Button type="button" variant="outline" onClick={onClose} disabled={isSubmitting}>
-              Cancel
+              Batal
             </Button>
-            <Button 
-              type="submit" 
-              disabled={isSubmitting || isLoading || !isPlanActive}
-              className="bg-[#F97316] hover:bg-[#F97316]/90 text-white"
-            >
-              Pull Stock
+            <Button type="submit" disabled={isSubmitting || isLoading || !isPlanActive}>
+              Tarik Stok
             </Button>
           </DialogFooter>
         </form>

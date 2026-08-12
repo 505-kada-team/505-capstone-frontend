@@ -61,7 +61,7 @@ import { useSortable } from "@/hooks/useSortable";
 // ============================================================
 // Constants — opsi filter dan form
 // ============================================================
-const LIMIT = 5;
+const LIMIT = 10;
 
 // BERUBAH: value sekarang lowercase, persis enum Inventory.category di
 // backend ('ingredients' | 'packaging'). 'all' cuma sentinel client-side —
@@ -139,14 +139,6 @@ const sortItems = (items, sortBy) => {
       return sorted.sort(
         (a, b) => (a.lastCostBatch ?? Infinity) - (b.lastCostBatch ?? Infinity),
       );
-    case "newest":
-      return sorted.sort(
-        (a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0),
-      );
-    case "oldest":
-      return sorted.sort(
-        (a, b) => new Date(a.createdAt || 0) - new Date(b.createdAt || 0),
-      );
     default:
       return sorted;
   }
@@ -175,7 +167,7 @@ export default function InventoryPage() {
   // ── Filter state ──────────────────────────────────────────
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState("all");
-  const { sortBy, setSortBy } = useSortable("newest");
+  const { sortBy, setSortBy } = useSortable("name_asc");
   const [page, setPage] = useState(1);
 
   // ── Dialog state ──────────────────────────────────────────
@@ -298,7 +290,7 @@ export default function InventoryPage() {
       />
 
       {/* Filter Bar */}
-      <div className="flex items-center justify-between gap-2 mb-3">
+      <div className="flex items-center justify-between gap-2 mb-5">
         <SearchInput
           id="inventory-search"
           placeholder="Search by name or ID..."
@@ -330,14 +322,12 @@ export default function InventoryPage() {
               <SelectValue placeholder="Sort By" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="newest">Newest Added</SelectItem>
-              <SelectItem value="oldest">Oldest Added</SelectItem>
-              <SelectItem value="name_asc">Name (A-Z)</SelectItem>
-              <SelectItem value="name_desc">Name (Z-A)</SelectItem>
-              <SelectItem value="stock_high">Highest Stock</SelectItem>
-              <SelectItem value="stock_low">Lowest Stock</SelectItem>
-              <SelectItem value="cost_high">Highest Cost</SelectItem>
-              <SelectItem value="cost_low">Lowest Cost</SelectItem>
+              <SelectItem value="name_asc">Nama (A-Z)</SelectItem>
+              <SelectItem value="name_desc">Nama (Z-A)</SelectItem>
+              <SelectItem value="stock_high">Stok Tertinggi</SelectItem>
+              <SelectItem value="stock_low">Stok Terendah</SelectItem>
+              <SelectItem value="cost_high">Nilai Tertinggi</SelectItem>
+              <SelectItem value="cost_low">Nilai Terendah</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -385,13 +375,13 @@ export default function InventoryPage() {
           resetArchiveError();
         }}
         onConfirm={handleArchiveConfirm}
-        title="Archive Inventory?"
+        title="Arsipkan Inventory?"
         description={
           archiveTarget
-            ? `Inventory "${archiveTarget.name}" will be archived. Make sure all batches are empty before archiving.`
+            ? `Inventory "${archiveTarget.name}" akan diarsipkan. Pastikan semua batch sudah kosong sebelum mengarsipkan.`
             : ""
         }
-        confirmLabel="Yes, Archive"
+        confirmLabel="Ya, Arsipkan"
         loading={archiveLoading}
       />
     </div>

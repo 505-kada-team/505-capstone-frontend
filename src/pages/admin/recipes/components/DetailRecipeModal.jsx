@@ -48,7 +48,7 @@ export default function DetailRecipeModal({
         ) : (
           <>
             <DialogHeader className="mb-4">
-              <DialogTitle className="text-xl font-bold text-foreground font-heading">
+              <DialogTitle className="text-2xl font-bold text-foreground font-heading">
                 {recipe.name}
               </DialogTitle>
             </DialogHeader>
@@ -59,32 +59,32 @@ export default function DetailRecipeModal({
                   <TriangleAlert className="text-warning w-5 h-5 mt-0.5 flex-shrink-0" />
                   <p className="text-sm text-warning font-medium">
                     {recipe.warning ||
-                      "Some ingredients are inactive or do not have a batch price. Cost estimate cannot be fully calculated."}
+                      "Beberapa bahan tidak aktif atau belum memiliki harga batch. Estimasi biaya tidak dapat dihitung penuh."}
                   </p>
                 </div>
               )}
 
               <div>
                 <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
-                  DESCRIPTION
+                  DESKRIPSI
                 </h4>
                 <p className="text-sm text-foreground">
-                  {recipe.description || "No description."}
+                  {recipe.description || "Tidak ada deskripsi."}
                 </p>
               </div>
 
               <div>
                 <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
-                  INGREDIENTS
+                  INGREDIENT
                 </h4>
                 {ingredients.length > 0 ? (
                   <div className="border rounded-md overflow-hidden">
                     <table className="w-full text-sm text-left">
                       <thead className="bg-muted text-muted-foreground">
                         <tr>
-                          <th className="px-4 py-2 font-medium">Ingredient</th>
+                          <th className="px-4 py-2 font-medium">bahan</th>
                           <th className="px-4 py-2 font-medium text-right">
-                            Quantity
+                            jumlah
                           </th>
                         </tr>
                       </thead>
@@ -95,7 +95,7 @@ export default function DetailRecipeModal({
                               {item.nameInventory}
                               {item.inventoryStatus === "deleted" && (
                                 <span className="ml-2 text-[10px] bg-neutral-200 text-neutral-600 px-1.5 py-0.5 rounded">
-                                  Deleted
+                                  Dihapus
                                 </span>
                               )}
                             </td>
@@ -109,7 +109,7 @@ export default function DetailRecipeModal({
                   </div>
                 ) : (
                   <p className="text-sm text-muted-foreground italic">
-                    No ingredients.
+                    Tidak ada bahan baku.
                   </p>
                 )}
               </div>
@@ -123,9 +123,9 @@ export default function DetailRecipeModal({
                     <table className="w-full text-sm text-left">
                       <thead className="bg-muted text-muted-foreground">
                         <tr>
-                          <th className="px-4 py-2 font-medium">Packaging Item</th>
+                          <th className="px-4 py-2 font-medium">bahan</th>
                           <th className="px-4 py-2 font-medium text-right">
-                            Quantity
+                            jumlah
                           </th>
                         </tr>
                       </thead>
@@ -136,7 +136,7 @@ export default function DetailRecipeModal({
                               {item.nameInventory}
                               {item.inventoryStatus === "deleted" && (
                                 <span className="ml-2 text-[10px] bg-neutral-200 text-neutral-600 px-1.5 py-0.5 rounded">
-                                  Deleted
+                                  Dihapus
                                 </span>
                               )}
                             </td>
@@ -150,15 +150,15 @@ export default function DetailRecipeModal({
                   </div>
                 ) : (
                   <p className="text-sm text-muted-foreground italic">
-                    No packaging items.
+                    Tidak ada packaging.
                   </p>
                 )}
               </div>
 
-              <div className="bg-secondary/20 dark:bg-muted p-4 rounded-lg flex flex-col gap-2">
+              <div className="bg-[#f5f1ed] dark:bg-muted p-4 rounded-lg flex flex-col gap-2">
                 <div className="flex justify-between items-center text-sm">
                   <span className="text-muted-foreground font-medium">
-                    Cost Estimate
+                    modal per resep
                   </span>
                   <span className="font-mono text-foreground">
                     {recipe.costComplete
@@ -167,7 +167,7 @@ export default function DetailRecipeModal({
                   </span>
                 </div>
                 <div className="flex justify-between items-center text-sm font-bold">
-                  <span className="text-foreground">Selling Price</span>
+                  <span className="text-foreground">harga per resep</span>
                   <span className="font-mono text-foreground">
                     {formatCurrency(recipe.sellingPrice)}
                   </span>
@@ -175,21 +175,21 @@ export default function DetailRecipeModal({
               </div>
             </div>
 
-            <DialogFooter className="mt-6 flex justify-end gap-3">
+            <DialogFooter className="mt-8 border-t pt-4 flex justify-end gap-3">
               <Button
                 variant="outline"
                 className="border-destructive text-destructive hover:bg-destructive/10 h-10 text-sm font-semibold px-5"
                 onClick={() => onArchive(recipe.id)}
               >
                 <Trash2 className="w-4 h-4 mr-2" />
-                Delete
+                hapus
               </Button>
               <Button
                 className="bg-[#F97316] hover:bg-[#F97316]/90 text-white h-10 text-sm font-semibold px-6 shadow-sm"
                 onClick={() => onEdit(recipe.id)}
               >
                 <Edit2 className="w-4 h-4 mr-2" />
-                Edit
+                edit
               </Button>
             </DialogFooter>
           </>

@@ -33,8 +33,8 @@ export default function ConfirmDialog({
   onConfirm,
   title,
   description,
-  confirmLabel = 'Confirm',
-  cancelLabel  = 'Cancel',
+  confirmLabel = 'Konfirmasi',
+  cancelLabel  = 'Batal',
   variant      = 'destructive',
   loading      = false,
 }) {
@@ -42,7 +42,7 @@ export default function ConfirmDialog({
     <Dialog open={open} onOpenChange={(isOpen) => { if (!isOpen) onClose(); }}>
       <DialogContent className="max-w-sm" id="confirm-dialog">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2 text-base font-heading">
+          <DialogTitle className="flex items-center gap-2 text-base">
             <TriangleAlert size={18} strokeWidth={2} className="text-destructive shrink-0" />
             {title}
           </DialogTitle>
@@ -66,7 +66,7 @@ export default function ConfirmDialog({
             onClick={onConfirm}
             disabled={loading}
           >
-            {loading ? 'Processing...' : confirmLabel}
+            {loading ? 'Memproses...' : confirmLabel}
           </Button>
         </DialogFooter>
       </DialogContent>

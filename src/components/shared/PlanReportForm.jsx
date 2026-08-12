@@ -15,12 +15,12 @@ import { Label } from '@/components/ui/label';
 
 // Zod Schema
 const reportSchema = z.object({
-  planId: z.string().min(1, 'Select related plan'),
-  category: z.enum(['menu', 'ingredient'], { required_error: 'Select item category' }),
-  refId: z.string().min(1, 'Select damaged/lost item'),
-  quantityLost: z.coerce.number().min(1, 'Quantity must be at least 1'),
-  incidentAt: z.string().min(1, 'Select incident time'),
-  reason: z.string().min(1, 'Reason is required')
+  planId: z.string().min(1, 'Pilih plan terkait'),
+  category: z.enum(['menu', 'ingredient'], { required_error: 'Pilih kategori item' }),
+  refId: z.string().min(1, 'Pilih item yang rusak/hilang'),
+  quantityLost: z.coerce.number().min(1, 'Kuantitas minimal 1'),
+  incidentAt: z.string().min(1, 'Pilih waktu kejadian'),
+  reason: z.string().min(1, 'Alasan wajib diisi')
 });
 
 export default function PlanReportForm({ onSubmit, defaultPlanId = '' }) {
@@ -63,7 +63,7 @@ export default function PlanReportForm({ onSubmit, defaultPlanId = '' }) {
         setMenus(menusRes.data?.data || []);
         setIngredients(invRes.data?.data || []);
       } catch (err) {
-        console.error('Failed to load supporting data', err);
+        console.error('Gagal memuat data pendukung', err);
       } finally {
         setIsLoadingPlans(false);
       }
@@ -79,7 +79,7 @@ export default function PlanReportForm({ onSubmit, defaultPlanId = '' }) {
       const incidentDate = new Date(selectedIncidentAt);
       const now = new Date();
       if (incidentDate > now) {
-        setIncidentError('Incident time cannot be in the future.');
+        setIncidentError('Waktu kejadian tidak boleh di masa depan.');
         return;
       }
       const plan = plans.find(p => p._id === selectedPlanId);
@@ -88,7 +88,7 @@ export default function PlanReportForm({ onSubmit, defaultPlanId = '' }) {
         // Estimate end date if duration exists
         const end = new Date(start.getTime() + (plan.duration || 1) * 24 * 60 * 60 * 1000);
         if (incidentDate < start || incidentDate > end) {
-          setIncidentError('Incident time is outside the selected plan\'s duration.');
+          setIncidentError('Waktu kejadian berada di luar rentang durasi plan yang dipilih.');
           return;
         }
       }
@@ -100,7 +100,7 @@ export default function PlanReportForm({ onSubmit, defaultPlanId = '' }) {
 
   const handleSubmit = async (values) => {
     if (incidentError) {
-      toast.error('Please fix incident date errors before submitting.');
+      toast.error('Perbaiki error pada tanggal kejadian sebelum submit.');
       return;
     }
     
@@ -130,7 +130,7 @@ export default function PlanReportForm({ onSubmit, defaultPlanId = '' }) {
           disabled={isLoadingPlans}
         >
           <SelectTrigger>
-            <SelectValue placeholder="Select active/completed plan" />
+            <SelectValue placeholder="Pilih plan aktif/selesai" />
           </SelectTrigger>
           <SelectContent>
             {plans.map(p => (
@@ -143,7 +143,7 @@ export default function PlanReportForm({ onSubmit, defaultPlanId = '' }) {
 
       <div className="grid grid-cols-2 gap-4">
         <div className="grid gap-2">
-          <Label>Item Category</Label>
+          <Label>Kategori Item</Label>
           <Select 
             value={selectedCategory} 
             onValueChange={(val) => {
@@ -152,23 +152,23 @@ export default function PlanReportForm({ onSubmit, defaultPlanId = '' }) {
             }}
           >
             <SelectTrigger>
-              <SelectValue placeholder="Select Category" />
+              <SelectValue placeholder="Pilih Kategori" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="menu">Menu / Finished Product</SelectItem>
-              <SelectItem value="ingredient">Raw Material (Ingredient)</SelectItem>
+              <SelectItem value="menu">Menu / Produk Jadi</SelectItem>
+              <SelectItem value="ingredient">Bahan Mentah (Ingredient)</SelectItem>
             </SelectContent>
           </Select>
         </div>
 
         <div className="grid gap-2">
-          <Label>Item (Name)</Label>
+          <Label>Item (Nama)</Label>
           <Select 
             value={form.watch('refId')} 
             onValueChange={(val) => form.setValue('refId', val)}
           >
             <SelectTrigger>
-              <SelectValue placeholder="Select Item" />
+              <SelectValue placeholder="Pilih Item" />
             </SelectTrigger>
             <SelectContent>
               {selectedCategory === 'menu' 
@@ -183,18 +183,18 @@ export default function PlanReportForm({ onSubmit, defaultPlanId = '' }) {
 
       <div className="grid grid-cols-2 gap-4">
         <div className="grid gap-2">
-          <Label>Quantity Lost</Label>
+          <Label>Kuantitas Rusak</Label>
           <Input 
             type="number" 
             min="1" 
-            placeholder="e.g., 2" 
+            placeholder="Misal: 2" 
             {...form.register('quantityLost')} 
           />
           {form.formState.errors.quantityLost && <span className="text-xs text-destructive">{form.formState.errors.quantityLost.message}</span>}
         </div>
 
         <div className="grid gap-2">
-          <Label>Incident Time (Actual)</Label>
+          <Label>Waktu Kejadian (Riil)</Label>
           <Input 
             type="datetime-local" 
             {...form.register('incidentAt')} 
@@ -209,16 +209,16 @@ export default function PlanReportForm({ onSubmit, defaultPlanId = '' }) {
       </div>
 
       <div className="grid gap-2">
-        <Label>Reason / Incident Details</Label>
+        <Label>Alasan / Detail Kejadian</Label>
         <Textarea 
-          placeholder="Briefly explain why this item was damaged or lost..."
+          placeholder="Jelaskan secara singkat kenapa item ini rusak/hilang..."
           {...form.register('reason')} 
         />
         {form.formState.errors.reason && <span className="text-xs text-destructive">{form.formState.errors.reason.message}</span>}
       </div>
 
-      <Button type="submit" disabled={isSubmitting || !!incidentError} className="mt-2 bg-[#F97316] hover:bg-[#F97316]/90 text-white">
-        {isSubmitting ? 'Submitting...' : 'Submit Report'}
+      <Button type="submit" disabled={isSubmitting || !!incidentError} className="mt-2">
+        {isSubmitting ? 'Submitting...' : 'Submit Laporan'}
       </Button>
     </form>
   );

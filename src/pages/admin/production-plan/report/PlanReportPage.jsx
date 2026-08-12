@@ -13,8 +13,6 @@ import { useSortable } from '@/hooks/useSortable';
 import ReviewReportModal from './components/ReviewReportModal';
 import ReplacementModal from './components/ReplacementModal';
 import AddReportModal from './components/AddReportModal';
-import Pagination from '@/components/shared/Pagination';
-import { usePagination } from '@/hooks/usePagination';
 
 export default function PlanReportPage() {
   const [reports, setReports] = useState([]);
@@ -25,15 +23,6 @@ export default function PlanReportPage() {
   const [filterStatus, setFilterStatus] = useState('all');
   const [filterCategory, setFilterCategory] = useState('all');
   const [search, setSearch] = useState('');
-
-  const { currentPage, totalPages, paginatedItems: paginatedReports, setPage, resetPage } = usePagination(
-    reports,
-    5
-  );
-
-  useEffect(() => {
-    resetPage();
-  }, [filterStatus, filterCategory, search, sortBy, resetPage]);
 
   // Modals state
   const [reviewReport, setReviewReport] = useState(null);
@@ -56,7 +45,7 @@ export default function PlanReportPage() {
         setReports(res.data.data || []);
       }
     } catch {
-      toast.error('Failed to retrieve plan reports');
+      toast.error('Gagal mengambil daftar laporan');
     } finally {
       setIsLoading(false);
     }
@@ -73,14 +62,14 @@ export default function PlanReportPage() {
   const columns = [
     {
       key: 'incidentAt',
-      header: 'Incident Time',
+      header: 'Waktu Kejadian',
       render: (row) => (
         <div className="flex flex-col gap-1">
-          <span className="font-medium">{new Date(row.incidentAt).toLocaleDateString('en-US', { day: '2-digit', month: 'short', year: 'numeric' })}</span>
-          <span className="text-xs text-muted-foreground">{new Date(row.incidentAt).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}</span>
+          <span className="font-medium">{new Date(row.incidentAt).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' })}</span>
+          <span className="text-xs text-muted-foreground">{new Date(row.incidentAt).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}</span>
           {row.isLateReport && (
             <span className="inline-flex items-center gap-1 text-[10px] text-amber-600 font-semibold bg-amber-50 px-1 py-0.5 rounded w-max">
-              <Clock size={10} /> Late Report
+              <Clock size={10} /> Laporan Telat
             </span>
           )}
         </div>
@@ -88,7 +77,7 @@ export default function PlanReportPage() {
     },
     {
       key: 'item',
-      header: 'Type & Item',
+      header: 'Tipe & Item',
       render: (row) => (
         <div className="flex flex-col">
           <span className="font-semibold capitalize text-foreground">{row.category}</span>
@@ -98,14 +87,14 @@ export default function PlanReportPage() {
     },
     {
       key: 'quantityLost',
-      header: 'Lost Quantity',
+      header: 'Kuantitas Rusak',
       render: (row) => (
         <span className="font-semibold text-destructive">{row.quantityLost}</span>
       ),
     },
     {
       key: 'reportedBy',
-      header: 'Reporter',
+      header: 'Pelapor',
       render: (row) => (
         <div className="flex flex-col">
           <span className="text-sm font-medium">{row.reportedBy}</span>
@@ -123,7 +112,7 @@ export default function PlanReportPage() {
     },
     {
       key: 'actions',
-      header: 'Action',
+      header: 'Aksi',
       headerClass: 'text-right',
       cellClass: 'text-right',
       render: (row) => {
@@ -143,8 +132,8 @@ export default function PlanReportPage() {
               Detail
             </Button>
             {isTarikStok && (
-              <Button size="sm" variant="default" className="bg-[#F97316] hover:bg-[#F97316]/90 text-white" onClick={() => setReplaceReport(row)}>
-                Restock
+              <Button size="sm" variant="default" className="bg-orange-600 hover:bg-orange-700" onClick={() => setReplaceReport(row)}>
+                Tarik Stok
               </Button>
             )}
           </div>
@@ -165,7 +154,7 @@ export default function PlanReportPage() {
       />
 
       {/* Filter Bar */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between gap-2 mb-2">
         {/* Search */}
         <SearchInput
           id="report-search"
@@ -182,7 +171,7 @@ export default function PlanReportPage() {
               <SelectValue placeholder="Status" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All Statuses</SelectItem>
+              <SelectItem value="all">Semua Status</SelectItem>
               <SelectItem value="pending">Pending</SelectItem>
               <SelectItem value="approved">Approved</SelectItem>
               <SelectItem value="rejected">Rejected</SelectItem>
@@ -191,10 +180,10 @@ export default function PlanReportPage() {
 
           <Select value={filterCategory} onValueChange={setFilterCategory}>
             <SelectTrigger className="w-[160px] h-9 text-muted-foreground font-normal">
-              <SelectValue placeholder="Category" />
+              <SelectValue placeholder="Kategori" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All Categories</SelectItem>
+              <SelectItem value="all">Semua Kategori</SelectItem>
               <SelectItem value="menu">Menu</SelectItem>
               <SelectItem value="ingredient">Ingredient</SelectItem>
             </SelectContent>
@@ -206,8 +195,8 @@ export default function PlanReportPage() {
               <SelectValue placeholder="Sort By" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="date_newest">Newest</SelectItem>
-              <SelectItem value="date_oldest">Oldest</SelectItem>
+              <SelectItem value="date_newest">Terbaru</SelectItem>
+              <SelectItem value="date_oldest">Terlama</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -216,21 +205,11 @@ export default function PlanReportPage() {
       <div className="rounded-lg border border-border bg-card shadow-sm overflow-hidden">
         <DataTable
           columns={columns}
-          data={paginatedReports}
+          data={reports}
           loading={isLoading}
-          emptyMessage="No incident report history."
+          emptyMessage="Tidak ada riwayat laporan insiden."
         />
       </div>
-
-      {paginatedReports.length > 0 && (
-        <Pagination
-          currentPage={currentPage}
-          totalPage={totalPages}
-          totalData={reports.length}
-          limit={5}
-          onPageChange={setPage}
-        />
-      )}
 
       <ReviewReportModal 
         open={!!reviewReport} 

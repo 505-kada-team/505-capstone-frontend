@@ -55,7 +55,7 @@ export default function Pagination({ currentPage, totalPage, totalData, limit, o
           id="pagination-prev"
           onClick={() => onPageChange(currentPage - 1)}
           disabled={currentPage <= 1}
-          aria-label="Previous page"
+          aria-label="Halaman sebelumnya"
         >
           <ChevronLeft size={14} strokeWidth={2} />
         </Button>
@@ -67,7 +67,7 @@ export default function Pagination({ currentPage, totalPage, totalData, limit, o
             size="icon-sm"
             id={`pagination-page-${page}`}
             onClick={() => onPageChange(page)}
-            aria-label={`Page ${page}`}
+            aria-label={`Halaman ${page}`}
             aria-current={page === currentPage ? 'page' : undefined}
             className={cn(
               'min-w-[28px] font-mono text-xs',
@@ -84,7 +84,7 @@ export default function Pagination({ currentPage, totalPage, totalData, limit, o
           id="pagination-next"
           onClick={() => onPageChange(currentPage + 1)}
           disabled={currentPage >= totalPage}
-          aria-label="Next page"
+          aria-label="Halaman berikutnya"
         >
           <ChevronRight size={14} strokeWidth={2} />
         </Button>
