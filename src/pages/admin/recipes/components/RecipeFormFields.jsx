@@ -125,11 +125,16 @@ export default function RecipeFormFields({
                     Upload Picture
                   </p>
                   <p className="text-[11px] text-muted-foreground mt-0.5">
-                    PNG or JPG, up to 5MB
+                    PNG or JPG, up to 2MB
                   </p>
                 </>
               )}
             </div>
+            {form.formState.errors.image && (
+              <p className="text-destructive text-xs font-medium">
+                {form.formState.errors.image.message}
+              </p>
+            )}
           </div>
 
           <div className="space-y-1">

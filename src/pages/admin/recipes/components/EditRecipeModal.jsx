@@ -79,10 +79,14 @@ export default function EditRecipeModal({
         return;
       }
 
-      const res = await updateRecipe(recipeId, {
-        ...data,
-        ingredients: resolved,
-      });
+      const res = await updateRecipe(
+        recipeId,
+        {
+          ...data,
+          ingredients: resolved,
+        },
+        formState.imageFile,
+      );
       if (res.success) {
         toast.success(res.message);
         onSuccess();
