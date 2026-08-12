@@ -7,7 +7,8 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { getMenuDropdown, createPlan } from '@/services/api';
+import { planApi } from '@/services/plan/plan.api';
+import { getMenuDropdown } from '@/services/api'; // kept temporarily for menu dropdown
 import PlanDetailModal from './components/PlanDetailModal';
 import PlanHistoryView from './components/PlanHistoryView';
 
@@ -108,10 +109,11 @@ export default function DraftPlanPage() {
         }))
       };
       
-      const res = await createPlan(payload);
-      if (res.data?.success) {
-        toast.success(res.data.message);
-        setCreatedPlanId(res.data.data._id);
+      const res = await planApi.create(payload);
+      // planApi.create returns the envelope directly: { data: planObject, message }
+      if (res?.data?._id) {
+        toast.success(res.message || 'Plan created');
+        setCreatedPlanId(res.data._id);
       } else {
         toast.error('Failed to create draft plan');
       }
