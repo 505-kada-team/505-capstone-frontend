@@ -2,68 +2,75 @@
  * InventoryPage.jsx — pages/admin/
  *
  * Halaman daftar inventory (admin).
- * Fitur: list + filter + search + sort + pagination + tambah inventory.
+ * Fitur: list + filter + search + sort (client-side) + pagination + tambah inventory.
  *
  * Referensi endpoint:
- *   GET  /api/inventory           → getInventoryList  (list + filter)
- *   POST /api/inventory           → createInventory   (tambah item baru)
- *   DEL  /api/inventory/:id       → archiveInventory  (arsip via ConfirmDialog)
+ *   GET  /api/inventory           → useInventoryList  (list + filter)
+ *   POST /api/inventory           → useInventoryMutations.createInventory (lewat AddInventoryModal)
+ *   DEL  /api/inventory/:id       → useInventoryMutations.archiveInventory (via ConfirmDialog)
+ *
+ * PENTING — dua perubahan dari versi lama:
+ *   1. Backend TIDAK menerima query param `sort` (lihat
+ *      validations/inventory.validation.js / listInventoryQuery: cuma
+ *      page, limit, category, search, includeDeleted). Sorting sekarang
+ *      dilakukan client-side terhadap `items` hasil fetch. Konsekuensinya:
+ *      sort HANYA berlaku dalam satu halaman pagination yang sedang
+ *      ditampilkan, bukan global across semua data. Kalau butuh sort
+ *      global, itu harus jadi permintaan fitur ke backend (di luar scope
+ *      "pages menyesuaikan").
+ *   2. Filter kategori sebelumnya kirim value 'Ingredients'/'Packaging'
+ *      (kapital) padahal enum backend 'ingredients'/'packaging' — filter
+ *      kategori kemungkinan besar selama ini selalu no-op. Sudah dibetulkan
+ *      ke lowercase.
  *
  * State yang dihandle:
  *   - quantityTotal: null  → tampilkan "—" (inventory baru tanpa batch)
  *   - quantityTotal: 0     → tampilkan "0 unit" (pernah ada stok, sekarang habis)
  *   - category badge       → ingredients=oranye, packaging=abu
- *
- * Komponen UI: SEMUA pakai shadcn — tidak ada native <select> HTML.
- *   Filter bar : shadcn Select (Select + SelectTrigger + SelectContent + SelectItem)
- *   Form dialog: FormSelect shared component (wrapper shadcn Select + Label + error)
  */
 
-import { useState, useEffect, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
-import {  Plus } from 'lucide-react';
+import { useState, useEffect, useMemo } from "react";
+import { useNavigate } from "react-router-dom";
+import { Plus } from "lucide-react";
 
 // Shared components
-import PageHeader    from '@/components/shared/PageHeader';
-import DataTable     from '@/components/shared/DataTable';
-import CategoryBadge from '@/components/shared/CategoryBadge';
-import Pagination    from '@/components/shared/Pagination';
-import SearchInput   from '@/components/shared/SearchInput';
-import ConfirmDialog from '@/components/shared/ConfirmDialog';
+import PageHeader from "@/components/shared/PageHeader";
+import DataTable from "@/components/shared/DataTable";
+import CategoryBadge from "@/components/shared/CategoryBadge";
+import Pagination from "@/components/shared/Pagination";
+import SearchInput from "@/components/shared/SearchInput";
+import ConfirmDialog from "@/components/shared/ConfirmDialog";
 
-import AddInventoryModal from './components/AddInventoryModal';
+import AddInventoryModal from "./components/AddInventoryModal";
 
 // shadcn UI
-import { Button } from '@/components/ui/button';
+import { Button } from "@/components/ui/button";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
+} from "@/components/ui/select";
 
-// Services & schemas
-import {
-  getInventoryList,
-  archiveInventory,
-} from '@/services/api';
-import { useSortable } from '@/hooks/useSortable';
+// Hooks
+import { useInventoryList } from "@/hooks/inventory/useInventoryList";
+import { useInventoryMutations } from "@/hooks/inventory/useInventoryMutations";
+import { useSortable } from "@/hooks/useSortable";
 
 // ============================================================
 // Constants — opsi filter dan form
 // ============================================================
 const LIMIT = 10;
 
+// BERUBAH: value sekarang lowercase, persis enum Inventory.category di
+// backend ('ingredients' | 'packaging'). 'all' cuma sentinel client-side —
+// gak pernah dikirim ke query.
 const CATEGORY_FILTER_OPTIONS = [
-  { value: 'All Categories', label: 'All Categories' },
-  { value: 'Ingredients', label: 'Ingredients' },
-  { value: 'Packaging',   label: 'Packaging' },
+  { value: "all", label: "All Categories" },
+  { value: "ingredients", label: "Ingredients" },
+  { value: "packaging", label: "Packaging" },
 ];
-
-
-
-
 
 // ============================================================
 // Helper functions
@@ -71,10 +78,10 @@ const CATEGORY_FILTER_OPTIONS = [
 
 /** Format angka ke Rupiah: 12700 → "Rp 12.700" */
 const formatCurrency = (amount) => {
-  if (amount === null || amount === undefined) return '—';
-  return new Intl.NumberFormat('id-ID', {
-    style: 'currency',
-    currency: 'IDR',
+  if (amount === null || amount === undefined) return "—";
+  return new Intl.NumberFormat("id-ID", {
+    style: "currency",
+    currency: "IDR",
     minimumFractionDigits: 0,
   }).format(amount);
 };
@@ -86,17 +93,55 @@ const formatCurrency = (amount) => {
  *   null       → "—" (inventory baru, belum ada batch)
  */
 const formatQuantity = (quantity, unit) => {
-  if (quantity === null || quantity === undefined) return '—';
-  if (unit === 'gr' && quantity >= 1000) {
-    const val = (quantity / 1000).toLocaleString('id-ID', { maximumFractionDigits: 2 });
+  if (quantity === null || quantity === undefined) return "—";
+  if (unit === "gr" && quantity >= 1000) {
+    const val = (quantity / 1000).toLocaleString("id-ID", {
+      maximumFractionDigits: 2,
+    });
     return `${val} Kg`;
   }
-  if (unit === 'ml' && quantity >= 1000) {
-    const val = (quantity / 1000).toLocaleString('id-ID', { maximumFractionDigits: 2 });
+  if (unit === "ml" && quantity >= 1000) {
+    const val = (quantity / 1000).toLocaleString("id-ID", {
+      maximumFractionDigits: 2,
+    });
     return `${val} Ltr`;
   }
-  const uMap = { gr: 'gr', ml: 'ml', pcs: 'Pcs' };
-  return `${quantity.toLocaleString('id-ID')} ${uMap[unit] ?? unit}`;
+  const uMap = { gr: "gr", ml: "ml", pcs: "Pcs" };
+  return `${quantity.toLocaleString("id-ID")} ${uMap[unit] ?? unit}`;
+};
+
+/**
+ * Sort client-side. Cuma jalan terhadap `items` di halaman pagination yang
+ * lagi tampil — lihat catatan di header file soal keterbatasan ini.
+ */
+const sortItems = (items, sortBy) => {
+  const sorted = [...items];
+  switch (sortBy) {
+    case "name_asc":
+      return sorted.sort((a, b) => a.name.localeCompare(b.name));
+    case "name_desc":
+      return sorted.sort((a, b) => b.name.localeCompare(a.name));
+    case "stock_high":
+      return sorted.sort(
+        (a, b) =>
+          (b.quantityTotal ?? -Infinity) - (a.quantityTotal ?? -Infinity),
+      );
+    case "stock_low":
+      return sorted.sort(
+        (a, b) => (a.quantityTotal ?? Infinity) - (b.quantityTotal ?? Infinity),
+      );
+    case "cost_high":
+      return sorted.sort(
+        (a, b) =>
+          (b.lastCostBatch ?? -Infinity) - (a.lastCostBatch ?? -Infinity),
+      );
+    case "cost_low":
+      return sorted.sort(
+        (a, b) => (a.lastCostBatch ?? Infinity) - (b.lastCostBatch ?? Infinity),
+      );
+    default:
+      return sorted;
+  }
 };
 
 // ============================================================
@@ -105,121 +150,118 @@ const formatQuantity = (quantity, unit) => {
 export default function InventoryPage() {
   const navigate = useNavigate();
 
-  // ── Data state ────────────────────────────────────────────
-  const [inventoryList, setInventoryList] = useState([]);
-  const [loading,       setLoading]       = useState(true);
-  const [pagination,    setPagination]    = useState({
-    totalData: 0, totalPage: 1, currentPage: 1, limit: LIMIT,
-  });
+  // ── Data hooks ────────────────────────────────────────────
+  const {
+    items,
+    pagination,
+    isLoading: loading,
+    fetchInventoryList,
+  } = useInventoryList();
+  const {
+    archiveInventory,
+    isArchiving: archiveLoading,
+    archiveError,
+    resetArchiveError,
+  } = useInventoryMutations();
 
   // ── Filter state ──────────────────────────────────────────
-  const [search,   setSearch]   = useState('');
-  const [category, setCategory] = useState('all');
-  const { sortBy, setSortBy } = useSortable('name_asc');
-  const [page,     setPage]     = useState(1);
+  const [search, setSearch] = useState("");
+  const [category, setCategory] = useState("all");
+  const { sortBy, setSortBy } = useSortable("name_asc");
+  const [page, setPage] = useState(1);
 
   // ── Dialog state ──────────────────────────────────────────
   const [showAddDialog, setShowAddDialog] = useState(false);
-  const [archiveTarget,  setArchiveTarget]  = useState(null);
-  const [archiveLoading, setArchiveLoading] = useState(false);
+  const [archiveTarget, setArchiveTarget] = useState(null);
 
   // ── Fetch data ────────────────────────────────────────────
-  const fetchInventory = useCallback(async () => {
-    setLoading(true);
-    try {
-      const params = {
-        page,
-        limit: LIMIT,
-        ...(search            && { search }),
-        ...(category !== 'all' && { category }),
-        ...(sortBy            && { sort: sortBy }),
-      };
-      const res = await getInventoryList(params);
-      setInventoryList(res.data.data ?? []);
-      if (res.data.pagination) setPagination(res.data.pagination);
-    } catch (err) {
-      console.error('[InventoryPage] fetchInventory error:', err);
-    } finally {
-      setLoading(false);
-    }
-  }, [page, search, category, sortBy]);
-
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    fetchInventory();
-  }, [fetchInventory]);
+    fetchInventoryList({ page, limit: LIMIT, search, category });
+  }, [fetchInventoryList, page, search, category]);
+
+  const sortedItems = useMemo(() => sortItems(items, sortBy), [items, sortBy]);
 
   // Reset page ke 1 setiap kali filter berubah
-  const handleSearch   = (val) => { setSearch(val);   setPage(1); };
-  const handleCategory = (val) => { setCategory(val); setPage(1); };
+  const handleSearch = (val) => {
+    setSearch(val);
+    setPage(1);
+  };
+  const handleCategory = (val) => {
+    setCategory(val);
+    setPage(1);
+  };
+
+  const refetch = () =>
+    fetchInventoryList({ page, limit: LIMIT, search, category });
 
   // ── Archive inventory ─────────────────────────────────────
   const handleArchiveConfirm = async () => {
     if (!archiveTarget) return;
-    setArchiveLoading(true);
     try {
-      await archiveInventory(archiveTarget._id);
+      await archiveInventory(archiveTarget.id);
       setArchiveTarget(null);
-      fetchInventory();
-    } catch (err) {
-      console.error('[InventoryPage] archiveInventory error:', err);
-    } finally {
-      setArchiveLoading(false);
+      refetch();
+    } catch {
+      // archiveError sudah di-set di dalam hook — ConfirmDialog tetap
+      // kebuka biar orang bisa baca pesannya (misal: masih ada stok aktif).
     }
   };
 
   // ── Table column definitions ──────────────────────────────
   const columns = [
     {
-      key: 'nameInventory',
-      header: 'Item Name',
-      headerClass: 'w-[40%]',
+      key: "name",
+      header: "Item Name",
+      headerClass: "w-[40%]",
       render: (row) => (
-        <span className="font-medium text-foreground text-sm">{row.nameInventory}</span>
+        <span className="font-medium text-foreground text-sm">{row.name}</span>
       ),
     },
     {
-      key: 'quantityTotal',
-      header: 'Quantity',
-      headerClass: 'w-[15%]',
-      // Angka pakai font-mono (Geist Mono Variable)
-      cellClass: 'font-mono text-sm',
+      key: "quantityTotal",
+      header: "Quantity",
+      headerClass: "w-[15%]",
+      cellClass: "font-mono text-sm",
       render: (row) => (
-        <span className={row.quantityTotal === null ? 'text-muted-foreground' : ''}>
+        <span
+          className={row.quantityTotal === null ? "text-muted-foreground" : ""}
+        >
           {formatQuantity(row.quantityTotal, row.unit)}
         </span>
       ),
     },
     {
-      key: 'lastCostBatch',
-      header: 'Cost per Unit',
-      headerClass: 'w-[20%]',
-      cellClass: 'font-mono text-sm',
+      key: "lastCostBatch",
+      header: "Cost per Unit",
+      headerClass: "w-[20%]",
+      cellClass: "font-mono text-sm",
       render: (row) => (
-        <span className={row.lastCostBatch === null ? 'text-muted-foreground' : ''}>
+        <span
+          className={row.lastCostBatch === null ? "text-muted-foreground" : ""}
+        >
           {formatCurrency(row.lastCostBatch)}
         </span>
       ),
     },
     {
-      key: 'category',
-      header: 'Category',
-      headerClass: 'w-[15%]',
+      key: "category",
+      header: "Category",
+      headerClass: "w-[15%]",
       render: (row) => <CategoryBadge category={row.category} />,
     },
     {
-      key: 'aksi',
-      header: 'Action',
-      headerClass: 'w-[10%] text-right',
-      cellClass: 'text-right',
+      key: "aksi",
+      header: "Action",
+      headerClass: "w-[10%] text-right",
+      cellClass: "text-right",
       render: (row) => (
         <div className="flex items-center justify-end gap-1.5">
           <Button
-            id={`inventory-detail-${row._id}`}
+            id={`inventory-detail-${row.id}`}
             variant="link"
             size="sm"
             className="text-[#F97316] hover:text-[#F97316]/80 px-0 h-auto font-medium"
-            onClick={() => navigate(`/admin/inventory/${row._id}`)}
+            onClick={() => navigate(`/admin/inventory/${row.id}`)}
           >
             Detail
           </Button>
@@ -247,9 +289,8 @@ export default function InventoryPage() {
         }
       />
 
-      {/* Filter Bar — semua shadcn Select, tidak ada native <select> */}
+      {/* Filter Bar */}
       <div className="flex items-center justify-between gap-2 mb-5">
-        {/* Search */}
         <SearchInput
           id="inventory-search"
           placeholder="Search by name or ID..."
@@ -259,7 +300,6 @@ export default function InventoryPage() {
         />
 
         <div className="flex items-center gap-3">
-          {/* Category filter — shadcn Select */}
           <Select value={category} onValueChange={handleCategory}>
             <SelectTrigger
               id="inventory-category-filter"
@@ -276,7 +316,7 @@ export default function InventoryPage() {
             </SelectContent>
           </Select>
 
-          {/* Sort By Dropdown */}
+          {/* Sort By — client-side, lihat catatan di header file */}
           <Select value={sortBy} onValueChange={setSortBy}>
             <SelectTrigger className="w-[160px] gap-2 h-9 text-muted-foreground font-normal">
               <SelectValue placeholder="Sort By" />
@@ -293,46 +333,53 @@ export default function InventoryPage() {
         </div>
       </div>
 
+      {archiveError && (
+        <div className="mb-4 flex items-center gap-2 rounded-md bg-destructive/10 border border-destructive/30 p-3">
+          <p className="text-sm text-destructive">{archiveError}</p>
+        </div>
+      )}
+
       {/* Table */}
       <div className="rounded-lg border border-border bg-card shadow-sm overflow-hidden">
         <DataTable
           columns={columns}
-          data={inventoryList}
+          data={sortedItems}
           loading={loading}
           emptyMessage="No inventory added yet. Click '+ Add Item' to add first item."
         />
       </div>
 
-      {/* Pagination */}
+      {/* Pagination — nama prop Pagination component beda sama shape hook,
+          jadi di-map manual di sini (page->currentPage, totalPages->totalPage,
+          total->totalData). */}
       <Pagination
-        currentPage={pagination.currentPage}
-        totalPage={pagination.totalPage}
-        totalData={pagination.totalData}
+        currentPage={pagination.page}
+        totalPage={pagination.totalPages}
+        totalData={pagination.total}
         limit={pagination.limit}
         onPageChange={setPage}
       />
 
       {/* ── Dialogs ──────────────────────────────────────── */}
 
-      {/* Add Inventory */}
       <AddInventoryModal
         open={showAddDialog}
         onClose={() => setShowAddDialog(false)}
-        onSuccess={fetchInventory}
+        onSuccess={refetch}
       />
 
-      {/* Detail & Edit Inventory */}
-
-      {/* Confirm Archive */}
       <ConfirmDialog
         open={!!archiveTarget}
-        onClose={() => setArchiveTarget(null)}
+        onClose={() => {
+          setArchiveTarget(null);
+          resetArchiveError();
+        }}
         onConfirm={handleArchiveConfirm}
         title="Arsipkan Inventory?"
         description={
           archiveTarget
-            ? `Inventory "${archiveTarget.nameInventory}" akan diarsipkan. Pastikan semua batch sudah kosong sebelum mengarsipkan.`
-            : ''
+            ? `Inventory "${archiveTarget.name}" akan diarsipkan. Pastikan semua batch sudah kosong sebelum mengarsipkan.`
+            : ""
         }
         confirmLabel="Ya, Arsipkan"
         loading={archiveLoading}

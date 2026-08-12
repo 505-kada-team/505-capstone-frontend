@@ -38,13 +38,19 @@ function deriveExpiryStatus(daysUntilExpiry) {
 
 function mapPagination(pagination) {
   if (!pagination) return null;
+  // Backend mengembalikan { currentPage, totalData, totalPage, limit }.
+  // Normalisasi ke shape yang dipakai hooks/UI: { page, total, totalPages, limit }.
+  const page = pagination.currentPage ?? pagination.page ?? 1;
+  const total = pagination.totalData ?? pagination.total ?? 0;
+  const totalPages = pagination.totalPage ?? pagination.totalPages ?? 1;
+  const limit = pagination.limit ?? 10;
   return {
-    page: pagination.page,
-    limit: pagination.limit,
-    total: pagination.total,
-    totalPages: pagination.totalPages,
-    hasNextPage: pagination.page < pagination.totalPages,
-    hasPrevPage: pagination.page > 1,
+    page,
+    limit,
+    total,
+    totalPages,
+    hasNextPage: page < totalPages,
+    hasPrevPage: page > 1,
   };
 }
 
@@ -54,9 +60,12 @@ function mapPagination(pagination) {
 
 export function mapInventory(raw) {
   if (!raw) return null;
+  // Backend pakai 'nameInventory', frontend internal pakai 'name'.
+  // Kedua-duanya didukung untuk kompatibilitas.
+  const name = raw.name ?? raw.nameInventory ?? "";
   return {
     id: raw._id ?? raw.id,
-    name: raw.name,
+    name,
     itemCode: raw.itemCode,
     category: raw.category, // 'ingredients' | 'packaging'
     unit: raw.unit,
@@ -74,7 +83,7 @@ export function mapInventoryDropdownItem(raw) {
   if (!raw) return null;
   return {
     id: raw._id ?? raw.id,
-    name: raw.name,
+    name: raw.name ?? raw.nameInventory ?? "",
     itemCode: raw.itemCode,
     category: raw.category,
     unit: raw.unit,
@@ -82,8 +91,11 @@ export function mapInventoryDropdownItem(raw) {
 }
 
 export function mapInventoryList(rawResult) {
+  // Backend mengembalikan { success, data: [...], pagination }.
+  // 'items' adalah alias lama — 'data' adalah field aktual dari backend.
+  const rawItems = rawResult?.items ?? rawResult?.data ?? [];
   return {
-    items: (rawResult?.items ?? []).map(mapInventory),
+    items: rawItems.map(mapInventory),
     pagination: mapPagination(rawResult?.pagination),
   };
 }
@@ -131,7 +143,7 @@ export function mapHistorySubInventoryEntry(raw) {
     id: raw._id ?? raw.id,
     inventoryId: raw.inventoryId,
     subInventoryId: raw.subInventoryId,
-    nameInventory: raw.nameInventory,
+    nameInventory: raw.nameInventory ?? raw.name ?? "",
     itemCode: raw.itemCode,
     category: raw.category,
     unit: raw.unit,
@@ -157,7 +169,7 @@ export function mapHistoryUsageEntry(raw) {
     id: raw._id ?? raw.id,
     inventoryId: raw.inventoryId,
     subInventoryId: raw.subInventoryId,
-    nameInventory: raw.nameInventory,
+    nameInventory: raw.nameInventory ?? raw.name ?? "",
     batchCode: raw.batchCode,
     quantityUsed: raw.quantityUsed,
     costPriceUsed: raw.costPriceUsed,

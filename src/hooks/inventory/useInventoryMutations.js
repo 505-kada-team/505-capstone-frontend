@@ -1,12 +1,12 @@
 // src/features/inventory/hooks/useInventoryMutations.js
 
 import { useState, useCallback } from "react";
-import { inventoryApi } from "@/features/inventory/api/inventory.api";
+import { inventoryApi } from "@/services/inventory/inventory.api";
 import {
   mapInventory,
   toCreateInventoryPayload,
   toUpdateInventoryPayload,
-} from "@/features/inventory/api/inventory.mapper";
+} from "@/services/inventory/inventory.mapper";
 
 /**
  * Mutation hook untuk create / update / archive Inventory (item card).
@@ -84,16 +84,23 @@ export function useInventoryMutations() {
     }
   }, []);
 
+  const resetCreateError = useCallback(() => setCreateError(null), []);
+  const resetUpdateError = useCallback(() => setUpdateError(null), []);
+  const resetArchiveError = useCallback(() => setArchiveError(null), []);
+
   return {
     createInventory,
     isCreating,
     createError,
+    resetCreateError,
     updateInventory,
     isUpdating,
     updateError,
+    resetUpdateError,
     archiveInventory,
     isArchiving,
     archiveError,
+    resetArchiveError,
   };
 }
 

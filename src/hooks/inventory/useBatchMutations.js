@@ -1,11 +1,11 @@
 // src/features/inventory/hooks/useBatchMutations.js
 
 import { useState, useCallback } from "react";
-import { inventoryApi } from "@/features/inventory/api/inventory.api";
+import { inventoryApi } from "@/services/inventory/inventory.api";
 import {
   mapBatch,
   toAddBatchPayload,
-} from "@/features/inventory/api/inventory.mapper";
+} from "@/services/inventory/inventory.mapper";
 
 /**
  * Mutation hook untuk SubInventory (batch): tambah & arsipkan.
@@ -68,13 +68,21 @@ export function useBatchMutations() {
     }
   }, []);
 
+  const resetAddBatchError = useCallback(() => setAddBatchError(null), []);
+  const resetArchiveBatchError = useCallback(
+    () => setArchiveBatchError(null),
+    [],
+  );
+
   return {
     addBatch,
     isAddingBatch,
     addBatchError,
+    resetAddBatchError,
     archiveBatch,
     isArchivingBatch,
     archiveBatchError,
+    resetArchiveBatchError,
   };
 }
 

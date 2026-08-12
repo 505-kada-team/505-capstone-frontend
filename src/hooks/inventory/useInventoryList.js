@@ -1,8 +1,8 @@
 // src/features/inventory/hooks/useInventoryList.js
 
 import { useState, useCallback } from "react";
-import { inventoryApi } from "@/features/inventory/api/inventory.api";
-import { mapInventoryList } from "@/features/inventory/api/inventory.mapper";
+import { inventoryApi } from "@/services/inventory/inventory.api";
+import { mapInventoryList } from "@/services/inventory/inventory.mapper";
 
 const DEFAULT_PAGINATION = {
   page: 1,

@@ -1,8 +1,8 @@
 // src/features/inventory/hooks/useInventoryDetail.js
 
 import { useState, useCallback } from "react";
-import { inventoryApi } from "@/features/inventory/api/inventory.api";
-import { mapInventoryDetail } from "@/features/inventory/api/inventory.mapper";
+import { inventoryApi } from "@/services/inventory/inventory.api";
+import { mapInventoryDetail } from "@/services/inventory/inventory.mapper";
 
 /**
  * Query hook untuk detail satu inventory (GET /inventory/:id) beserta
