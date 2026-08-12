@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -13,6 +13,15 @@ import DataTable from "@/components/shared/DataTable";
 import StatusBadge from "@/components/shared/StatusBadge";
 import ConfirmDialog from "@/components/shared/ConfirmDialog";
 import AddBatchModal from "./components/AddBatchModal";
+import Pagination from "@/components/shared/Pagination";
+import { usePagination } from "@/hooks/usePagination";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 import { useInventoryDetail } from "@/hooks/inventory/useInventoryDetail";
 import { useInventoryMutations } from "@/hooks/inventory/useInventoryMutations";
@@ -90,6 +99,7 @@ export default function DetailInventoryPage() {
   const [showAddBatch, setShowAddBatch] = useState(false);
   const [deleteBatchTarget, setDeleteBatchTarget] = useState(null);
   const [archiveItemTarget, setArchiveItemTarget] = useState(false);
+  const [sortBy, setSortBy] = useState("newest");
 
   const {
     register,
@@ -110,6 +120,38 @@ export default function DetailInventoryPage() {
       reset({ name: data.name, description: data.description || "" });
     }
   }, [data, reset]);
+
+  const sortedBatches = useMemo(() => {
+    const batches = [...(data?.batches || [])];
+    switch (sortBy) {
+      case "oldest":
+        return batches.sort((a, b) => new Date(a.inDate || 0) - new Date(b.inDate || 0));
+      case "expiry_asc":
+        return batches.sort((a, b) => {
+          if (!a.expired) return 1;
+          if (!b.expired) return -1;
+          return new Date(a.expired) - new Date(b.expired);
+        });
+      case "expiry_desc":
+        return batches.sort((a, b) => {
+          if (!a.expired) return 1;
+          if (!b.expired) return -1;
+          return new Date(b.expired) - new Date(a.expired);
+        });
+      case "newest":
+      default:
+        return batches.sort((a, b) => new Date(b.inDate || 0) - new Date(a.inDate || 0));
+    }
+  }, [data?.batches, sortBy]);
+
+  const { currentPage, totalPages, paginatedItems: paginatedBatches, setPage, resetPage } = usePagination(
+    sortedBatches,
+    5
+  );
+
+  useEffect(() => {
+    resetPage();
+  }, [sortBy, resetPage]);
 
   const error = detailError || updateError || archiveError || archiveBatchError;
 
@@ -148,25 +190,25 @@ export default function DetailInventoryPage() {
   const columns = [
     {
       key: "inDate",
-      header: "Diterima",
+      header: "Received Date",
       cellClass: "font-mono text-xs",
       render: (row) => formatDate(row.inDate),
     },
     {
       key: "costPrices",
-      header: "Harga per Unit",
+      header: "Price per Unit",
       cellClass: "font-mono text-sm",
       render: (row) => formatCurrency(row.costPrices),
     },
     {
       key: "quantity",
-      header: "Jumlah",
+      header: "Quantity",
       cellClass: "font-mono text-sm",
       render: (row) => formatQuantity(row.quantity, data?.unit),
     },
     {
       key: "expired",
-      header: "Kadaluarsa",
+      header: "Expiry Date",
       cellClass: "font-mono text-xs",
       render: (row) =>
         data?.category === "packaging" ? "—" : formatDate(row.expired),
@@ -178,7 +220,7 @@ export default function DetailInventoryPage() {
     },
     {
       key: "aksi",
-      header: "Aksi",
+      header: "Action",
       headerClass: "text-right",
       cellClass: "text-right",
       render: (row) => (
@@ -188,7 +230,7 @@ export default function DetailInventoryPage() {
           className="text-destructive hover:bg-destructive/10 hover:text-destructive h-7 px-2 font-medium"
           onClick={() => setDeleteBatchTarget(row)}
         >
-          Hapus
+          Delete
         </Button>
       ),
     },
@@ -222,7 +264,7 @@ export default function DetailInventoryPage() {
 
       {loading && !data ? (
         <div className="p-12 text-center text-muted-foreground bg-card rounded-lg border border-border">
-          Memuat data...
+          Loading data...
         </div>
       ) : data ? (
         <div className="bg-card rounded-lg border border-border p-6 shadow-sm">
@@ -318,17 +360,45 @@ export default function DetailInventoryPage() {
           </form>
 
           <div className="mt-12 space-y-3">
-            <h3 className="font-heading text-lg font-bold">
-              Inventory Batches
-            </h3>
+            <div className="flex justify-between items-center">
+              <h3 className="font-heading text-lg font-bold">
+                Inventory Batches
+              </h3>
+              <div className="flex items-center gap-3">
+                <Select value={sortBy} onValueChange={setSortBy}>
+                  <SelectTrigger className="w-[180px] gap-2 h-9 text-muted-foreground font-normal">
+                    <SelectValue placeholder="Sort By" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="newest">Newest Received</SelectItem>
+                    <SelectItem value="oldest">Oldest Received</SelectItem>
+                    {data?.category !== "packaging" && (
+                      <>
+                        <SelectItem value="expiry_asc">Nearest Expiry</SelectItem>
+                        <SelectItem value="expiry_desc">Farthest Expiry</SelectItem>
+                      </>
+                    )}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
             <div className="rounded-lg border border-border shadow-sm overflow-hidden bg-background">
               <DataTable
                 columns={columns}
-                data={data.batches || []}
+                data={paginatedBatches}
                 loading={false}
                 emptyMessage="No inventory batches found for this item."
               />
             </div>
+            {totalPages > 1 && (
+              <Pagination
+                currentPage={currentPage}
+                totalPage={totalPages}
+                totalData={sortedBatches.length}
+                limit={5}
+                onPageChange={setPage}
+              />
+            )}
           </div>
         </div>
       ) : null}

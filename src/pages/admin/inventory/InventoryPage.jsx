@@ -61,7 +61,7 @@ import { useSortable } from "@/hooks/useSortable";
 // ============================================================
 // Constants — opsi filter dan form
 // ============================================================
-const LIMIT = 10;
+const LIMIT = 5;
 
 // BERUBAH: value sekarang lowercase, persis enum Inventory.category di
 // backend ('ingredients' | 'packaging'). 'all' cuma sentinel client-side —
@@ -298,7 +298,7 @@ export default function InventoryPage() {
       />
 
       {/* Filter Bar */}
-      <div className="flex items-center justify-between gap-2 mb-5">
+      <div className="flex items-center justify-between gap-2 mb-3">
         <SearchInput
           id="inventory-search"
           placeholder="Search by name or ID..."
@@ -385,13 +385,13 @@ export default function InventoryPage() {
           resetArchiveError();
         }}
         onConfirm={handleArchiveConfirm}
-        title="Arsipkan Inventory?"
+        title="Archive Inventory?"
         description={
           archiveTarget
-            ? `Inventory "${archiveTarget.name}" akan diarsipkan. Pastikan semua batch sudah kosong sebelum mengarsipkan.`
+            ? `Inventory "${archiveTarget.name}" will be archived. Make sure all batches are empty before archiving.`
             : ""
         }
-        confirmLabel="Ya, Arsipkan"
+        confirmLabel="Yes, Archive"
         loading={archiveLoading}
       />
     </div>
