@@ -23,7 +23,8 @@ export const inventoryApi = {
     api.post(inventoryEndpoints.create(), payload).then((res) => res.data),
 
   /**
-   * @param {{page?: number, limit?: number, category?: string, search?: string, includeDeleted?: boolean}} params
+   * /**
+ * @param {{page?: number, limit?: number, inventoryId?: string, startDate?: string, endDate?: string}} params
    */
   list: (params) =>
     api.get(inventoryEndpoints.list(), { params }).then((res) => res.data),
@@ -58,7 +59,15 @@ export const inventoryApi = {
   // --- Logs ---
 
   /**
-   * @param {{page?: number, limit?: number, inventoryId?: string, from?: string, to?: string}} params
+   * /**
+  * @param {{
+  *   page?: number,
+  *   limit?: number,
+  *   inventoryId?: string,
+  *   nameResponsible?: string,
+  *   startDate?: string,
+  *   endDate?: string
+  * }} params
    */
   historySubInventory: (params) =>
     api
@@ -66,7 +75,15 @@ export const inventoryApi = {
       .then((res) => res.data),
 
   /**
-   * @param {{page?: number, limit?: number, inventoryId?: string, from?: string, to?: string}} params
+   * /**
+  * @param {{
+  *   page?: number,
+  *   limit?: number,
+  *   inventoryId?: string,
+  *   planId?: string,
+  *   startDate?: string,
+  *   endDate?: string
+  * }} params
    */
   historyUsage: (params) =>
     api
