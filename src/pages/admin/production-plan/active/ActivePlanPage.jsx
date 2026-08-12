@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { Calendar, Plus, TriangleAlert, ChevronLeft, ChevronRight, StopCircle } from 'lucide-react';
@@ -11,7 +11,7 @@ import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover
 import { Button } from '@/components/ui/button';
 import SearchInput from '@/components/shared/SearchInput';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { getPlanList, getPlanDetail, stopPlan } from '@/services/api';
+import { useActivePlanOverview } from '@/hooks/plan/usePlanOverview';
 import { useSortable } from '@/hooks/useSortable';
 
 function formatDate(dateStr) {
@@ -42,67 +42,31 @@ function ProgressBar({ current, max, colorClass = "bg-[#4E6A3E]" }) {
 
 export default function ActivePlanPage() {
   const navigate = useNavigate();
-  const [plans, setPlans] = useState([]);
+  const {
+    plans,
+    activePlanDetail,
+    isLoading,
+    isStopping,
+    stopActivePlan,
+    refetch,
+  } = useActivePlanOverview();
+
   const [searchHistory, setSearchHistory] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
   const { sortBy, setSortBy, sortData } = useSortable('date_newest');
-  const [activePlanDetail, setActivePlanDetail] = useState(null);
-  const [isLoading, setIsLoading] = useState(true);
-  
   const [isStopDialogOpen, setIsStopDialogOpen] = useState(false);
-  const [isStopping, setIsStopping] = useState(false);
 
   const filteredPlans = sortData(plans.filter(plan => {
+    if (plan.status === 'active') return false;
     const matchSearch = plan.name.toLowerCase().includes(searchHistory.toLowerCase());
     const matchStatus = filterStatus === 'all' || plan.status === filterStatus;
     return matchSearch && matchStatus;
   }));
 
-  const fetchData = async () => {
-      setIsLoading(true);
-      try {
-        // Fetch all plans for history
-        const listRes = await getPlanList();
-        if (listRes.data?.success) {
-          const fetchedPlans = listRes.data.data || [];
-          setPlans(fetchedPlans);
-          
-          // Check if there is an active plan
-          const active = fetchedPlans.find(p => p.status === 'active');
-          if (active) {
-            // Fetch detailed active plan to get menus tracking
-            const detailRes = await getPlanDetail(active._id);
-            if (detailRes.data?.success) {
-              setActivePlanDetail(detailRes.data.data);
-            }
-          }
-        }
-      } catch {
-        toast.error('Failed to fetch plan data');
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    
-  useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    fetchData();
-  }, []);
-
   const handleStopPlan = async () => {
-    setIsStopping(true);
-    try {
-      const res = await stopPlan(activePlanDetail._id, { reason: 'Dihentikan manual' });
-      if (res.data?.success) {
-        toast.success('Plan berhasil dihentikan');
-        setIsStopDialogOpen(false);
-        setActivePlanDetail(null);
-        fetchData();
-      }
-    } catch {
-      toast.error('Gagal menghentikan plan');
-    } finally {
-      setIsStopping(false);
+    const result = await stopActivePlan({ reason: 'Dihentikan manual' });
+    if (result?.ok) {
+      setIsStopDialogOpen(false);
     }
   };
 
