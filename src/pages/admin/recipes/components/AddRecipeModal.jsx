@@ -1,3 +1,4 @@
+<<<<<<< Updated upstream
 import { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -54,10 +55,42 @@ export default function AddRecipeModal({ isOpen, onClose, onSuccess }) {
       form.reset();
       setPreviewImage(null);
       setTimeout(() => fetchInventories(), 0);
+=======
+import { useEffect } from "react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
+import { useRecipeForm } from "@/hooks/menu/useRecipeForm";
+import { useCreateMenu } from "@/hooks/menu/useCreateMenu";
+import { useInventoryOptions } from "@/hooks/inventory/useInventoryOptions";
+import RecipeFormFields from "./RecipeFormFields";
+import { resolveIngredientsForSubmit } from "@/lib/inventoryUnit";
+
+export default function AddRecipeModal({ isOpen, onClose, onSuccess }) {
+  const formState = useRecipeForm();
+  const {
+    inventoryOptions,
+    isLoading: isLoadingInv,
+    fetchInventoryOptions,
+  } = useInventoryOptions();
+  const { createRecipe, isSubmitting } = useCreateMenu();
+
+  useEffect(() => {
+    if (isOpen) {
+      formState.reset();
+      fetchInventoryOptions();
+>>>>>>> Stashed changes
     }
   }, [isOpen, form]);
 
   const onSubmit = async (data) => {
+<<<<<<< Updated upstream
     setIsSubmitting(true);
     try {
       const payload = {
@@ -72,6 +105,25 @@ export default function AddRecipeModal({ isOpen, onClose, onSuccess }) {
       const res = await createMenu(payload);
       if (res.data.success) {
         toast.success(res.data.message);
+=======
+    const { resolved, errors } = resolveIngredientsForSubmit(
+      data.ingredients,
+      inventoryOptions,
+    );
+    if (errors.length > 0) {
+      errors.forEach((e) =>
+        formState.form.setError(`ingredients.${e.index}.quantityNeeded`, {
+          message: e.message,
+        }),
+      );
+      toast.error("Ada bahan dengan unit yang tidak dikenali, cek kembali.");
+      return;
+    }
+    try {
+      const res = await createRecipe({ ...data, ingredients: resolved });
+      if (res.success) {
+        toast.success(res.message);
+>>>>>>> Stashed changes
         onSuccess();
         onClose();
       }
@@ -147,6 +199,7 @@ export default function AddRecipeModal({ isOpen, onClose, onSuccess }) {
 
         <form onSubmit={form.handleSubmit(onSubmit)} className="flex-1 flex flex-col min-h-0 overflow-hidden">
           <div className="flex-1 overflow-y-auto lg:overflow-hidden p-6 min-h-0 flex flex-col">
+<<<<<<< Updated upstream
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-stretch flex-1 min-h-0">
               {/* Left Column: General Information (6 cols) */}
               <div className="lg:col-span-6 space-y-5 lg:overflow-y-auto lg:min-h-0 lg:pr-2 custom-scrollbar">
@@ -335,6 +388,14 @@ export default function AddRecipeModal({ isOpen, onClose, onSuccess }) {
                 </div>
               </div>
             </div>
+=======
+            <RecipeFormFields
+              formState={formState}
+              inventoryOptions={inventoryOptions}
+              isLoadingInv={isLoadingInv}
+              mode="create"
+            />
+>>>>>>> Stashed changes
           </div>
 
           {/* Action Footer */}

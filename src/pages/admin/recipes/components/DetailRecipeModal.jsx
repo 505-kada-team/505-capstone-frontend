@@ -5,12 +5,21 @@ import {
   DialogHeader,
   DialogTitle,
   DialogFooter,
+<<<<<<< Updated upstream
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { getMenuDetail } from '@/services/api';
 import { formatCurrency } from '@/lib/formatCurrency';
 import { TriangleAlert, Trash2, Edit2 } from 'lucide-react';
 import { toast } from 'sonner';
+=======
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { getMenuDetail } from "@/services/api";
+import { formatCurrency } from "@/lib/formatCurrency";
+import { TriangleAlert, Trash2, Edit2 } from "lucide-react";
+import { toast } from "sonner";
+>>>>>>> Stashed changes
 
 export default function DetailRecipeModal({ isOpen, onClose, recipeId, onArchive, onEdit }) {
   const [recipe, setRecipe] = useState(null);

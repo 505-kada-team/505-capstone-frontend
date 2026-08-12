@@ -1,8 +1,15 @@
+<<<<<<< Updated upstream
 
 import { Card } from '@/components/ui/card';
 import StatusBadge from '@/components/shared/StatusBadge';
 import { formatCurrency } from '@/lib/formatCurrency';
 import { ImageIcon } from 'lucide-react';
+=======
+import { Card } from "@/components/ui/card";
+import StatusBadge from "@/components/shared/StatusBadge";
+import { formatCurrency } from "@/lib/formatCurrency";
+import { ImageIcon } from "lucide-react";
+>>>>>>> Stashed changes
 
 export default function RecipeCard({ recipe, onDetail }) {
   return (
