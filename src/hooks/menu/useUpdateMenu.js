@@ -8,13 +8,11 @@ import {
 export function useUpdateMenu() {
   const [isUpdating, setIsUpdating] = useState(false);
 
-  const updateRecipe = useCallback(async (id, changes) => {
+  const updateRecipe = useCallback(async (id, changes, imageFile) => {
     setIsUpdating(true);
     try {
       const payload = toUpdateMenuPayload(changes);
-      const res = await menuApi.update(id, payload);
-      // updateMenu() backend sengaja hanya balikin field terbatas
-      // (id, name, sellingPrice, updatedAt) — bukan detail lengkap.
+      const res = await menuApi.update(id, payload, imageFile); // teruskan file
       return {
         success: res.success,
         message: res.message,
