@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { Printer, Edit, CheckCircle, StopCircle, Eye, Lightbulb, Link } from 'lucide-react';
 
@@ -76,6 +77,7 @@ function mapIngredientsFromPlan(plan) {
 }
 
 export default function PlanDetailPane({ planId, onRefreshList }) {
+  const navigate = useNavigate();
   const {
     plan, isLoading, isMutating,
     approve, reject, stop, refreshAvailability,
@@ -134,7 +136,7 @@ export default function PlanDetailPane({ planId, onRefreshList }) {
               <Printer className="w-4 h-4 text-muted-foreground" />
             </Button>
             {isDraft && (
-              <Button variant="outline" size="icon" className="h-9 w-9" onClick={() => toast.info('Edit mode coming soon')}>
+              <Button variant="outline" size="icon" className="h-9 w-9" onClick={() => navigate(`/admin/production-plan/draft?edit=${planId}`)}>
                 <Edit className="w-4 h-4 text-muted-foreground" />
               </Button>
             )}
