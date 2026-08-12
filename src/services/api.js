@@ -888,3 +888,17 @@ export const addInventoryReplacement = (id, payload) =>
   USE_MOCK
     ? Promise.resolve({ data: mockAddInventoryReplacement })
     : api.post(`/api/plan-reports/${id}/add-inventory`, payload);
+
+// =============================================================================
+// MODUL DASHBOARD — 505_Database Schema_dashboard.md
+// =============================================================================
+
+// =============================================================================
+// ENDPOINT D1 — GET /api/dashboard/summary
+// Ringkasan KPI & Tren Penjualan
+// Params opsional: { date, startDate, endDate }
+// =============================================================================
+export const getDashboardSummary = (params) =>
+  USE_MOCK
+    ? Promise.resolve({ data: mockDashboardHourly })
+    : api.get("/api/dashboard/summary", { params });
