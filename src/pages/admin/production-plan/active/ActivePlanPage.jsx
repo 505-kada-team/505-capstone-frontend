@@ -15,8 +15,10 @@ import { getPlanList, getPlanDetail, stopPlan } from '@/services/api';
 import { useSortable } from '@/hooks/useSortable';
 import Pagination from '@/components/shared/Pagination';
 import { usePagination } from '@/hooks/usePagination';
+import ActiveMenuDetailModal from './components/ActiveMenuDetailModal';
+import PlanHistoryDetailModal from '../components/PlanHistoryDetailModal';
 
-function formatDate(dateStr) {
+export function formatDate(dateStr) {
   if (!dateStr) return '-';
   const date = new Date(dateStr);
   return `${String(date.getDate()).padStart(2, '0')} ${
@@ -53,6 +55,8 @@ export default function ActivePlanPage() {
   
   const [isStopDialogOpen, setIsStopDialogOpen] = useState(false);
   const [isStopping, setIsStopping] = useState(false);
+  const [selectedActiveMenuId, setSelectedActiveMenuId] = useState(null);
+  const [selectedHistoryPlanId, setSelectedHistoryPlanId] = useState(null);
 
   const filteredPlans = sortData(plans.filter(plan => {
     const matchSearch = plan.name.toLowerCase().includes(searchHistory.toLowerCase());
@@ -118,6 +122,23 @@ export default function ActivePlanPage() {
   };
 
   const hasActive = !!activePlanDetail;
+
+  const promoGroup = (() => {
+    if (!activePlanDetail?.menus) return null;
+    const discountedMenus = activePlanDetail.menus.filter(m => m.discount?.discountPercentage > 0);
+    if (discountedMenus.length === 0) return null;
+    
+    const firstDiscount = discountedMenus[0].discount;
+    const firstPercent = firstDiscount.discountPercentage;
+    const isFlat = discountedMenus.every(m => m.discount.discountPercentage === firstPercent);
+    
+    return {
+      reason: firstDiscount.reason || 'Active Promo',
+      scheme: isFlat ? 'flat' : 'vary',
+      percent: firstPercent,
+      menus: discountedMenus
+    };
+  })();
 
   return (
     <div className="flex flex-col gap-6">
@@ -188,13 +209,23 @@ export default function ActivePlanPage() {
         </div>
         <div className="flex items-center gap-6 text-sm font-medium">
           <span>
-            Plan Name : <span className="font-normal text-muted-foreground">{hasActive ? activePlanDetail.name : '-'}</span>
+            Plan Name: <span className="font-normal text-muted-foreground">{hasActive ? activePlanDetail.name : '-'}</span>
           </span>
           <span>
             Plan Period: <span className="font-normal text-muted-foreground">
               {hasActive ? `${formatDate(activePlanDetail.startDate)} - ${formatDate(activePlanDetail.endDate)}` : '-'}
             </span>
           </span>
+          {hasActive && promoGroup && (
+            <span>
+              Active Promo: <span className="font-semibold text-[#F97316] font-body">
+                {promoGroup.reason}{" "}
+                <span className="text-xs text-muted-foreground font-normal">
+                  ({promoGroup.scheme === 'flat' ? `Flat Rate ${promoGroup.percent}%` : 'Vary per Menu'})
+                </span>
+              </span>
+            </span>
+          )}
         </div>
       </div>
 
@@ -252,7 +283,14 @@ export default function ActivePlanPage() {
 
                       return (
                         <tr key={menu.menuId} className="hover:bg-muted/30">
-                          <td className="py-4 px-4 font-medium">{menu.name}</td>
+                          <td className="py-4 px-4 font-medium flex items-center gap-2">
+                            <span>{menu.name}</span>
+                            {menu.discount?.discountPercentage > 0 && (
+                              <span className="text-[10px] font-semibold text-[#F97316] bg-[#F97316]/10 px-1.5 py-0.5 rounded font-mono">
+                                {menu.discount.discountPercentage}% Off
+                              </span>
+                            )}
+                          </td>
                           <td className="py-4 px-4">
                             <ProgressBar current={sold} max={planned} colorClass={colorClass} />
                           </td>
@@ -260,7 +298,7 @@ export default function ActivePlanPage() {
                           <td className="py-4 px-4 text-center">
                             <button 
                               className="text-[#F97316] font-medium text-sm hover:underline"
-                              onClick={() => toast.info('Detail menu ' + menu.name)}
+                              onClick={() => setSelectedActiveMenuId(menu.menuId)}
                             >
                               Detail
                             </button>
@@ -359,7 +397,7 @@ export default function ActivePlanPage() {
                           <td className="py-4 px-6 text-center">
                             <button 
                               className="text-[#F97316] font-medium hover:underline text-sm"
-                              onClick={() => toast.info('Navigating to detail: ' + p.name)}
+                              onClick={() => setSelectedHistoryPlanId(p._id)}
                             >
                               Detail
                             </button>
@@ -399,6 +437,21 @@ export default function ActivePlanPage() {
           variant="destructive"
         />
       )}
+
+      {/* Active Menu Detail Modal */}
+      <ActiveMenuDetailModal
+        isOpen={!!selectedActiveMenuId}
+        onClose={() => setSelectedActiveMenuId(null)}
+        menuId={selectedActiveMenuId}
+        plan={activePlanDetail}
+      />
+
+      {/* Plan History Detail Modal */}
+      <PlanHistoryDetailModal
+        isOpen={!!selectedHistoryPlanId}
+        onClose={() => setSelectedHistoryPlanId(null)}
+        planId={selectedHistoryPlanId}
+      />
     </div>
   );
 }

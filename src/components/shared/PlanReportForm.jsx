@@ -23,7 +23,7 @@ const reportSchema = z.object({
   reason: z.string().min(1, 'Reason is required')
 });
 
-export default function PlanReportForm({ onSubmit, defaultPlanId = '' }) {
+export default function PlanReportForm({ onSubmit, defaultPlanId = '', id }) {
   const { user, role } = useAuth();
   const [plans, setPlans] = useState([]);
   const [menus, setMenus] = useState([]);
@@ -121,7 +121,7 @@ export default function PlanReportForm({ onSubmit, defaultPlanId = '' }) {
   };
 
   return (
-    <form onSubmit={form.handleSubmit(handleSubmit)} className="grid gap-4 py-4">
+    <form id={id} onSubmit={form.handleSubmit(handleSubmit)} className="grid gap-4 py-4">
       <div className="grid gap-2">
         <Label>Production Plan</Label>
         <Select 
@@ -217,9 +217,11 @@ export default function PlanReportForm({ onSubmit, defaultPlanId = '' }) {
         {form.formState.errors.reason && <span className="text-xs text-destructive">{form.formState.errors.reason.message}</span>}
       </div>
 
-      <Button type="submit" disabled={isSubmitting || !!incidentError} className="mt-2 bg-[#F97316] hover:bg-[#F97316]/90 text-white">
-        {isSubmitting ? 'Submitting...' : 'Submit Report'}
-      </Button>
+      {!id && (
+        <Button type="submit" disabled={isSubmitting || !!incidentError} className="mt-2 bg-[#F97316] hover:bg-[#F97316]/90 text-white">
+          {isSubmitting ? 'Submitting...' : 'Submit Report'}
+        </Button>
+      )}
     </form>
   );
 }

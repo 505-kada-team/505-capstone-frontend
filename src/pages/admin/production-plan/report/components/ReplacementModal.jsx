@@ -60,7 +60,7 @@ export default function ReplacementModal({ open, report, onClose, onRefresh }) {
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent className="sm:max-w-2xl">
         <DialogHeader>
           <DialogTitle className="text-lg font-bold font-heading">Pull Replacement Stock</DialogTitle>
           <DialogDescription>
@@ -68,43 +68,45 @@ export default function ReplacementModal({ open, report, onClose, onRefresh }) {
           </DialogDescription>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="grid gap-4 py-4">
-          <div className="bg-orange-50 text-orange-800 p-3 rounded-md text-sm">
-            <div className="font-semibold mb-1">Loss Information:</div>
-            There is a loss/damage of <span className="font-bold">{report.quantityLost}</span> portions/units.
-          </div>
-
-          {!isLoading && !isPlanActive && planStatus !== null && (
-            <div className="bg-red-50 text-red-800 p-3 rounded-md text-sm mb-2">
-              <span className="font-semibold block">Plan Inactive</span>
-              The parent plan for this report is not active (current status: {planStatus}). You cannot pull replacement stock for a plan that is completed or stopped.
+        <form onSubmit={handleSubmit} className="border-t border-border pt-4 mt-2 grid gap-4">
+          <div className="space-y-4 max-h-[60vh] overflow-y-auto pr-2 pb-2">
+            <div className="bg-orange-50 text-orange-800 p-3 rounded-md text-sm">
+              <div className="font-semibold mb-1">Loss Information:</div>
+              There is a loss/damage of <span className="font-bold">{report.quantityLost}</span> portions/units.
             </div>
-          )}
 
-          <div className="grid gap-2">
-            <Label htmlFor="replacementQuantity">Replacement Quantity to Pull</Label>
-            <Input
-              id="replacementQuantity"
-              type="number"
-              placeholder={`Recommended minimum: ${report.quantityLost}`}
-              value={replacementQuantity}
-              onChange={(e) => setReplacementQuantity(e.target.value)}
-              required
-              min="1"
-              disabled={isLoading || !isPlanActive}
-            />
-            <p className="text-xs text-muted-foreground">You can pull less or more than the damaged amount based on actual needs.</p>
-          </div>
+            {!isLoading && !isPlanActive && planStatus !== null && (
+              <div className="bg-red-50 text-red-800 p-3 rounded-md text-sm mb-2">
+                <span className="font-semibold block">Plan Inactive</span>
+                The parent plan for this report is not active (current status: {planStatus}). You cannot pull replacement stock for a plan that is completed or stopped.
+              </div>
+            )}
 
-          <div className="grid gap-2">
-            <Label htmlFor="varianceNote">Variance Note (Optional)</Label>
-            <Textarea
-              id="varianceNote"
-              placeholder="Example: Pull less because remaining kitchen stock is sufficient..."
-              value={varianceNote}
-              onChange={(e) => setVarianceNote(e.target.value)}
-              disabled={isLoading || !isPlanActive}
-            />
+            <div className="grid gap-2">
+              <Label htmlFor="replacementQuantity">Replacement Quantity to Pull</Label>
+              <Input
+                id="replacementQuantity"
+                type="number"
+                placeholder={`Recommended minimum: ${report.quantityLost}`}
+                value={replacementQuantity}
+                onChange={(e) => setReplacementQuantity(e.target.value)}
+                required
+                min="1"
+                disabled={isLoading || !isPlanActive}
+              />
+              <p className="text-xs text-muted-foreground">You can pull less or more than the damaged amount based on actual needs.</p>
+            </div>
+
+            <div className="grid gap-2">
+              <Label htmlFor="varianceNote">Variance Note (Optional)</Label>
+              <Textarea
+                id="varianceNote"
+                placeholder="Example: Pull less because remaining kitchen stock is sufficient..."
+                value={varianceNote}
+                onChange={(e) => setVarianceNote(e.target.value)}
+                disabled={isLoading || !isPlanActive}
+              />
+            </div>
           </div>
 
           <DialogFooter className="mt-2">

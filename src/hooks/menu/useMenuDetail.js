@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { menuApi } from "@/services/menu/menu.api";
+import { getMenuDetail } from "@/services/api";
 import { mapMenuDetail } from "@/services/menu/menu.mapper";
 
 export function useMenuDetail(id, { enabled = true } = {}) {
@@ -12,7 +12,8 @@ export function useMenuDetail(id, { enabled = true } = {}) {
     setIsLoading(true);
     setError(null);
     try {
-      const res = await menuApi.detail(id);
+      const response = await getMenuDetail(id);
+      const res = response.data;
       if (res.success) {
         setRecipe(mapMenuDetail(res.data));
       }

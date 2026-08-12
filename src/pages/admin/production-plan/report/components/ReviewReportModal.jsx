@@ -36,7 +36,7 @@ export default function ReviewReportModal({ open, report, onClose, onRefresh, re
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[500px]">
+      <DialogContent className="sm:max-w-3xl">
         <DialogHeader>
           <DialogTitle className="text-lg font-bold font-heading">
             {readOnly ? 'Incident Report Details' : 'Review Incident Report'}
@@ -46,62 +46,77 @@ export default function ReviewReportModal({ open, report, onClose, onRefresh, re
           </DialogDescription>
         </DialogHeader>
 
-        <div className="grid gap-4 py-4 text-sm">
-          <div className="grid grid-cols-2 gap-2">
-            <div>
-              <span className="font-semibold text-muted-foreground block mb-1">Reporter</span>
-              {report.reportedBy} ({report.reportedByRole})
-            </div>
-            <div>
-              <span className="font-semibold text-muted-foreground block mb-1">Incident Time</span>
-              {formatTime(report.incidentAt)}
-            </div>
-          </div>
-
-          <div className="bg-muted/30 p-3 rounded-md grid grid-cols-2 gap-2">
-            <div>
-              <span className="font-semibold text-muted-foreground block mb-1">Category / Item</span>
-              <span className="capitalize">{report.category}</span>
-            </div>
-            <div>
-              <span className="font-semibold text-muted-foreground block mb-1">Quantity Lost</span>
-              <span className="text-destructive font-semibold">{report.quantityLost}</span>
-            </div>
-          </div>
-
-          <div>
-            <span className="font-semibold text-muted-foreground block mb-1">Incident Reason</span>
-            <p className="text-foreground">{report.reason || '-'}</p>
-          </div>
-
-          {isMenu && val && (
-            <div className="border border-border rounded-md p-3 flex flex-col gap-2">
-              <span className="font-semibold mb-1">Estimated Loss Valuation</span>
-              <div className="flex justify-between items-center">
-                <span className="text-muted-foreground">Material Cost (Cost Loss):</span>
-                <span className="font-semibold">{formatRupiah(val.costLoss)}</span>
+        <div className="border-t border-border pt-4 mt-2 grid grid-cols-1 md:grid-cols-2 gap-6 text-sm">
+          {/* Left Column: Metadata & Details */}
+          <div className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <span className="font-semibold text-muted-foreground block mb-0.5 text-xs uppercase tracking-wider">Reporter</span>
+                <span className="text-foreground font-medium">{report.reportedBy}</span>
+                <span className="text-xs text-muted-foreground block capitalize mt-0.5">({report.reportedByRole})</span>
               </div>
-              <div className="flex justify-between items-center">
-                <span className="text-muted-foreground">Potential Revenue:</span>
-                <span className="font-semibold text-orange-600">{formatRupiah(val.lostRevenueEstimate)}</span>
+              <div>
+                <span className="font-semibold text-muted-foreground block mb-0.5 text-xs uppercase tracking-wider">Incident Time</span>
+                <span className="text-foreground font-medium">{formatTime(report.incidentAt)}</span>
               </div>
             </div>
-          )}
 
-          <div className="grid gap-2 mt-2">
-            <Label htmlFor="adminNote">Admin Notes {readOnly ? '' : '(Optional)'}</Label>
-            {readOnly ? (
-              <p className="text-foreground bg-muted/20 p-2 rounded-md border border-border min-h-10">
-                {report.adminNote || '-'}
+            <div className="bg-muted/30 p-3 rounded-lg grid grid-cols-2 gap-4 border border-border/50">
+              <div>
+                <span className="font-semibold text-muted-foreground block mb-0.5 text-xs uppercase tracking-wider">Category / Item</span>
+                <span className="capitalize text-foreground font-medium">{report.category}</span>
+                <span className="text-xs text-muted-foreground block truncate max-w-[130px] mt-0.5">{report.nameRef || report.refId}</span>
+              </div>
+              <div>
+                <span className="font-semibold text-muted-foreground block mb-0.5 text-xs uppercase tracking-wider">Quantity Lost</span>
+                <span className="text-destructive font-semibold text-base">{report.quantityLost} pcs</span>
+              </div>
+            </div>
+
+            <div>
+              <span className="font-semibold text-muted-foreground block mb-1 text-xs uppercase tracking-wider">Incident Reason</span>
+              <p className="text-foreground bg-muted/10 p-2.5 rounded-lg border border-border/50 min-h-16 text-xs leading-relaxed">
+                {report.reason || '-'}
               </p>
-            ) : (
-              <Textarea
-                id="adminNote"
-                placeholder="Add notes for the reporter..."
-                value={adminNote}
-                onChange={(e) => setAdminNote(e.target.value)}
-              />
+            </div>
+          </div>
+
+          {/* Right Column: Financial Valuation & Admin Notes */}
+          <div className="space-y-4">
+            {isMenu && val && (
+              <div className="border border-border rounded-lg p-3 bg-secondary/10 dark:bg-muted/30 flex flex-col gap-2">
+                <span className="font-bold text-xs uppercase tracking-wider text-foreground mb-1 border-b border-border pb-1">
+                  Estimated Loss Valuation
+                </span>
+                <div className="flex justify-between items-center text-xs">
+                  <span className="text-muted-foreground">Material Cost (Cost Loss):</span>
+                  <span className="font-semibold font-mono">{formatRupiah(val.costLoss)}</span>
+                </div>
+                <div className="flex justify-between items-center text-xs">
+                  <span className="text-muted-foreground">Potential Revenue:</span>
+                  <span className="font-semibold text-orange-600 font-mono">{formatRupiah(val.lostRevenueEstimate)}</span>
+                </div>
+              </div>
             )}
+
+            <div className="grid gap-2">
+              <Label htmlFor="adminNote" className="text-xs uppercase tracking-wider text-muted-foreground font-bold">
+                Admin Notes {readOnly ? '' : '(Optional)'}
+              </Label>
+              {readOnly ? (
+                <p className="text-foreground bg-muted/20 p-3 rounded-lg border border-border min-h-24 text-xs leading-relaxed">
+                  {report.adminNote || '-'}
+                </p>
+              ) : (
+                <Textarea
+                  id="adminNote"
+                  placeholder="Add decision notes for the reporter..."
+                  value={adminNote}
+                  onChange={(e) => setAdminNote(e.target.value)}
+                  className="min-h-24 resize-none text-xs"
+                />
+              )}
+            </div>
           </div>
         </div>
 
@@ -112,13 +127,10 @@ export default function ReviewReportModal({ open, report, onClose, onRefresh, re
             </Button>
           ) : (
             <>
-              <Button variant="outline" onClick={onClose} disabled={isSubmitting}>
-                Cancel
-              </Button>
               <Button variant="destructive" onClick={() => handleReview('rejected')} disabled={isSubmitting}>
                 Reject
               </Button>
-              <Button className="bg-[#4E6A3E] hover:bg-[#4E6A3E]/90 text-white" onClick={() => handleReview('approved')} disabled={isSubmitting}>
+              <Button className="ml-2 bg-[#4E6A3E] hover:bg-[#4E6A3E]/90 text-white" onClick={() => handleReview('approved')} disabled={isSubmitting}>
                 Approve
               </Button>
             </>
