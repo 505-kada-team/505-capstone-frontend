@@ -34,18 +34,40 @@ export default function DraftPlanPage() {
   useEffect(() => {
     if (step === 2 && availableMenus.length === 0) {
       getMenuDropdown().then(res => {
+        // Debug: log raw response to understand structure
+        console.log('[DraftPlan] getMenuDropdown raw response:', res);
+        console.log('[DraftPlan] res.data:', res?.data);
+
         // getMenuDropdown returns Axios response: { data: envelope }
-        // envelope = { success: true, data: [...] }
-        const envelope = res.data;
-        const data = envelope?.data ?? res.data;
-        if (Array.isArray(data)) {
+        // Try multiple paths to find the menu array
+        let data = null;
+        if (Array.isArray(res?.data?.data)) {
+          // Path: res.data = { success, data: [...] }
+          data = res.data.data;
+        } else if (Array.isArray(res?.data)) {
+          // Path: res.data = [...]
+          data = res.data;
+        } else if (Array.isArray(res?.data?.success ? res.data.data : null)) {
+          data = res.data.data;
+        }
+
+        console.log('[DraftPlan] parsed menu data:', data);
+
+        if (Array.isArray(data) && data.length > 0) {
+          console.log('[DraftPlan] first menu item keys:', Object.keys(data[0]));
           setAvailableMenus(data.map(m => ({
             ...m,
             _id: m._id || m.id,
-            name: m.name || m.menuName || 'Unnamed Menu',
+            name: m.name || m.menuName || m.nama || 'Unnamed Menu',
+            sellingPrice: m.sellingPrice || m.harga || 0,
           })));
+        } else {
+          console.warn('[DraftPlan] No menu data found in response');
         }
-      }).catch(() => toast.error('Failed to load menu'));
+      }).catch(err => {
+        console.error('[DraftPlan] Failed to load menu:', err);
+        toast.error('Failed to load menu');
+      });
     }
   }, [step, availableMenus.length]);
 
@@ -74,8 +96,12 @@ export default function DraftPlanPage() {
   const handleAddToCart = () => {
     if (!selectedMenu || !quantity || Number(quantity) <= 0) return;
     const menu = availableMenus.find(m => m._id === selectedMenu);
-    if (!menu) return;
+    if (!menu) {
+      console.warn('[DraftPlan] Menu not found for selectedMenu:', selectedMenu, 'availableMenus:', availableMenus);
+      return;
+    }
 
+    console.log('[DraftPlan] Adding to cart:', { _id: menu._id, name: menu.name, qty: Number(quantity) });
     setCart([...cart, {
       _id: menu._id,
       name: menu.name,
@@ -122,7 +148,9 @@ export default function DraftPlanPage() {
         }))
       };
       
+      console.log('[DraftPlan] Create plan payload:', JSON.stringify(payload, null, 2));
       const res = await planApi.create(payload);
+      console.log('[DraftPlan] Create plan response:', res);
       // planApi.create returns the envelope: { data: planObject, message }
       // planApi already unwraps res.data, so res = { data: ..., message: ... }
       const planData = res?.data;
