@@ -1,12 +1,11 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState } from 'react';
 import { RefreshCw, PlusCircle, Filter, ClipboardList } from 'lucide-react';
-import { toast } from 'sonner';
 
 import PageHeader from '@/components/shared/PageHeader';
 import PlanListCard from '@/components/shared/PlanListCard';
 import PlanDetailPane from '@/pages/admin/production-plan/components/PlanDetailPane';
 import { Button } from '@/components/ui/button';
-import { getPlanList } from '@/services/api';
+import { usePlanList } from '@/hooks/plan/usePlanList';
 
 // ─── Empty state for the right pane when no plan is selected ─────────────────
 function RightPaneEmpty() {
@@ -31,43 +30,15 @@ function ListSkeleton() {
 
 // ─── Main Component ─────────────────────────────────────────────────────────────
 export default function PlanHistoryView({ onNavigateToCreate }) {
-
-  const [plans, setPlans] = useState([]);
-  const [isLoadingList, setIsLoadingList] = useState(false);
+  const { plans, isLoading: isLoadingList, refetch } = usePlanList();
   const [selectedPlanId, setSelectedPlanId] = useState(null);
-
-  // ── Fetch plan list ──────────────────────────────────────────────────────
-  const fetchPlans = useCallback(async (showLoading = true) => {
-    if (showLoading) setIsLoadingList(true);
-    try {
-      const res = await getPlanList();
-      if (res.data?.success) {
-        setPlans(res.data.data ?? []);
-      }
-    } catch {
-      toast.error('Failed to load plan history');
-    } finally {
-      if (showLoading) setIsLoadingList(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    // Use timeout to push the initial fetch to the next tick, avoiding synchronous setState
-    const timer = setTimeout(() => {
-      fetchPlans();
-    }, 0);
-    return () => clearTimeout(timer);
-  }, [fetchPlans]);
 
   // ── Handlers ─────────────────────────────────────────────────────────────
   const handleSelectPlan = (id) => {
     setSelectedPlanId(id);
-    // Detail pane will be built in the next step
   };
 
-  const handleReload = () => {
-    fetchPlans();
-  };
+  const handleReload = () => refetch();
 
   return (
     <div className="flex flex-col gap-0 h-full">
@@ -142,7 +113,7 @@ export default function PlanHistoryView({ onNavigateToCreate }) {
           {!selectedPlanId ? (
             <RightPaneEmpty />
           ) : (
-            <PlanDetailPane planId={selectedPlanId} onRefreshList={fetchPlans} />
+            <PlanDetailPane planId={selectedPlanId} onRefreshList={refetch} />
           )}
         </section>
       </div>
