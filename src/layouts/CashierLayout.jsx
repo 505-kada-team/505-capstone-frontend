@@ -3,9 +3,9 @@ import { Coffee, LogOut } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 
 const NAV_ITEMS = [
-  { label: 'Cashier', to: '/kasir/transaksi' },
+  { label: 'Cashier', to: '/kasir/cashier' },
   { label: 'Invoice', to: '/kasir/invoice' },
-  { label: 'Barang', to: '/kasir/barang' },
+  { label: 'Overview', to: '/kasir/overview' },
   { label: 'Report Issue', to: '/kasir/report-issue' },
 ];
 
@@ -13,8 +13,11 @@ export default function CashierLayout() {
   const { user, logout } = useAuth();
 
   return (
-    <div className="min-h-screen min-w-[1280px] bg-background">
-      <header className="flex items-center justify-between border-b border-neutral-200 px-6 py-4">
+    // h-screen + flex-col + overflow-hidden di root: header jadi non-scroll,
+    // <main> ambil sisa tinggi layar. Halaman anak (TransaksiPage) tinggal
+    // pakai h-full di root div-nya untuk ikut dibatasi ke sisa tinggi ini.
+    <div className="flex h-screen min-w-[1280px] flex-col overflow-hidden bg-background">
+      <header className="flex shrink-0 items-center justify-between border-b border-neutral-200 px-6 py-4">
         <div className="flex items-center gap-2 text-primary">
           <Coffee size={20} strokeWidth={2} />
           <span className="text-lg font-semibold">Artisan Brew</span>
@@ -29,7 +32,7 @@ export default function CashierLayout() {
                 `border-b-2 pb-1 text-sm font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-orange-500/40 ${
                   isActive
                     ? 'border-accent text-accent'
-                    : 'text-muted-foreground hover:text-foreground border-transparent'
+                    : 'border-transparent text-muted-foreground hover:border-accent hover:text-accent'
                 }`
               }
             >
@@ -56,7 +59,7 @@ export default function CashierLayout() {
         </div>
       </header>
 
-      <main className="p-6">
+      <main className="flex-1 overflow-hidden p-6">
         <Outlet />
       </main>
     </div>

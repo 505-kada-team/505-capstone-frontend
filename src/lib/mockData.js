@@ -16,27 +16,32 @@
 /** Endpoint 1 → 201 Created: inventory baru berhasil dibuat */
 export const mockAddInventory = {
   success: true,
-  message: 'Inventory berhasil dibuat',
+  message: "Inventory berhasil dibuat",
   data: {
-    _id: '66c1a2b3d4e5f6a7b8c9d0e1',
-    nameInventory: 'Bubuk Kopi Arabica',
-    category: 'ingredients',
-    unit: 'gr',
-    description: 'Bubuk kopi arabica berkualitas premium',
-    status: 'active',
+    _id: "66c1a2b3d4e5f6a7b8c9d0e1",
+    nameInventory: "Bubuk Kopi Arabica",
+    category: "ingredients",
+    unit: "gr",
+    description: "Bubuk kopi arabica berkualitas premium",
+    status: "active",
     quantityTotal: null,
     lastCostBatch: null,
     totalSubInventory: 0,
-    createdAt: '2026-07-29T03:00:00.000Z',
-    updatedAt: '2026-07-29T03:00:00.000Z',
+    createdAt: "2026-07-29T03:00:00.000Z",
+    updatedAt: "2026-07-29T03:00:00.000Z",
   },
 };
 
 /** Endpoint 1 → 409 Conflict: nama inventory sudah terdaftar di kategori yang sama (case-insensitive) */
 export const mockAddInventoryConflict = {
   success: false,
-  message: 'Nama inventory sudah terdaftar pada kategori ini',
-  errors: [{ field: 'nameInventory', message: 'Duplikat nama dalam kategori yang sama' }],
+  message: "Nama inventory sudah terdaftar pada kategori ini",
+  errors: [
+    {
+      field: "nameInventory",
+      message: "Duplikat nama dalam kategori yang sama",
+    },
+  ],
 };
 
 // =============================================================================
@@ -52,34 +57,34 @@ export const mockInventoryList = {
   success: true,
   data: [
     {
-      _id: '66c1a2b3d4e5f6a7b8c9d0e1',
-      nameInventory: 'Bubuk Kopi Arabica',
-      category: 'ingredients',
-      unit: 'gr',
-      description: 'Bubuk kopi arabica berkualitas premium',
-      status: 'active',
+      _id: "66c1a2b3d4e5f6a7b8c9d0e1",
+      nameInventory: "Bubuk Kopi Arabica",
+      category: "ingredients",
+      unit: "gr",
+      description: "Bubuk kopi arabica berkualitas premium",
+      status: "active",
       quantityTotal: 15000,
       lastCostBatch: 12000,
       totalSubInventory: 2,
     },
     {
-      _id: '66c1a2b3d4e5f6a7b8c9d0e2',
-      nameInventory: 'Kardus Box Kecil',
-      category: 'packaging',
-      unit: 'pcs',
-      description: 'Kardus pengemas ukuran kecil',
-      status: 'active',
+      _id: "66c1a2b3d4e5f6a7b8c9d0e2",
+      nameInventory: "Kardus Box Kecil",
+      category: "packaging",
+      unit: "pcs",
+      description: "Kardus pengemas ukuran kecil",
+      status: "active",
       quantityTotal: 500,
       lastCostBatch: 3000,
       totalSubInventory: 1,
     },
     {
-      _id: '60c1a2r3d4e3f6a7b8c9d0e8',
-      nameInventory: 'Sirup Vanilla',
-      category: 'ingredients',
-      unit: 'ml',
-      description: 'Sirup untuk vanilla latte',
-      status: 'active',
+      _id: "60c1a2r3d4e3f6a7b8c9d0e8",
+      nameInventory: "Sirup Vanilla",
+      category: "ingredients",
+      unit: "ml",
+      description: "Sirup untuk vanilla latte",
+      status: "active",
       quantityTotal: 200,
       lastCostBatch: 5000,
       totalSubInventory: 2,
@@ -108,8 +113,18 @@ export const mockInventoryListEmpty = {
 export const mockInventoryDropdown = {
   success: true,
   data: [
-    { _id: '66c1a2b3d4e5f6a7b8c9d0e1', nameInventory: 'Bubuk Kopi Arabica', category: 'ingredients', unit: 'gr' },
-    { _id: '66c1a2b3d4e5f6a7b8c9d0e2', nameInventory: 'Kardus Box Kecil', category: 'packaging', unit: 'pcs' },
+    {
+      _id: "66c1a2b3d4e5f6a7b8c9d0e1",
+      nameInventory: "Bubuk Kopi Arabica",
+      category: "ingredients",
+      unit: "gr",
+    },
+    {
+      _id: "66c1a2b3d4e5f6a7b8c9d0e2",
+      nameInventory: "Kardus Box Kecil",
+      category: "packaging",
+      unit: "pcs",
+    },
   ],
 };
 
@@ -126,37 +141,37 @@ export const mockInventoryDropdown = {
 export const mockInventoryDetail = {
   success: true,
   data: {
-    _id: '66c1a2b3d4e5f6a7b8c9d0e1',
-    nameInventory: 'Bubuk Kopi Arabica',
-    category: 'ingredients',
-    unit: 'gr',
-    description: 'Bubuk kopi arabica berkualitas premium',
-    status: 'active',
+    _id: "66c1a2b3d4e5f6a7b8c9d0e1",
+    nameInventory: "Bubuk Kopi Arabica",
+    category: "ingredients",
+    unit: "gr",
+    description: "Bubuk kopi arabica berkualitas premium",
+    status: "active",
     quantityTotal: 15000,
     lastCostBatch: 12000,
     totalSubInventory: 2,
     subInventories: [
       {
-        _id: 'sub_001',
+        _id: "sub_001",
         initialQuantity: 5000,
         quantity: 5000,
         costPrices: 10000,
-        inDate: '2026-07-01T00:00:00.000Z',
-        expired: '2026-08-10T00:00:00.000Z',
-        status: 'active',
+        inDate: "2026-07-01T00:00:00.000Z",
+        expired: "2026-08-10T00:00:00.000Z",
+        status: "active",
       },
       {
-        _id: 'sub_002',
+        _id: "sub_002",
         initialQuantity: 10000,
         quantity: 10000,
         costPrices: 12000,
-        inDate: '2026-07-15T00:00:00.000Z',
-        expired: '2026-08-20T00:00:00.000Z',
-        status: 'active',
+        inDate: "2026-07-15T00:00:00.000Z",
+        expired: "2026-08-20T00:00:00.000Z",
+        status: "active",
       },
     ],
-    createdAt: '2026-07-01T00:00:00.000Z',
-    updatedAt: '2026-07-15T00:00:00.000Z',
+    createdAt: "2026-07-01T00:00:00.000Z",
+    updatedAt: "2026-07-15T00:00:00.000Z",
   },
 };
 
@@ -167,35 +182,35 @@ export const mockInventoryDetail = {
 export const mockInventoryDetailPackaging = {
   success: true,
   data: {
-    _id: '66c1a2b3d4e5f6a7b8c9d0e2',
-    nameInventory: 'Kardus Box Kecil',
-    category: 'packaging',
-    unit: 'pcs',
-    description: 'Kardus pengemas ukuran kecil',
-    status: 'active',
+    _id: "66c1a2b3d4e5f6a7b8c9d0e2",
+    nameInventory: "Kardus Box Kecil",
+    category: "packaging",
+    unit: "pcs",
+    description: "Kardus pengemas ukuran kecil",
+    status: "active",
     quantityTotal: 500,
     lastCostBatch: 3000,
     totalSubInventory: 1,
     subInventories: [
       {
-        _id: 'sub_010',
+        _id: "sub_010",
         initialQuantity: 500,
         quantity: 500,
         costPrices: 3000,
-        inDate: '2026-07-10T00:00:00.000Z',
+        inDate: "2026-07-10T00:00:00.000Z",
         expired: null, // packaging tidak punya expired
-        status: 'active',
+        status: "active",
       },
     ],
-    createdAt: '2026-07-10T00:00:00.000Z',
-    updatedAt: '2026-07-10T00:00:00.000Z',
+    createdAt: "2026-07-10T00:00:00.000Z",
+    updatedAt: "2026-07-10T00:00:00.000Z",
   },
 };
 
 /** Endpoint 4 → 404 Not Found: inventory tidak ditemukan atau sudah diarsipkan */
 export const mockInventoryNotFound = {
   success: false,
-  message: 'Inventory tidak ditemukan',
+  message: "Inventory tidak ditemukan",
 };
 
 // =============================================================================
@@ -206,22 +221,27 @@ export const mockInventoryNotFound = {
 /** Endpoint 5 → 200 OK: nama atau deskripsi inventory berhasil diperbarui */
 export const mockEditInventory = {
   success: true,
-  message: 'Inventory berhasil diperbarui',
+  message: "Inventory berhasil diperbarui",
   data: {
-    _id: '66c1a2b3d4e5f6a7b8c9d0e1',
-    nameInventory: 'Bubuk Kopi Arabica Premium',
-    category: 'ingredients',
-    unit: 'gr',
-    description: 'Update: ganti supplier kopi',
-    updatedAt: '2026-07-29T04:00:00.000Z',
+    _id: "66c1a2b3d4e5f6a7b8c9d0e1",
+    nameInventory: "Bubuk Kopi Arabica Premium",
+    category: "ingredients",
+    unit: "gr",
+    description: "Update: ganti supplier kopi",
+    updatedAt: "2026-07-29T04:00:00.000Z",
   },
 };
 
 /** Endpoint 5 → 400 Bad Request: payload menyertakan field terkunci (category atau unit) */
 export const mockEditInventoryLockedField = {
   success: false,
-  message: 'Field category/unit tidak dapat diubah',
-  errors: [{ field: 'category', message: 'Field ini terkunci setelah inventory dibuat' }],
+  message: "Field category/unit tidak dapat diubah",
+  errors: [
+    {
+      field: "category",
+      message: "Field ini terkunci setelah inventory dibuat",
+    },
+  ],
 };
 
 // =============================================================================
@@ -232,25 +252,31 @@ export const mockEditInventoryLockedField = {
 /** Endpoint 6 → 200 OK: inventory berhasil diarsipkan */
 export const mockDeleteInventory = {
   success: true,
-  message: 'Inventory berhasil diarsipkan',
+  message: "Inventory berhasil diarsipkan",
   data: {
-    _id: '66c1a2b3d4e5f6a7b8c9d0e1',
-    status: 'deleted',
-    deletedAt: '2026-07-30T02:00:00.000Z',
+    _id: "66c1a2b3d4e5f6a7b8c9d0e1",
+    status: "deleted",
+    deletedAt: "2026-07-30T02:00:00.000Z",
   },
 };
 
 /** Endpoint 6 → 409 Conflict: masih ada batch (subinventory) aktif dengan sisa stok > 0 */
 export const mockDeleteInventoryConflict = {
   success: false,
-  message: 'Inventory masih memiliki batch aktif dengan stok tersisa, kosongkan atau hapus batch terlebih dahulu',
-  errors: [{ field: 'id', message: 'Ditemukan SubInventory dengan status active dan quantity > 0' }],
+  message:
+    "Inventory masih memiliki batch aktif dengan stok tersisa, kosongkan atau hapus batch terlebih dahulu",
+  errors: [
+    {
+      field: "id",
+      message: "Ditemukan SubInventory dengan status active dan quantity > 0",
+    },
+  ],
 };
 
 /** Endpoint 6 → 404 Not Found: inventory tidak ditemukan atau sudah diarsipkan sebelumnya */
 export const mockDeleteInventoryNotFound = {
   success: false,
-  message: 'Inventory tidak ditemukan',
+  message: "Inventory tidak ditemukan",
 };
 
 // =============================================================================
@@ -264,26 +290,35 @@ export const mockDeleteInventoryNotFound = {
  */
 export const mockAddSubInventoryBatch = {
   success: true,
-  message: 'Subinventory berhasil ditambahkan',
+  message: "Subinventory berhasil ditambahkan",
   data: {
-    _id: 'sub_003',
-    inventoryId: '66c1a2b3d4e5f6a7b8c9d0e1',
+    _id: "sub_003",
+    inventoryId: "66c1a2b3d4e5f6a7b8c9d0e1",
     initialQuantity: 5000,
     quantity: 5000,
     costPrices: 10000,
-    inDate: '2026-07-29T00:00:00.000Z',
-    expired: '2026-09-15T00:00:00.000Z',
-    status: 'active',
-    createdAt: '2026-07-29T04:10:00.000Z',
+    inDate: "2026-07-29T00:00:00.000Z",
+    expired: "2026-09-15T00:00:00.000Z",
+    status: "active",
+    createdAt: "2026-07-29T04:10:00.000Z",
   },
-  updatedInventorySummary: { quantityTotal: 20000, lastCostBatch: 10000, totalSubInventory: 3 },
+  updatedInventorySummary: {
+    quantityTotal: 20000,
+    lastCostBatch: 10000,
+    totalSubInventory: 3,
+  },
 };
 
 /** Endpoint 7 → 400 Bad Request: field expired kosong padahal kategori ingredients (wajib isi expired) */
 export const mockAddSubInventoryError = {
   success: false,
-  message: 'Validation error: expired wajib diisi untuk kategori ingredients',
-  errors: [{ field: 'expired', message: 'expired wajib diisi untuk kategori ingredients' }],
+  message: "Validation error: expired wajib diisi untuk kategori ingredients",
+  errors: [
+    {
+      field: "expired",
+      message: "expired wajib diisi untuk kategori ingredients",
+    },
+  ],
 };
 
 // =============================================================================
@@ -300,22 +335,22 @@ export const mockSubInventoryList = {
   success: true,
   data: [
     {
-      _id: 'sub_001',
+      _id: "sub_001",
       initialQuantity: 5000,
       quantity: 3000,
       costPrices: 10000,
-      inDate: '2026-07-01T00:00:00.000Z',
-      expired: '2026-08-10T00:00:00.000Z',
-      status: 'active',
+      inDate: "2026-07-01T00:00:00.000Z",
+      expired: "2026-08-10T00:00:00.000Z",
+      status: "active",
     },
     {
-      _id: 'sub_002',
+      _id: "sub_002",
       initialQuantity: 10000,
       quantity: 10000,
       costPrices: 12000,
-      inDate: '2026-07-15T00:00:00.000Z',
-      expired: '2026-08-20T00:00:00.000Z',
-      status: 'active',
+      inDate: "2026-07-15T00:00:00.000Z",
+      expired: "2026-08-20T00:00:00.000Z",
+      status: "active",
     },
   ],
 };
@@ -328,31 +363,31 @@ export const mockSubInventoryListAll = {
   success: true,
   data: [
     {
-      _id: 'sub_001',
+      _id: "sub_001",
       initialQuantity: 5000,
       quantity: 3000,
       costPrices: 10000,
-      inDate: '2026-07-01T00:00:00.000Z',
-      expired: '2026-08-10T00:00:00.000Z',
-      status: 'active',
+      inDate: "2026-07-01T00:00:00.000Z",
+      expired: "2026-08-10T00:00:00.000Z",
+      status: "active",
     },
     {
-      _id: 'sub_004',
+      _id: "sub_004",
       initialQuantity: 8000,
       quantity: 0,
       costPrices: 9500,
-      inDate: '2026-06-01T00:00:00.000Z',
-      expired: '2026-07-20T00:00:00.000Z',
-      status: 'depleted', // habis via FEFO, quantity = 0
+      inDate: "2026-06-01T00:00:00.000Z",
+      expired: "2026-07-20T00:00:00.000Z",
+      status: "depleted", // habis via FEFO, quantity = 0
     },
     {
-      _id: 'sub_005',
+      _id: "sub_005",
       initialQuantity: 3000,
       quantity: 1200,
       costPrices: 11000,
-      inDate: '2026-06-15T00:00:00.000Z',
-      expired: '2026-07-10T00:00:00.000Z',
-      status: 'expired', // tanggal expired sudah lewat, lazy check mengubah status ini
+      inDate: "2026-06-15T00:00:00.000Z",
+      expired: "2026-07-10T00:00:00.000Z",
+      status: "expired", // tanggal expired sudah lewat, lazy check mengubah status ini
     },
   ],
 };
@@ -368,21 +403,25 @@ export const mockSubInventoryListAll = {
  */
 export const mockDeleteSubInventory = {
   success: true,
-  message: 'Subinventory berhasil diarsipkan',
+  message: "Subinventory berhasil diarsipkan",
   data: {
-    _id: 'sub_001',
-    status: 'deleted',
-    deletedAt: '2026-07-30T02:10:00.000Z',
-    deletedBy: 'Pencit',
-    reason: 'Batch rusak sebelum masuk produksi',
+    _id: "sub_001",
+    status: "deleted",
+    deletedAt: "2026-07-30T02:10:00.000Z",
+    deletedBy: "Pencit",
+    reason: "Batch rusak sebelum masuk produksi",
   },
-  updatedInventorySummary: { quantityTotal: 10000, lastCostBatch: 12000, totalSubInventory: 1 },
+  updatedInventorySummary: {
+    quantityTotal: 10000,
+    lastCostBatch: 12000,
+    totalSubInventory: 1,
+  },
 };
 
 /** Endpoint 9 → 404/409: batch tidak ditemukan atau sudah tidak active (sudah depleted/expired/deleted) */
 export const mockDeleteSubInventoryError = {
   success: false,
-  message: 'Subinventory tidak ditemukan atau tidak dapat diarsipkan',
+  message: "Subinventory tidak ditemukan atau tidak dapat diarsipkan",
 };
 
 // =============================================================================
@@ -398,22 +437,22 @@ export const mockHistorySubInventory = {
   success: true,
   data: [
     {
-      _id: 'hist_001',
-      inventoryId: '66c1a2b3d4e5f6a7b8c9d0e1',
-      nameInventory: 'Bubuk Kopi Arabica',
-      nameResponsible: 'Pencit',
+      _id: "hist_001",
+      inventoryId: "66c1a2b3d4e5f6a7b8c9d0e1",
+      nameInventory: "Bubuk Kopi Arabica",
+      nameResponsible: "Pencit",
       costPrices: 10000,
       quantity: 5000,
-      inDate: '2026-07-01T00:00:00.000Z',
+      inDate: "2026-07-01T00:00:00.000Z",
     },
     {
-      _id: 'hist_002',
-      inventoryId: '66c1a2b3d4e5f6a7b8c9d0e1',
-      nameInventory: 'Bubuk Kopi Arabica',
-      nameResponsible: 'Budi',
+      _id: "hist_002",
+      inventoryId: "66c1a2b3d4e5f6a7b8c9d0e1",
+      nameInventory: "Bubuk Kopi Arabica",
+      nameResponsible: "Budi",
       costPrices: 12000,
       quantity: 10000,
-      inDate: '2026-07-15T00:00:00.000Z',
+      inDate: "2026-07-15T00:00:00.000Z",
     },
   ],
   pagination: { totalData: 20, totalPage: 2, currentPage: 1, limit: 10 },
@@ -439,10 +478,10 @@ export const mockCheckAvailabilitySufficient = {
     hasUnsafeBatch: false,
     eligibleBatches: [
       {
-        subInventoryId: 'sub_002',
+        subInventoryId: "sub_002",
         quantityTaken: 8000,
-        expired: '2026-09-15T00:00:00.000Z',
-        batchSafetyStatus: 'safe',
+        expired: "2026-09-15T00:00:00.000Z",
+        batchSafetyStatus: "safe",
       },
     ],
   },
@@ -462,16 +501,16 @@ export const mockCheckAvailabilityUnsafe = {
     hasUnsafeBatch: true,
     eligibleBatches: [
       {
-        subInventoryId: 'sub_001',
+        subInventoryId: "sub_001",
         quantityTaken: 3000,
-        expired: '2026-08-10T00:00:00.000Z',
-        batchSafetyStatus: 'unsafe', // expired < availableUntil, batch akan busuk sebelum plan selesai
+        expired: "2026-08-10T00:00:00.000Z",
+        batchSafetyStatus: "unsafe", // expired < availableUntil, batch akan busuk sebelum plan selesai
       },
       {
-        subInventoryId: 'sub_002',
+        subInventoryId: "sub_002",
         quantityTaken: 5000,
-        expired: '2026-08-20T00:00:00.000Z',
-        batchSafetyStatus: 'safe',
+        expired: "2026-08-20T00:00:00.000Z",
+        batchSafetyStatus: "safe",
       },
     ],
   },
@@ -492,10 +531,10 @@ export const mockCheckAvailabilityInsufficient = {
     hasUnsafeBatch: true,
     eligibleBatches: [
       {
-        subInventoryId: 'sub_001',
+        subInventoryId: "sub_001",
         quantityTaken: 5000,
-        expired: '2026-08-10T00:00:00.000Z',
-        batchSafetyStatus: 'unsafe',
+        expired: "2026-08-10T00:00:00.000Z",
+        batchSafetyStatus: "unsafe",
       },
     ],
   },
@@ -514,23 +553,23 @@ export const mockCheckAvailabilityInsufficient = {
  */
 export const mockDeductStock = {
   success: true,
-  message: 'Stok berhasil dipotong (FEFO)',
+  message: "Stok berhasil dipotong (FEFO)",
   data: {
     hasUnsafeBatch: true,
     deductions: [
       {
-        subInventoryId: 'sub_001',
+        subInventoryId: "sub_001",
         quantityUsed: 3000,
         costPriceUsed: 10000,
         remainingQuantity: 0,
-        batchSafetyStatus: 'unsafe', // batch ini expired sebelum plan selesai
+        batchSafetyStatus: "unsafe", // batch ini expired sebelum plan selesai
       },
       {
-        subInventoryId: 'sub_002',
+        subInventoryId: "sub_002",
         quantityUsed: 5000,
         costPriceUsed: 12000,
         remainingQuantity: 5000,
-        batchSafetyStatus: 'safe',
+        batchSafetyStatus: "safe",
       },
     ],
   },
@@ -540,15 +579,20 @@ export const mockDeductStock = {
 /** Endpoint 12 → 409 Conflict: total stok aktif tidak cukup memenuhi quantityNeeded */
 export const mockDeductStockInsufficient = {
   success: false,
-  message: 'Stok tidak mencukupi untuk memenuhi kebutuhan plan',
-  errors: [{ field: 'quantityNeeded', message: 'Tersedia 5000, dibutuhkan 8000' }],
+  message: "Stok tidak mencukupi untuk memenuhi kebutuhan plan",
+  errors: [
+    { field: "quantityNeeded", message: "Tersedia 5000, dibutuhkan 8000" },
+  ],
 };
 
 /** Endpoint 12 → 409 Conflict: planId ini sudah pernah melakukan deduction sebelumnya (double-deduct guard) */
 export const mockDeductStockDoubleDeduct = {
   success: false,
-  message: 'Plan ini sudah pernah melakukan deduction, gunakan reverse dulu jika ingin mengulang',
-  errors: [{ field: 'planId', message: 'planId sudah memiliki HistoryUsage aktif' }],
+  message:
+    "Plan ini sudah pernah melakukan deduction, gunakan reverse dulu jika ingin mengulang",
+  errors: [
+    { field: "planId", message: "planId sudah memiliki HistoryUsage aktif" },
+  ],
 };
 
 // =============================================================================
@@ -562,7 +606,7 @@ export const mockDeductStockDoubleDeduct = {
  */
 export const mockDeductReverse = {
   success: true,
-  message: 'Deduction untuk plan_00123 berhasil dibatalkan',
+  message: "Deduction untuk plan_00123 berhasil dibatalkan",
   data: { reversedCount: 2 },
   updatedInventorySummary: { quantityTotal: 15000, totalSubInventory: 2 },
 };
@@ -570,8 +614,14 @@ export const mockDeductReverse = {
 /** Endpoint 13 → 409 Conflict: tidak ada HistoryUsage aktif (isReversed: false) untuk planId ini */
 export const mockDeductReverseNotFound = {
   success: false,
-  message: 'Tidak ada deduction aktif untuk planId ini',
-  errors: [{ field: 'planId', message: 'Tidak ditemukan HistoryUsage dengan isReversed: false untuk planId ini' }],
+  message: "Tidak ada deduction aktif untuk planId ini",
+  errors: [
+    {
+      field: "planId",
+      message:
+        "Tidak ditemukan HistoryUsage dengan isReversed: false untuk planId ini",
+    },
+  ],
 };
 
 // =============================================================================
@@ -589,28 +639,28 @@ export const mockHistoryUsage = {
   success: true,
   data: [
     {
-      _id: 'usage_001',
-      inventoryId: '66c1a2b3d4e5f6a7b8c9d0e1',
-      nameInventory: 'Bubuk Kopi Arabica',
-      subInventoryId: 'sub_001',
+      _id: "usage_001",
+      inventoryId: "66c1a2b3d4e5f6a7b8c9d0e1",
+      nameInventory: "Bubuk Kopi Arabica",
+      subInventoryId: "sub_001",
       quantityUsed: 3000,
       costPriceUsed: 10000,
-      planId: 'plan_00123',
-      usedDate: '2026-07-29T05:00:00.000Z',
-      batchSafetyStatus: 'unsafe',
+      planId: "plan_00123",
+      usedDate: "2026-07-29T05:00:00.000Z",
+      batchSafetyStatus: "unsafe",
       isReversed: false,
       reversedAt: null,
     },
     {
-      _id: 'usage_002',
-      inventoryId: '66c1a2b3d4e5f6a7b8c9d0e1',
-      nameInventory: 'Bubuk Kopi Arabica',
-      subInventoryId: 'sub_002',
+      _id: "usage_002",
+      inventoryId: "66c1a2b3d4e5f6a7b8c9d0e1",
+      nameInventory: "Bubuk Kopi Arabica",
+      subInventoryId: "sub_002",
       quantityUsed: 5000,
       costPriceUsed: 12000,
-      planId: 'plan_00123',
-      usedDate: '2026-07-29T05:00:00.000Z',
-      batchSafetyStatus: 'safe',
+      planId: "plan_00123",
+      usedDate: "2026-07-29T05:00:00.000Z",
+      batchSafetyStatus: "safe",
       isReversed: false,
       reversedAt: null,
     },
@@ -653,41 +703,41 @@ export const mockHistoryUsage = {
  */
 export const mockMenuCreated = {
   success: true,
-  message: 'Menu berhasil dibuat',
+  message: "Menu berhasil dibuat",
   data: {
-    _id: 'menu_003',
-    name: 'Iced Americano',
-    description: 'Espresso dengan air dingin dan es batu',
-    image: 'https://cdn.example.com/menu/nasi-goreng.jpg',
+    _id: "menu_003",
+    name: "Iced Americano",
+    description: "Espresso dengan air dingin dan es batu",
+    image: "https://cdn.example.com/menu/nasi-goreng.jpg",
     sellingPrice: 25000,
-    status: 'active',
+    status: "active",
     ingredients: [
       {
-        inventoryId: '66c1a2b3d4e5f6a7b8c9d0e1',
-        nameInventory: 'Bubuk Kopi Arabica',
-        category: 'ingredients',
-        unit: 'gr',
+        inventoryId: "66c1a2b3d4e5f6a7b8c9d0e1",
+        nameInventory: "Bubuk Kopi Arabica",
+        category: "ingredients",
+        unit: "gr",
         // inventoryStatus TIDAK ADA di response POST — hanya muncul di GET /:id
         quantityNeeded: 200,
-        currentCostPerUnit: 15,    // = lastCostBatch dari Inventory (diambil live)
-        subtotalCost: 3000,        // 200 × 15
+        currentCostPerUnit: 15, // = lastCostBatch dari Inventory (diambil live)
+        subtotalCost: 3000, // 200 × 15
       },
       {
-        inventoryId: '66c1a2b3d4e5f6a7b8c9d0e2',
-        nameInventory: 'Kardus Box Kecil',
-        category: 'packaging',
-        unit: 'pcs',
+        inventoryId: "66c1a2b3d4e5f6a7b8c9d0e2",
+        nameInventory: "Kardus Box Kecil",
+        category: "packaging",
+        unit: "pcs",
         quantityNeeded: 1,
         currentCostPerUnit: 1500,
-        subtotalCost: 1500,        // 1 × 1500
+        subtotalCost: 1500, // 1 × 1500
       },
     ],
-    currentCostEstimate: 4500,     // 3000 + 1500
-    marginEstimate: 20500,         // 25000 - 4500
-    marginPercentage: 82,          // round(20500/25000 × 100)
+    currentCostEstimate: 4500, // 3000 + 1500
+    marginEstimate: 20500, // 25000 - 4500
+    marginPercentage: 82, // round(20500/25000 × 100)
     costComplete: true,
-    createdAt: '2026-07-31T03:00:00.000Z',
-    updatedAt: '2026-07-31T03:00:00.000Z',
+    createdAt: "2026-07-31T03:00:00.000Z",
+    updatedAt: "2026-07-31T03:00:00.000Z",
   },
 };
 
@@ -697,11 +747,11 @@ export const mockMenuCreated = {
  */
 export const mockMenuCreatedInvalidIngredient = {
   success: false,
-  message: 'Validation error: ada ingredient yang inventoryId-nya tidak valid',
+  message: "Validation error: ada ingredient yang inventoryId-nya tidak valid",
   errors: [
     {
-      field: 'ingredients[1].inventoryId',
-      message: 'Inventory tidak ditemukan atau berstatus deleted',
+      field: "ingredients[1].inventoryId",
+      message: "Inventory tidak ditemukan atau berstatus deleted",
     },
   ],
 };
@@ -712,11 +762,13 @@ export const mockMenuCreatedInvalidIngredient = {
  */
 export const mockMenuCreatedDuplicateIngredient = {
   success: false,
-  message: 'Validation error: terdapat inventoryId yang sama lebih dari satu kali',
+  message:
+    "Validation error: terdapat inventoryId yang sama lebih dari satu kali",
   errors: [
     {
-      field: 'ingredients',
-      message: "inventoryId '66c1a2b3d4e5f6a7b8c9d0e1' muncul lebih dari sekali",
+      field: "ingredients",
+      message:
+        "inventoryId '66c1a2b3d4e5f6a7b8c9d0e1' muncul lebih dari sekali",
     },
   ],
 };
@@ -744,23 +796,23 @@ export const mockMenuList = {
   success: true,
   data: [
     {
-      _id: 'menu_001',
-      image: 'https://cdn.example.com/menu/es-kopi-susu.jpg',
-      name: 'Es Kopi Susu',
+      _id: "menu_001",
+      image: "https://cdn.example.com/menu/es-kopi-susu.jpg",
+      name: "Es Kopi Susu",
       sellingPrice: 18000,
-      status: 'active',
-      totalIngredients: 3,       // 3 bahan: kopi, sirup, kardus
+      status: "active",
+      totalIngredients: 3, // 3 bahan: kopi, sirup, kardus
       currentCostEstimate: 4300,
       marginEstimate: 13700,
       marginPercentage: 76,
       costComplete: true,
     },
     {
-      _id: 'menu_002',
-      image: 'https://cdn.example.com/menu/matcha-latte.jpg',
-      name: 'Matcha Latte',
+      _id: "menu_002",
+      image: "https://cdn.example.com/menu/matcha-latte.jpg",
+      name: "Matcha Latte",
       sellingPrice: 22000,
-      status: 'active',
+      status: "active",
       totalIngredients: 2,
       // Semua null karena ada ingredient dengan inventory deleted
       currentCostEstimate: null,
@@ -769,11 +821,11 @@ export const mockMenuList = {
       costComplete: false,
     },
     {
-      _id: 'menu_003',
-      image: 'https://cdn.example.com/menu/nasi-goreng.jpg',
-      name: 'Iced Americano',
+      _id: "menu_003",
+      image: "https://cdn.example.com/menu/nasi-goreng.jpg",
+      name: "Iced Americano",
       sellingPrice: 25000,
-      status: 'active',
+      status: "active",
       totalIngredients: 2,
       currentCostEstimate: 4500,
       marginEstimate: 20500,
@@ -781,11 +833,11 @@ export const mockMenuList = {
       costComplete: true,
     },
     {
-      _id: 'menu_004',
-      image: 'https://cdn.example.com/menu/es-teh.jpg',
-      name: 'Es Teh Manis',
+      _id: "menu_004",
+      image: "https://cdn.example.com/menu/es-teh.jpg",
+      name: "Es Teh Manis",
       sellingPrice: 8000,
-      status: 'active',
+      status: "active",
       totalIngredients: 2,
       currentCostEstimate: 1200,
       marginEstimate: 6800,
@@ -828,51 +880,51 @@ export const mockMenuListEmpty = {
 export const mockMenuDetail = {
   success: true,
   data: {
-    _id: 'menu_001',
-    image: 'https://cdn.example.com/menu/es-kopi-susu.jpg',
-    name: 'Es Kopi Susu',
-    description: 'Kopi susu premium dengan sirup vanilla, disajikan dingin',
+    _id: "menu_001",
+    image: "https://cdn.example.com/menu/es-kopi-susu.jpg",
+    name: "Es Kopi Susu",
+    description: "Kopi susu premium dengan sirup vanilla, disajikan dingin",
     sellingPrice: 18000,
-    status: 'active',
+    status: "active",
     ingredients: [
       {
-        inventoryId: '66c1a2b3d4e5f6a7b8c9d0e1',
-        nameInventory: 'Bubuk Kopi Arabica',
-        category: 'ingredients',
-        unit: 'gr',
-        inventoryStatus: 'active',  // field live dari Inventory — HANYA ada di endpoint detail
+        inventoryId: "66c1a2b3d4e5f6a7b8c9d0e1",
+        nameInventory: "Bubuk Kopi Arabica",
+        category: "ingredients",
+        unit: "gr",
+        inventoryStatus: "active", // field live dari Inventory — HANYA ada di endpoint detail
         quantityNeeded: 15,
-        currentCostPerUnit: 120,   // = lastCostBatch dari Inventory (Rp120/gr)
-        subtotalCost: 1800,        // 15 × 120
+        currentCostPerUnit: 120, // = lastCostBatch dari Inventory (Rp120/gr)
+        subtotalCost: 1800, // 15 × 120
       },
       {
-        inventoryId: '60c1a2r3d4e3f6a7b8c9d0e8',
-        nameInventory: 'Sirup Vanilla',
-        category: 'ingredients',
-        unit: 'ml',
-        inventoryStatus: 'active',
+        inventoryId: "60c1a2r3d4e3f6a7b8c9d0e8",
+        nameInventory: "Sirup Vanilla",
+        category: "ingredients",
+        unit: "ml",
+        inventoryStatus: "active",
         quantityNeeded: 20,
-        currentCostPerUnit: 50,    // = lastCostBatch Sirup Vanilla (Rp50/ml)
-        subtotalCost: 1000,        // 20 × 50
+        currentCostPerUnit: 50, // = lastCostBatch Sirup Vanilla (Rp50/ml)
+        subtotalCost: 1000, // 20 × 50
       },
       {
-        inventoryId: '66c1a2b3d4e5f6a7b8c9d0e2',
-        nameInventory: 'Kardus Box Kecil',
-        category: 'packaging',
-        unit: 'pcs',
-        inventoryStatus: 'active',
+        inventoryId: "66c1a2b3d4e5f6a7b8c9d0e2",
+        nameInventory: "Kardus Box Kecil",
+        category: "packaging",
+        unit: "pcs",
+        inventoryStatus: "active",
         quantityNeeded: 1,
         currentCostPerUnit: 1500,
-        subtotalCost: 1500,        // 1 × 1500
+        subtotalCost: 1500, // 1 × 1500
       },
     ],
-    currentCostEstimate: 4300,     // 1800 + 1000 + 1500
-    marginEstimate: 13700,         // 18000 - 4300
-    marginPercentage: 76,          // round(13700/18000 × 100) = 76.1 → 76
+    currentCostEstimate: 4300, // 1800 + 1000 + 1500
+    marginEstimate: 13700, // 18000 - 4300
+    marginPercentage: 76, // round(13700/18000 × 100) = 76.1 → 76
     costComplete: true,
     // 'warning' TIDAK ADA saat costComplete: true
-    createdAt: '2026-07-30T03:00:00.000Z',
-    updatedAt: '2026-07-30T03:00:00.000Z',
+    createdAt: "2026-07-30T03:00:00.000Z",
+    updatedAt: "2026-07-30T03:00:00.000Z",
   },
 };
 
@@ -893,32 +945,32 @@ export const mockMenuDetail = {
 export const mockMenuDetailIncomplete = {
   success: true,
   data: {
-    _id: 'menu_002',
-    image: 'https://cdn.example.com/menu/matcha-latte.jpg',
-    name: 'Matcha Latte',
-    description: 'Minuman matcha segar dengan susu dan sirup vanilla',
+    _id: "menu_002",
+    image: "https://cdn.example.com/menu/matcha-latte.jpg",
+    name: "Matcha Latte",
+    description: "Minuman matcha segar dengan susu dan sirup vanilla",
     sellingPrice: 22000,
-    status: 'active',
+    status: "active",
     ingredients: [
       {
-        inventoryId: '66c1a2b3d4e5f6a7b8c9d0e9',
-        nameInventory: 'Bubuk Matcha Premium',
-        category: 'ingredients',
-        unit: 'gr',
-        inventoryStatus: 'deleted',  // ← inventory sudah diarsipkan
+        inventoryId: "66c1a2b3d4e5f6a7b8c9d0e9",
+        nameInventory: "Bubuk Matcha Premium",
+        category: "ingredients",
+        unit: "gr",
+        inventoryStatus: "deleted", // ← inventory sudah diarsipkan
         quantityNeeded: 20,
-        currentCostPerUnit: null,    // tidak bisa diambil dari inventory deleted
-        subtotalCost: null,          // null karena currentCostPerUnit null
+        currentCostPerUnit: null, // tidak bisa diambil dari inventory deleted
+        subtotalCost: null, // null karena currentCostPerUnit null
       },
       {
-        inventoryId: '60c1a2r3d4e3f6a7b8c9d0e8',
-        nameInventory: 'Sirup Vanilla',
-        category: 'ingredients',
-        unit: 'ml',
-        inventoryStatus: 'active',
+        inventoryId: "60c1a2r3d4e3f6a7b8c9d0e8",
+        nameInventory: "Sirup Vanilla",
+        category: "ingredients",
+        unit: "ml",
+        inventoryStatus: "active",
         quantityNeeded: 15,
         currentCostPerUnit: 50,
-        subtotalCost: 750,           // 15 × 50 (dihitung, tapi bukan penentu estimasi total)
+        subtotalCost: 750, // 15 × 50 (dihitung, tapi bukan penentu estimasi total)
       },
     ],
     // Semua top-level cost null karena costComplete: false
@@ -926,16 +978,17 @@ export const mockMenuDetailIncomplete = {
     marginEstimate: null,
     marginPercentage: null,
     costComplete: false,
-    warning: 'Terdapat ingredient yang inventory-nya sudah diarsipkan atau belum pernah punya batch, estimasi cost tidak dapat dihitung penuh',
-    createdAt: '2026-07-28T03:00:00.000Z',
-    updatedAt: '2026-07-28T03:00:00.000Z',
+    warning:
+      "Terdapat ingredient yang inventory-nya sudah diarsipkan atau belum pernah punya batch, estimasi cost tidak dapat dihitung penuh",
+    createdAt: "2026-07-28T03:00:00.000Z",
+    updatedAt: "2026-07-28T03:00:00.000Z",
   },
 };
 
 /** Endpoint 3 → 404 Not Found: menu tidak ditemukan (termasuk menu status: deleted) */
 export const mockMenuNotFound = {
   success: false,
-  message: 'Menu tidak ditemukan',
+  message: "Menu tidak ditemukan",
 };
 
 // =============================================================================
@@ -951,15 +1004,15 @@ export const mockMenuNotFound = {
  */
 export const mockEditMenu = {
   success: true,
-  message: 'Menu berhasil diperbarui',
+  message: "Menu berhasil diperbarui",
   data: {
-    _id: 'menu_001',
-    name: 'Es Kopi Susu Special',
+    _id: "menu_001",
+    name: "Es Kopi Susu Special",
     sellingPrice: 20000,
-    updatedAt: '2026-07-31T04:00:00.000Z',
+    updatedAt: "2026-07-31T04:00:00.000Z",
   },
   // ada 1 draft plan yang referensi menu ini → ditandai stale
-  affectedDraftPlans: ['plan_002'],
+  affectedDraftPlans: ["plan_002"],
 };
 
 /**
@@ -968,12 +1021,12 @@ export const mockEditMenu = {
  */
 export const mockEditMenuNoEffect = {
   success: true,
-  message: 'Menu berhasil diperbarui',
+  message: "Menu berhasil diperbarui",
   data: {
-    _id: 'menu_001',
-    name: 'Es Kopi Susu Artisan',
+    _id: "menu_001",
+    name: "Es Kopi Susu Artisan",
     sellingPrice: 18000,
-    updatedAt: '2026-07-31T04:30:00.000Z',
+    updatedAt: "2026-07-31T04:30:00.000Z",
   },
   affectedDraftPlans: [], // kosong karena hanya name yang berubah
 };
@@ -983,11 +1036,11 @@ export const mockEditMenuNoEffect = {
  */
 export const mockEditMenuInvalidIngredient = {
   success: false,
-  message: 'Validation error: ada ingredient yang inventoryId-nya tidak valid',
+  message: "Validation error: ada ingredient yang inventoryId-nya tidak valid",
   errors: [
     {
-      field: 'ingredients[1].inventoryId',
-      message: 'Inventory tidak ditemukan atau berstatus deleted',
+      field: "ingredients[1].inventoryId",
+      message: "Inventory tidak ditemukan atau berstatus deleted",
     },
   ],
 };
@@ -1004,13 +1057,13 @@ export const mockEditMenuInvalidIngredient = {
  */
 export const mockDeleteMenu = {
   success: true,
-  message: 'Menu berhasil diarsipkan',
+  message: "Menu berhasil diarsipkan",
   data: {
-    _id: 'menu_001',
-    status: 'deleted',
-    deletedAt: '2026-07-31T05:00:00.000Z',
+    _id: "menu_001",
+    status: "deleted",
+    deletedAt: "2026-07-31T05:00:00.000Z",
   },
-  affectedDraftPlans: ['plan_003'], // 1 draft plan perlu di-refresh setelah arsip
+  affectedDraftPlans: ["plan_003"], // 1 draft plan perlu di-refresh setelah arsip
 };
 
 /**
@@ -1018,11 +1071,11 @@ export const mockDeleteMenu = {
  */
 export const mockDeleteMenuNoEffect = {
   success: true,
-  message: 'Menu berhasil diarsipkan',
+  message: "Menu berhasil diarsipkan",
   data: {
-    _id: 'menu_004',
-    status: 'deleted',
-    deletedAt: '2026-07-31T05:30:00.000Z',
+    _id: "menu_004",
+    status: "deleted",
+    deletedAt: "2026-07-31T05:30:00.000Z",
   },
   affectedDraftPlans: [], // tidak ada draft yang mereferensikan menu ini
 };
@@ -1030,7 +1083,7 @@ export const mockDeleteMenuNoEffect = {
 /** Endpoint 5 → 404: menu tidak ditemukan atau sudah berstatus deleted sebelumnya */
 export const mockDeleteMenuNotFound = {
   success: false,
-  message: 'Menu tidak ditemukan',
+  message: "Menu tidak ditemukan",
 };
 
 // =============================================================================
@@ -1049,22 +1102,22 @@ export const mockMenuDropdown = {
   success: true,
   data: [
     {
-      _id: 'menu_001',
-      name: 'Es Kopi Susu',
+      _id: "menu_001",
+      name: "Es Kopi Susu",
       sellingPrice: 18000,
-      image: 'https://cdn.example.com/menu/es-kopi-susu.jpg',
+      image: "https://cdn.example.com/menu/es-kopi-susu.jpg",
     },
     {
-      _id: 'menu_003',
-      name: 'Iced Americano',
+      _id: "menu_003",
+      name: "Iced Americano",
       sellingPrice: 25000,
-      image: 'https://cdn.example.com/menu/nasi-goreng.jpg',
+      image: "https://cdn.example.com/menu/nasi-goreng.jpg",
     },
     {
-      _id: 'menu_004',
-      name: 'Es Teh Manis',
+      _id: "menu_004",
+      name: "Es Teh Manis",
       sellingPrice: 8000,
-      image: 'https://cdn.example.com/menu/es-teh.jpg',
+      image: "https://cdn.example.com/menu/es-teh.jpg",
     },
   ],
   // Tanpa pagination — semua hasil dikembalikan sekaligus (sesuai contract endpoint 6)
@@ -1083,19 +1136,19 @@ export const mockMenuDropdown = {
 
 export const mockCreatePlan = {
   success: true,
-  message: 'Plan berhasil dibuat sebagai draft',
+  message: "Plan berhasil dibuat sebagai draft",
   data: {
-    _id: 'plan_001',
-    name: 'Promo Nasi Goreng Agustus',
-    tags: ['promo'],
-    status: 'draft',
-    startDate: '2026-08-05T00:00:00.000Z',
+    _id: "plan_001",
+    name: "Promo Nasi Goreng Agustus",
+    tags: ["promo"],
+    status: "draft",
+    startDate: "2026-08-05T00:00:00.000Z",
     duration: 14,
-    endDate: '2026-08-19T00:00:00.000Z',
+    endDate: "2026-08-19T00:00:00.000Z",
     menus: [
       {
-        menuId: 'menu_001',
-        name: 'Nasi Goreng Spesial',
+        menuId: "menu_001",
+        name: "Nasi Goreng Spesial",
         quantityPlanned: 100,
         soldQuantity: 0,
         lossQuantity: 0,
@@ -1108,15 +1161,25 @@ export const mockCreatePlan = {
     ],
     checkResult: [
       {
-        inventoryId: '66c1a2b3d4e5f6a7b8c9d0e1',
-        nameInventory: 'Beras Premium',
+        inventoryId: "66c1a2b3d4e5f6a7b8c9d0e1",
+        nameInventory: "Beras Premium",
         quantityNeeded: 20000,
         sufficient: true,
         availableQuantity: 25000,
         hasUnsafeBatch: true,
         eligibleBatches: [
-          { subInventoryId: 'sub_001', quantityTaken: 8000, expired: '2026-08-12T00:00:00.000Z', batchSafetyStatus: 'unsafe' },
-          { subInventoryId: 'sub_002', quantityTaken: 12000, expired: '2026-09-01T00:00:00.000Z', batchSafetyStatus: 'safe' },
+          {
+            subInventoryId: "sub_001",
+            quantityTaken: 8000,
+            expired: "2026-08-12T00:00:00.000Z",
+            batchSafetyStatus: "unsafe",
+          },
+          {
+            subInventoryId: "sub_002",
+            quantityTaken: 12000,
+            expired: "2026-09-01T00:00:00.000Z",
+            batchSafetyStatus: "safe",
+          },
         ],
       },
     ],
@@ -1124,14 +1187,20 @@ export const mockCreatePlan = {
     staleReason: null,
     readyToApprove: true,
     hasPendingLossReplacement: false,
-    createdAt: '2026-08-01T02:00:00.000Z',
+    createdAt: "2026-08-01T02:00:00.000Z",
   },
 };
 
 export const mockCreatePlanInvalidMenu = {
   success: false,
-  message: 'Validation error: ada menuId yang tidak ditemukan atau sudah diarsipkan',
-  errors: [{ field: 'menus[1].menuId', message: 'Menu tidak ditemukan atau berstatus deleted' }],
+  message:
+    "Validation error: ada menuId yang tidak ditemukan atau sudah diarsipkan",
+  errors: [
+    {
+      field: "menus[1].menuId",
+      message: "Menu tidak ditemukan atau berstatus deleted",
+    },
+  ],
 };
 
 // =============================================================================
@@ -1143,12 +1212,12 @@ export const mockPlanList = {
   success: true,
   data: [
     {
-      _id: 'plan_001',
-      name: 'Promo Nasi Goreng Agustus',
-      tags: ['promo'],
-      status: 'active',
-      startDate: '2026-08-05T00:00:00.000Z',
-      endDate: '2026-08-19T00:00:00.000Z',
+      _id: "plan_001",
+      name: "Promo Nasi Goreng Agustus",
+      tags: ["promo"],
+      status: "active",
+      startDate: "2026-08-05T00:00:00.000Z",
+      endDate: "2026-08-19T00:00:00.000Z",
       totalMenu: 2,
       readyToApprove: true,
       hasPendingLossReplacement: false,
@@ -1167,39 +1236,46 @@ export const mockPlanList = {
 export const mockPlanDetailDraft = {
   success: true,
   data: {
-    _id: 'plan_001',
-    name: 'Promo Nasi Goreng Agustus',
-    status: 'draft',
+    _id: "plan_001",
+    name: "Promo Nasi Goreng Agustus",
+    status: "draft",
+    startDate: "2026-08-05T00:00:00.000Z",
+    duration: 14,
     menus: [
       {
-        menuId: 'menu_001',
-        name: 'Nasi Goreng Spesial',
+        menuId: "menu_001",
+        name: "Nasi Goreng Spesial",
         quantityPlanned: 100,
         frozenSellingPrice: null,
         effectiveSellingPrice: 25000,
         currentPrice: 25000,
         discount: {
           discountPercentage: 15,
-          startDate: '2026-08-12T00:00:00.000Z',
-          endDate: '2026-08-19T00:00:00.000Z',
-          reason: 'Beras Premium mendekati expired',
+          startDate: "2026-08-12T00:00:00.000Z",
+          endDate: "2026-08-19T00:00:00.000Z",
+          reason: "Beras Premium mendekati expired",
           discountedPrice: 21250,
-          discountStatus: 'upcoming',
-          setBy: 'Admin A',
-          setAt: '2026-08-05T03:00:00.000Z',
+          discountStatus: "upcoming",
+          setBy: "Admin A",
+          setAt: "2026-08-05T03:00:00.000Z",
         },
       },
     ],
     checkResult: [
       {
-        inventoryId: '66c1a2b3d4e5f6a7b8c9d0e1',
-        nameInventory: 'Beras Premium',
+        inventoryId: "66c1a2b3d4e5f6a7b8c9d0e1",
+        nameInventory: "Beras Premium",
         quantityNeeded: 20000,
         sufficient: true,
         availableQuantity: 25000,
         hasUnsafeBatch: true,
         eligibleBatches: [
-          { subInventoryId: 'sub_001', quantityTaken: 8000, expired: '2026-08-12T00:00:00.000Z', batchSafetyStatus: 'unsafe' },
+          {
+            subInventoryId: "sub_001",
+            quantityTaken: 8000,
+            expired: "2026-08-12T00:00:00.000Z",
+            batchSafetyStatus: "unsafe",
+          },
         ],
       },
     ],
@@ -1209,17 +1285,107 @@ export const mockPlanDetailDraft = {
   },
 };
 
+// Bentuk data WAJIB sama persis dengan API contract (lihat CONVENTIONS.md section 5).
+// Swap ke getProducts() di services/api.js begitu backend siap.
+export const mockProducts = [
+  {
+    id: "prod-001",
+    name: "Latte",
+    image:
+      "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQRHV4c9P4IXb6Dsk1F69YM13GJU9NuO-WIvNit9Ed_QA&s=10",
+    price: 12700,
+    discountPrice: null,
+    discountPercent: null,
+    stockRemaining: 10,
+    isAvailable: true,
+  },
+  {
+    id: "prod-002",
+    name: "Ice Americano",
+    image: "https://picsum.photos/seed/ice-americano/300/200",
+    price: 18750,
+    discountPrice: 15000,
+    discountPercent: 20,
+    stockRemaining: null,
+    isAvailable: true,
+  },
+  {
+    id: "prod-003",
+    name: "Matcha Drink",
+    image: "https://picsum.photos/seed/matcha/300/200",
+    price: 26000,
+    discountPrice: null,
+    discountPercent: null,
+    stockRemaining: null,
+    isAvailable: true,
+  },
+  {
+    id: "prod-004",
+    name: "Cappuccino",
+    image: "https://picsum.photos/seed/cappuccino/300/200",
+    price: 18000,
+    discountPrice: null,
+    discountPercent: null,
+    stockRemaining: 0,
+    isAvailable: false,
+  },
+  {
+    id: "prod-005",
+    name: "Lemonade",
+    image: "https://picsum.photos/seed/lemonade/300/200",
+    price: 15500,
+    discountPrice: null,
+    discountPercent: null,
+    stockRemaining: null,
+    isAvailable: true,
+  },
+  {
+    id: "prod-006",
+    name: "Latte",
+    image: "https://picsum.photos/seed/latte/300/200",
+    price: 12700,
+    discountPrice: null,
+    discountPercent: null,
+    stockRemaining: 10,
+    isAvailable: true,
+  },
+  {
+    id: "prod-007",
+    name: "Ice Americano",
+    image: "https://picsum.photos/seed/ice-americano/300/200",
+    price: 18750,
+    discountPrice: 15000,
+    discountPercent: 20,
+    stockRemaining: 5,
+    isAvailable: true,
+  },
+  {
+    id: "prod-008",
+    name: "Matcha Drink",
+    image: "https://picsum.photos/seed/matcha/300/200",
+    price: 26000,
+    discountPrice: null,
+    discountPercent: null,
+    stockRemaining: 50,
+    isAvailable: true,
+  },
+];
+
 export const mockPlanDetailActive = {
   success: true,
   data: {
-    _id: 'plan_001',
-    status: 'active',
+    _id: "plan_001",
+    name: "Promo Nasi Goreng Agustus",
+    status: "active",
+    startDate: "2026-08-05T00:00:00.000Z",
+    duration: 14,
     hasPendingLossReplacement: true,
-    warning: 'Ada laporan kerugian bahan yang sudah disetujui tapi belum diganti stoknya',
+    warning:
+      "Ada laporan kerugian bahan yang sudah disetujui tapi belum diganti stoknya",
     menus: [
       {
-        menuId: 'menu_001',
-        name: 'Nasi Goreng Spesial',
+        menuId: "menu_001",
+        name: "Nasi Goreng Spesial",
         quantityPlanned: 100,
         soldQuantity: 62,
         lossQuantity: 0,
@@ -1230,24 +1396,34 @@ export const mockPlanDetailActive = {
         currentPrice: 21250,
         discount: {
           discountPercentage: 15,
-          startDate: '2026-08-12T00:00:00.000Z',
-          endDate: '2026-08-19T00:00:00.000Z',
-          reason: 'Beras Premium mendekati expired',
+          startDate: "2026-08-12T00:00:00.000Z",
+          endDate: "2026-08-19T00:00:00.000Z",
+          reason: "Beras Premium mendekati expired",
           discountedPrice: 21250,
-          discountStatus: 'active',
-          setBy: 'Admin A',
-          setAt: '2026-08-05T03:00:00.000Z',
+          discountStatus: "active",
+          setBy: "Admin A",
+          setAt: "2026-08-05T03:00:00.000Z",
         },
       },
     ],
     committedIngredients: [
       {
-        inventoryId: '66c1a2b3d4e5f6a7b8c9d0e1',
-        nameInventory: 'Beras Premium',
+        inventoryId: "66c1a2b3d4e5f6a7b8c9d0e1",
+        nameInventory: "Beras Premium",
         quantityNeeded: 20000,
         batches: [
-          { subInventoryId: 'sub_001', quantityUsed: 8000, costPriceUsed: 10000, batchSafetyStatus: 'unsafe' },
-          { subInventoryId: 'sub_002', quantityUsed: 12000, costPriceUsed: 12000, batchSafetyStatus: 'safe' },
+          {
+            subInventoryId: "sub_001",
+            quantityUsed: 8000,
+            costPriceUsed: 10000,
+            batchSafetyStatus: "unsafe",
+          },
+          {
+            subInventoryId: "sub_002",
+            quantityUsed: 12000,
+            costPriceUsed: 12000,
+            batchSafetyStatus: "safe",
+          },
         ],
       },
     ],
@@ -1257,18 +1433,19 @@ export const mockPlanDetailActive = {
 export const mockPlanDetailStale = {
   success: true,
   data: {
-    _id: 'plan_002',
-    status: 'draft',
+    _id: "plan_002",
+    status: "draft",
     checkResultStale: true,
-    staleReason: 'recipe_changed',
+    staleReason: "recipe_changed",
     readyToApprove: false,
-    warning: 'Resep salah satu menu di plan ini berubah sejak simulasi terakhir. Refresh check-availability wajib dilakukan sebelum approve.',
+    warning:
+      "Resep salah satu menu di plan ini berubah sejak simulasi terakhir. Refresh check-availability wajib dilakukan sebelum approve.",
   },
 };
 
 export const mockPlanNotFound = {
   success: false,
-  message: 'Plan tidak ditemukan',
+  message: "Plan tidak ditemukan",
 };
 
 // =============================================================================
@@ -1278,20 +1455,34 @@ export const mockPlanNotFound = {
 
 export const mockUpdatePlan = {
   success: true,
-  message: 'Plan berhasil diperbarui, simulasi ketersediaan sudah di-refresh',
-  data: { _id: 'plan_001', endDate: '2026-08-17T00:00:00.000Z', readyToApprove: true, checkResultStale: false, staleReason: null, updatedAt: '2026-08-02T01:00:00.000Z' },
+  message: "Plan berhasil diperbarui, simulasi ketersediaan sudah di-refresh",
+  data: {
+    _id: "plan_001",
+    endDate: "2026-08-17T00:00:00.000Z",
+    readyToApprove: true,
+    checkResultStale: false,
+    staleReason: null,
+    updatedAt: "2026-08-02T01:00:00.000Z",
+  },
 };
 
 export const mockUpdatePlanNotDraft = {
   success: false,
-  message: 'Plan hanya bisa diedit selagi berstatus draft',
-  errors: [{ field: 'status', message: 'Status saat ini: active' }],
+  message: "Plan hanya bisa diedit selagi berstatus draft",
+  errors: [{ field: "status", message: "Status saat ini: active" }],
 };
 
 export const mockUpdatePlanDiscountOutOfRange = {
   success: false,
-  message: 'Perubahan durasi plan membuat slot diskon menu_001 berada di luar rentang plan baru, hapus atau sesuaikan diskon tersebut dulu',
-  errors: [{ field: 'duration', message: 'Diskon menu_001 (2026-08-12 s/d 2026-08-19) melebihi endDate baru 2026-08-15' }],
+  message:
+    "Perubahan durasi plan membuat slot diskon menu_001 berada di luar rentang plan baru, hapus atau sesuaikan diskon tersebut dulu",
+  errors: [
+    {
+      field: "duration",
+      message:
+        "Diskon menu_001 (2026-08-12 s/d 2026-08-19) melebihi endDate baru 2026-08-15",
+    },
+  ],
 };
 
 // =============================================================================
@@ -1307,26 +1498,36 @@ export const mockCheckAvailabilityPlan = {
     staleReason: null,
     checkResult: [
       {
-        inventoryId: '66c1a2b3d4e5f6a7b8c9d0e1',
-        nameInventory: 'Beras Premium',
+        inventoryId: "66c1a2b3d4e5f6a7b8c9d0e1",
+        nameInventory: "Beras Premium",
         quantityNeeded: 20000,
         sufficient: true,
         availableQuantity: 25000,
         hasUnsafeBatch: true,
         eligibleBatches: [
-          { subInventoryId: 'sub_001', quantityTaken: 20000, expired: '2026-08-12T00:00:00.000Z', batchSafetyStatus: 'unsafe' },
+          {
+            subInventoryId: "sub_001",
+            quantityTaken: 20000,
+            expired: "2026-08-12T00:00:00.000Z",
+            batchSafetyStatus: "unsafe",
+          },
         ],
       },
       {
-        inventoryId: '66c1a2b3d4e5f6a7b8c9d0e2',
-        nameInventory: 'Kardus Box Kecil',
+        inventoryId: "66c1a2b3d4e5f6a7b8c9d0e2",
+        nameInventory: "Kardus Box Kecil",
         quantityNeeded: 150,
         sufficient: false,
         availableQuantity: 90,
         shortfall: 60,
         hasUnsafeBatch: false,
         eligibleBatches: [
-          { subInventoryId: 'sub_010', quantityTaken: 90, expired: null, batchSafetyStatus: 'safe' },
+          {
+            subInventoryId: "sub_010",
+            quantityTaken: 90,
+            expired: null,
+            batchSafetyStatus: "safe",
+          },
         ],
       },
     ],
@@ -1340,26 +1541,44 @@ export const mockCheckAvailabilityPlan = {
 
 export const mockApprovePlan = {
   success: true,
-  message: 'Plan disetujui, stok bahan telah dialokasikan dan harga jual dibekukan',
-  data: { _id: 'plan_001', status: 'active', approvedAt: '2026-08-04T02:00:00.000Z' },
+  message:
+    "Plan disetujui, stok bahan telah dialokasikan dan harga jual dibekukan",
+  data: {
+    _id: "plan_001",
+    status: "active",
+    approvedAt: "2026-08-04T02:00:00.000Z",
+  },
 };
 
 export const mockApprovePlanStaleRecipe = {
   success: false,
-  message: 'Resep salah satu menu berubah sejak simulasi terakhir, wajib refresh check-availability sebelum approve',
-  errors: [{ field: 'staleReason', message: 'staleReason: recipe_changed' }],
+  message:
+    "Resep salah satu menu berubah sejak simulasi terakhir, wajib refresh check-availability sebelum approve",
+  errors: [{ field: "staleReason", message: "staleReason: recipe_changed" }],
 };
 
 export const mockApprovePlanInsufficient = {
   success: false,
-  message: 'Ketersediaan stok berubah sejak simulasi terakhir, silakan check-availability ulang',
-  errors: [{ field: 'checkResult', message: '1 atau lebih inventoryId tidak lagi mencukupi' }],
+  message:
+    "Ketersediaan stok berubah sejak simulasi terakhir, silakan check-availability ulang",
+  errors: [
+    {
+      field: "checkResult",
+      message: "1 atau lebih inventoryId tidak lagi mencukupi",
+    },
+  ],
 };
 
 export const mockApprovePlanConflict = {
   success: false,
-  message: 'Masih ada plan lain yang sedang aktif, selesaikan atau hentikan plan tersebut dulu',
-  errors: [{ field: 'status', message: 'Hanya boleh 1 plan berstatus active pada satu waktu' }],
+  message:
+    "Masih ada plan lain yang sedang aktif, selesaikan atau hentikan plan tersebut dulu",
+  errors: [
+    {
+      field: "status",
+      message: "Hanya boleh 1 plan berstatus active pada satu waktu",
+    },
+  ],
 };
 
 // =============================================================================
@@ -1369,14 +1588,20 @@ export const mockApprovePlanConflict = {
 
 export const mockStopPlan = {
   success: true,
-  message: 'Plan dihentikan, laporan akhir telah dibuat',
-  data: { _id: 'plan_001', status: 'stopped', stoppedAt: '2026-08-12T09:00:00.000Z', stoppedBy: 'Admin A', stopReason: 'Kehabisan stok bahan utama' },
+  message: "Plan dihentikan, laporan akhir telah dibuat",
+  data: {
+    _id: "plan_001",
+    status: "stopped",
+    stoppedAt: "2026-08-12T09:00:00.000Z",
+    stoppedBy: "Admin A",
+    stopReason: "Kehabisan stok bahan utama",
+  },
 };
 
 export const mockStopPlanNotActive = {
   success: false,
-  message: 'Hanya plan berstatus active yang bisa dihentikan',
-  errors: [{ field: 'status', message: 'Status saat ini: draft' }],
+  message: "Hanya plan berstatus active yang bisa dihentikan",
+  errors: [{ field: "status", message: "Status saat ini: draft" }],
 };
 
 // =============================================================================
@@ -1386,14 +1611,24 @@ export const mockStopPlanNotActive = {
 
 export const mockCancelPlan = {
   success: true,
-  message: 'Draft plan berhasil dibatalkan',
-  data: { _id: 'plan_001', status: 'cancelled', cancelledAt: '2026-08-02T03:00:00.000Z' },
+  message: "Draft plan berhasil dibatalkan",
+  data: {
+    _id: "plan_001",
+    status: "cancelled",
+    cancelledAt: "2026-08-02T03:00:00.000Z",
+  },
 };
 
 export const mockCancelPlanNotDraft = {
   success: false,
-  message: 'Hanya plan berstatus draft yang bisa dibatalkan',
-  errors: [{ field: 'status', message: 'Status saat ini: active — hentikan lewat endpoint stop, bukan dibatalkan' }],
+  message: "Hanya plan berstatus draft yang bisa dibatalkan",
+  errors: [
+    {
+      field: "status",
+      message:
+        "Status saat ini: active — hentikan lewat endpoint stop, bukan dibatalkan",
+    },
+  ],
 };
 
 // =============================================================================
@@ -1403,19 +1638,19 @@ export const mockCancelPlanNotDraft = {
 
 export const mockSetDiscount = {
   success: true,
-  message: 'Diskon berhasil diterapkan pada menu',
+  message: "Diskon berhasil diterapkan pada menu",
   data: {
-    menuId: 'menu_001',
+    menuId: "menu_001",
     effectiveSellingPrice: 25000,
     discount: {
       discountPercentage: 15,
-      startDate: '2026-08-12T00:00:00.000Z',
-      endDate: '2026-08-19T00:00:00.000Z',
-      reason: 'Beras Premium mendekati expired',
+      startDate: "2026-08-12T00:00:00.000Z",
+      endDate: "2026-08-19T00:00:00.000Z",
+      reason: "Beras Premium mendekati expired",
       discountedPrice: 21250,
-      discountStatus: 'upcoming',
-      setBy: 'Admin A',
-      setAt: '2026-08-05T03:00:00.000Z',
+      discountStatus: "upcoming",
+      setBy: "Admin A",
+      setAt: "2026-08-05T03:00:00.000Z",
     },
   },
 };
@@ -1427,14 +1662,14 @@ export const mockSetDiscount = {
 
 export const mockDeleteDiscount = {
   success: true,
-  message: 'Diskon pada menu berhasil dihapus',
-  data: { menuId: 'menu_001', discount: null },
+  message: "Diskon pada menu berhasil dihapus",
+  data: { menuId: "menu_001", discount: null },
 };
 
 export const mockDeleteDiscountNotFound = {
   success: false,
-  message: 'Menu ini tidak memiliki diskon aktif untuk dihapus',
-  errors: [{ field: 'menuId', message: 'discount: null' }],
+  message: "Menu ini tidak memiliki diskon aktif untuk dihapus",
+  errors: [{ field: "menuId", message: "discount: null" }],
 };
 
 // =============================================================================
@@ -1451,26 +1686,26 @@ export const mockSellingActiveList = {
   success: true,
   data: [
     {
-      planId: 'plan_001',
-      name: 'Promo Nasi Goreng Agustus',
-      startDate: '2026-08-05T00:00:00.000Z',
-      endDate: '2026-08-19T00:00:00.000Z',
+      planId: "plan_001",
+      name: "Promo Nasi Goreng Agustus",
+      startDate: "2026-08-05T00:00:00.000Z",
+      endDate: "2026-08-19T00:00:00.000Z",
       sellable: true,
       menus: [
         {
-          menuId: 'menu_001',
-          name: 'Nasi Goreng Spesial',
+          menuId: "menu_001",
+          name: "Nasi Goreng Spesial",
           sellingPrice: 25000,
           currentPrice: 21250,
           isDiscounted: true,
           discountPercentage: 15,
-          discountEndsAt: '2026-08-19T00:00:00.000Z',
+          discountEndsAt: "2026-08-19T00:00:00.000Z",
           remainingQuantity: 47,
           warning: null,
         },
         {
-          menuId: 'menu_002',
-          name: 'Es Teh Manis',
+          menuId: "menu_002",
+          name: "Es Teh Manis",
           sellingPrice: 8000,
           currentPrice: 8000,
           isDiscounted: false,
@@ -1491,50 +1726,55 @@ export const mockSellingActiveList = {
 
 export const mockCreateSaleNormal = {
   success: true,
-  message: 'Penjualan berhasil dicatat',
+  message: "Penjualan berhasil dicatat",
   data: {
-    _id: 'sale_045',
-    planId: 'plan_001',
-    menuId: 'menu_001',
+    _id: "sale_045",
+    planId: "plan_001",
+    menuId: "menu_001",
     quantitySold: 2,
     originalPrice: 25000,
     priceUsed: 25000,
     discountApplied: false,
     discountPercentage: null,
-    cashierName: 'Sari',
-    soldAt: '2026-08-10T04:30:00.000Z',
+    cashierName: "Sari",
+    soldAt: "2026-08-10T04:30:00.000Z",
     remainingQuantity: 36,
   },
 };
 
 export const mockCreateSaleDiscount = {
   success: true,
-  message: 'Penjualan berhasil dicatat (harga diskon)',
+  message: "Penjualan berhasil dicatat (harga diskon)",
   data: {
-    _id: 'sale_046',
-    planId: 'plan_001',
-    menuId: 'menu_001',
+    _id: "sale_046",
+    planId: "plan_001",
+    menuId: "menu_001",
     quantitySold: 2,
     originalPrice: 25000,
     priceUsed: 21250,
     discountApplied: true,
     discountPercentage: 15,
-    cashierName: 'Sari',
-    soldAt: '2026-08-13T04:30:00.000Z',
+    cashierName: "Sari",
+    soldAt: "2026-08-13T04:30:00.000Z",
     remainingQuantity: 34,
   },
 };
 
 export const mockCreateSaleNotStarted = {
   success: false,
-  message: 'Plan belum dimulai, penjualan baru bisa dicatat mulai 2026-08-05',
-  errors: [{ field: 'startDate', message: 'Tanggal sekarang masih sebelum startDate plan' }],
+  message: "Plan belum dimulai, penjualan baru bisa dicatat mulai 2026-08-05",
+  errors: [
+    {
+      field: "startDate",
+      message: "Tanggal sekarang masih sebelum startDate plan",
+    },
+  ],
 };
 
 export const mockCreateSaleInsufficient = {
   success: false,
-  message: 'Sisa porsi menu ini tidak mencukupi',
-  errors: [{ field: 'quantitySold', message: 'Sisa 1, diminta 2' }],
+  message: "Sisa porsi menu ini tidak mencukupi",
+  errors: [{ field: "quantitySold", message: "Sisa 1, diminta 2" }],
 };
 
 // =============================================================================
@@ -1546,28 +1786,28 @@ export const mockSellingHistory = {
   success: true,
   data: [
     {
-      _id: 'sale_045',
-      menuId: 'menu_001',
-      menuName: 'Nasi Goreng Spesial',
+      _id: "sale_045",
+      menuId: "menu_001",
+      menuName: "Nasi Goreng Spesial",
       quantitySold: 2,
       originalPrice: 25000,
       priceUsed: 25000,
       discountApplied: false,
       discountPercentage: null,
-      cashierName: 'Sari',
-      soldAt: '2026-08-10T04:30:00.000Z',
+      cashierName: "Sari",
+      soldAt: "2026-08-10T04:30:00.000Z",
     },
     {
-      _id: 'sale_046',
-      menuId: 'menu_001',
-      menuName: 'Nasi Goreng Spesial',
+      _id: "sale_046",
+      menuId: "menu_001",
+      menuName: "Nasi Goreng Spesial",
       quantitySold: 2,
       originalPrice: 25000,
       priceUsed: 21250,
       discountApplied: true,
       discountPercentage: 15,
-      cashierName: 'Sari',
-      soldAt: '2026-08-13T04:30:00.000Z',
+      cashierName: "Sari",
+      soldAt: "2026-08-13T04:30:00.000Z",
     },
   ],
   summary: {
@@ -1589,19 +1829,19 @@ export const mockSellingHistory = {
 
 export const mockCreatePlanReportMenuDiscount = {
   success: true,
-  message: 'Laporan berhasil dikirim, menunggu review admin',
+  message: "Laporan berhasil dikirim, menunggu review admin",
   data: {
-    _id: 'report_012',
-    planId: 'plan_001',
-    category: 'menu',
-    refId: 'menu_001',
+    _id: "report_012",
+    planId: "plan_001",
+    category: "menu",
+    refId: "menu_001",
     quantityLost: 2,
-    incidentAt: '2026-08-13T03:15:00.000Z',
+    incidentAt: "2026-08-13T03:15:00.000Z",
     isLateReport: false,
-    reason: 'Terjatuh saat penyajian',
-    reportedBy: 'Sari',
-    reportedByRole: 'cashier',
-    status: 'pending',
+    reason: "Terjatuh saat penyajian",
+    reportedBy: "Sari",
+    reportedByRole: "cashier",
+    status: "pending",
     valuation: {
       unitCostAtLoss: 4500,
       costLoss: 9000,
@@ -1611,21 +1851,21 @@ export const mockCreatePlanReportMenuDiscount = {
       priceUsedAtLoss: 21250,
       lostRevenueEstimate: 42500,
     },
-    createdAt: '2026-08-13T05:00:00.000Z',
+    createdAt: "2026-08-13T05:00:00.000Z",
   },
 };
 
 export const mockCreatePlanReportMenuNoDiscount = {
   success: true,
-  message: 'Laporan berhasil dikirim, menunggu review admin',
+  message: "Laporan berhasil dikirim, menunggu review admin",
   data: {
-    _id: 'report_014',
-    category: 'menu',
-    refId: 'menu_002',
+    _id: "report_014",
+    category: "menu",
+    refId: "menu_002",
     quantityLost: 1,
-    incidentAt: '2026-08-09T10:00:00.000Z',
+    incidentAt: "2026-08-09T10:00:00.000Z",
     isLateReport: true,
-    status: 'pending',
+    status: "pending",
     valuation: {
       unitCostAtLoss: 2200,
       costLoss: 2200,
@@ -1635,45 +1875,52 @@ export const mockCreatePlanReportMenuNoDiscount = {
       priceUsedAtLoss: 8000,
       lostRevenueEstimate: 8000,
     },
-    createdAt: '2026-08-11T02:00:00.000Z',
+    createdAt: "2026-08-11T02:00:00.000Z",
   },
 };
 
 export const mockCreatePlanReportIngredientAdmin = {
   success: true,
-  message: 'Laporan tercatat dan otomatis disetujui',
+  message: "Laporan tercatat dan otomatis disetujui",
   data: {
-    _id: 'report_013',
-    category: 'ingredient',
-    refId: '66c1a2b3d4e5f6a7b8c9d0e1',
+    _id: "report_013",
+    category: "ingredient",
+    refId: "66c1a2b3d4e5f6a7b8c9d0e1",
     quantityLost: 200,
-    incidentAt: '2026-08-10T08:00:00.000Z',
+    incidentAt: "2026-08-10T08:00:00.000Z",
     isLateReport: false,
-    reportedBy: 'Admin A',
-    reportedByRole: 'admin',
-    status: 'approved',
-    reviewedBy: 'Admin A',
-    reviewedAt: '2026-08-10T08:05:00.000Z',
+    reportedBy: "Admin A",
+    reportedByRole: "admin",
+    status: "approved",
+    reviewedBy: "Admin A",
+    reviewedAt: "2026-08-10T08:05:00.000Z",
     valuation: null,
   },
 };
 
 export const mockCreatePlanReportNotActive = {
   success: false,
-  message: 'Laporan hanya bisa dibuat untuk plan yang sudah pernah aktif',
-  errors: [{ field: 'planId', message: 'Status plan saat ini: draft' }],
+  message: "Laporan hanya bisa dibuat untuk plan yang sudah pernah aktif",
+  errors: [{ field: "planId", message: "Status plan saat ini: draft" }],
 };
 
 export const mockCreatePlanReportOutOfRange = {
   success: false,
-  message: 'Validation error: incidentAt berada di luar rentang durasi plan',
-  errors: [{ field: 'incidentAt', message: 'incidentAt (2026-08-20) melebihi endDate plan (2026-08-19)' }],
+  message: "Validation error: incidentAt berada di luar rentang durasi plan",
+  errors: [
+    {
+      field: "incidentAt",
+      message: "incidentAt (2026-08-20) melebihi endDate plan (2026-08-19)",
+    },
+  ],
 };
 
 export const mockCreatePlanReportFuture = {
   success: false,
-  message: 'Validation error: incidentAt tidak boleh di masa depan',
-  errors: [{ field: 'incidentAt', message: 'incidentAt melebihi waktu saat ini' }],
+  message: "Validation error: incidentAt tidak boleh di masa depan",
+  errors: [
+    { field: "incidentAt", message: "incidentAt melebihi waktu saat ini" },
+  ],
 };
 
 // =============================================================================
@@ -1685,34 +1932,53 @@ export const mockPlanReportList = {
   success: true,
   data: [
     {
-      _id: 'report_012',
-      planId: 'plan_001',
-      category: 'menu',
-      refId: 'menu_001',
-      nameRef: 'Nasi Goreng Spesial',
+      _id: "report_012",
+      planId: "plan_001",
+      category: "menu",
+      refId: "menu_001",
+      nameRef: "Nasi Goreng Spesial",
       quantityLost: 2,
-      incidentAt: '2026-08-13T03:15:00.000Z',
+      incidentAt: "2026-08-13T03:15:00.000Z",
       isLateReport: false,
-      status: 'pending',
+      status: "pending",
       valuation: {
         costLoss: 9000,
         lostRevenueEstimate: 42500,
       },
-      createdAt: '2026-08-13T05:00:00.000Z',
+      createdAt: "2026-08-13T05:00:00.000Z",
     },
     {
-      _id: 'report_010',
-      planId: 'plan_001',
-      category: 'ingredient',
-      refId: '66c1a2b3d4e5f6a7b8c9d0e1',
-      nameRef: 'Beras Premium',
+      _id: "report_010",
+      planId: "plan_001",
+      category: "ingredient",
+      refId: "66c1a2b3d4e5f6a7b8c9d0e1",
+      nameRef: "Beras Premium",
       quantityLost: 500,
-      incidentAt: '2026-08-09T02:00:00.000Z',
+      incidentAt: "2026-08-09T02:00:00.000Z",
       isLateReport: false,
-      status: 'approved',
+      status: "approved",
       replacementDeducted: false,
       valuation: null,
-      createdAt: '2026-08-09T02:30:00.000Z',
+      createdAt: "2026-08-09T02:30:00.000Z",
+    },
+    {
+      _id: "report_013",
+      planId: "plan_001",
+      category: "menu",
+      refId: "menu_002",
+      nameRef: "Ayam Bakar Madu",
+      quantityLost: 1,
+      incidentAt: "2026-08-10T11:00:00.000Z",
+      isLateReport: true,
+      status: "approved",
+      valuation: {
+        costLoss: 15000,
+        lostRevenueEstimate: 35000,
+      },
+      reason:
+        "Tumpah saat akan dihidangkan ke meja pelanggan (oleh waiter baru).",
+      adminNote: "Sudah di-acc, mohon lebih hati-hati lain kali.",
+      createdAt: "2026-08-11T09:00:00.000Z",
     },
   ],
 };
@@ -1724,20 +1990,20 @@ export const mockPlanReportList = {
 
 export const mockReviewPlanReport = {
   success: true,
-  message: 'Laporan disetujui',
+  message: "Laporan disetujui",
   data: {
-    _id: 'report_012',
-    status: 'approved',
-    reviewedBy: 'Admin A',
-    reviewedAt: '2026-08-13T06:00:00.000Z',
-    adminNote: 'Sudah dicek, sesuai',
+    _id: "report_012",
+    status: "approved",
+    reviewedBy: "Admin A",
+    reviewedAt: "2026-08-13T06:00:00.000Z",
+    adminNote: "Sudah dicek, sesuai",
   },
 };
 
 export const mockReviewPlanReportConflict = {
   success: false,
-  message: 'Laporan ini sudah pernah direview',
-  errors: [{ field: 'status', message: 'Status saat ini: approved' }],
+  message: "Laporan ini sudah pernah direview",
+  errors: [{ field: "status", message: "Status saat ini: approved" }],
 };
 
 // =============================================================================
@@ -1747,69 +2013,261 @@ export const mockReviewPlanReportConflict = {
 
 export const mockAddInventoryReplacement = {
   success: true,
-  message: 'Stok pengganti berhasil ditarik dan dicatat di laporan',
+  message: "Stok pengganti berhasil ditarik dan dicatat di laporan",
   data: {
-    reportId: 'report_010',
+    reportId: "report_010",
     replacementBatches: [
-      { subInventoryId: 'sub_004', quantityUsed: 2000, costPriceUsed: 11000 },
+      { subInventoryId: "sub_004", quantityUsed: 2000, costPriceUsed: 11000 },
     ],
     replacementCost: 22000,
   },
 };
-
 // ==================================Transaction Cashier Mock Data==================================
 
 // Bentuk data WAJIB sama persis dengan API contract (lihat CONVENTIONS.md section 5).
 // Swap ke getProducts() di services/api.js begitu backend siap.
-export const mockProducts = [
+
+
+// TODO: ganti dengan getInvoices() / getInvoiceDetail() dari services/api.js
+// begitu backend siap. Pindahkan array ini ke lib/mockData.js kalau memang
+// jadi sumber dummy bersama (biar konsisten dengan mockProducts), bentuknya
+// WAJIB sama persis dengan API contract nanti.
+
+export const mockInvoices = [
   {
-    id: 'prod-001',
-    name: 'Latte',
-    image: 'https://picsum.photos/seed/latte/300/200',
-    price: 12700,
-    discountPrice: null,
-    discountPercent: null,
-    stockRemaining: 10,
-    isAvailable: true,
+    id: "INV-001",
+    date: "2026-07-20",
+    cashierName: "Sarah Jenkins",
+    items: [
+      { name: "Americano", price: 12700, qty: 1 },
+      { name: "Matcha Latte", price: 12700, qty: 1 },
+      { name: "Latte", price: 12700, qty: 1 },
+      { name: "Machiato", price: 12700, qty: 1 },
+      { name: "Matcha Latte", price: 12700, qty: 1 },
+      { name: "Latte", price: 12700, qty: 1 },
+      { name: "Machiato", price: 12700, qty: 1 },
+    ],
   },
   {
-    id: 'prod-002',
-    name: 'Ice Americano',
-    image: 'https://picsum.photos/seed/ice-americano/300/200',
-    price: 18750,
-    discountPrice: 15000,
-    discountPercent: 20,
-    stockRemaining: null,
-    isAvailable: true,
-  },
-  {
-    id: 'prod-003',
-    name: 'Matcha Drink',
-    image: 'https://picsum.photos/seed/matcha/300/200',
-    price: 26000,
-    discountPrice: null,
-    discountPercent: null,
-    stockRemaining: null,
-    isAvailable: true,
-  },
-  {
-    id: 'prod-004',
-    name: 'Cappuccino',
-    image: 'https://picsum.photos/seed/cappuccino/300/200',
-    price: 18000,
-    discountPrice: null,
-    discountPercent: null,
-    stockRemaining: 0,
-    isAvailable: false,
-  },
-  {
-    id: 'prod-005',
-    name: 'Lemonade',
-    image: 'https://picsum.photos/seed/lemonade/300/200',
-    price: 15500,
-    discountPrice: null,
-    discountPercent: null,
-    stockRemaining: null,
-    isAvailable: true,
+    id: "INV-002",
+    date: "2026-07-20",
+    cashierName: "Sarah Jenkins",
+    items: [
+      { name: "Ice Americano", price: 15000, qty: 1 },
+      { name: "Matcha Drink", price: 20000, qty: 1 },
+    ],
   },
 ];
+
+// TODO: ganti dengan getInventory() dari services/api.js begitu backend siap.
+// Pindahkan ke lib/mockData.js kalau jadi sumber dummy bersama, bentuknya
+// WAJIB sama persis dengan API contract nanti.
+export const mockInventory = [
+  {
+    id: "ITM-001",
+    name: "Bubuk Kopi Arabica",
+    qty: 150,
+    unit: "Kg",
+    expiryDate: "2026-07-20",
+    category: "Ingredient",
+    status: "aman",
+  },
+  {
+    id: "ITM-002",
+    name: "Cup Plastik",
+    qty: 150,
+    unit: "Kg",
+    expiryDate: "2026-07-20",
+    category: "Packaging",
+    status: "tidak aman",
+  },
+  {
+    id: "ITM-003",
+    name: "Susu UHT",
+    qty: 50,
+    unit: "L",
+    expiryDate: "2026-07-22",
+    category: "Ingredient",
+    status: "tidak aman",
+  },
+];
+
+// TODO: ganti dengan getReportIssues() dari services/api.js begitu backend
+// siap. Pindahkan ke lib/mockData.js kalau jadi sumber dummy bersama,
+// bentuknya WAJIB sama persis dengan API contract nanti.
+export const initialIssues = [
+  {
+    id: "ISS-001",
+    title: "Inventory Mismatch",
+    context: "Inventory",
+    date: "2026-07-20",
+    description: "Jumlah stok di sistem tidak sesuai fisik.",
+    reportedBy: "Budi (Cashier)",
+  },
+  {
+    id: "ISS-002",
+    title: "Menu Link Broken",
+    context: "Menu",
+    date: "2026-07-20",
+    description: "Link gambar menu Matcha Drink rusak.",
+    reportedBy: "Siti (Cashier)",
+  },
+  {
+    id: "ISS-003",
+    title: "Stock Level Error",
+    context: "Inventory",
+    date: "2026-07-19",
+    description: "Stok Susu UHT tidak update otomatis.",
+    reportedBy: "Agus (Cashier)",
+  },
+  {
+    id: "ISS-004",
+    title: "Item Image Missing",
+    context: "Menu",
+    date: "2026-07-18",
+    description: "Foto produk Cappuccino belum di-upload.",
+    reportedBy: "Dewi (Cashier)",
+  },
+  {
+    id: "ISS-005",
+    title: "Wrong Price Displayed",
+    context: "Menu",
+    date: "2026-07-17",
+    description: "Harga Latte tampil salah di kasir.",
+    reportedBy: "Budi (Cashier)",
+  },
+  {
+    id: "ISS-006",
+    title: "Barcode Not Found",
+    context: "Inventory",
+    date: "2026-07-16",
+    description: "Barcode Cup Plastik tidak terbaca scanner.",
+    reportedBy: "Siti (Cashier)",
+  },
+  {
+    id: "ISS-007",
+    title: "Printer Offline",
+    context: "Hardware",
+    date: "2026-07-15",
+    description: "Printer struk tidak merespon.",
+    reportedBy: "Agus (Cashier)",
+  },
+  {
+    id: "ISS-008",
+    title: "Duplicate Category",
+    context: "Menu",
+    date: "2026-07-14",
+    description: 'Kategori "Ingredient" muncul 2 kali.',
+    reportedBy: "Dewi (Cashier)",
+  },
+  {
+    id: "ISS-009",
+    title: "Unit Conversion Wrong",
+    context: "Inventory",
+    date: "2026-07-13",
+    description: "Konversi Kg ke gram salah hitung.",
+    reportedBy: "Budi (Cashier)",
+  },
+  {
+    id: "ISS-010",
+    title: "Login Session Expired",
+    context: "System",
+    date: "2026-07-12",
+    description: "Sesi login terputus terlalu cepat.",
+    reportedBy: "Siti (Cashier)",
+  },
+];
+
+// =============================================================================
+// MODUL DASHBOARD — 505_Database Schema_dashboard.md
+// 1 endpoint (D1): GET summary
+// =============================================================================
+
+export const mockDashboardHourly = {
+  success: true,
+  message: "Data dashboard harian (hourly) berhasil didapatkan",
+  filter: {
+    selectedDate: "2026-08-07",
+    startDate: "2026-08-07T00:00:00.000Z",
+    endDate: "2026-08-07T23:59:59.999Z",
+  },
+  data: {
+    kpi: {
+      totalRevenue: 1250000,
+      totalCupsSold: 58,
+    },
+    hourlyTrend: [
+      {
+        hour: "08:00",
+        hourlyRevenue: 150000,
+        hourlyCupsSold: 8,
+        totalTransactions: 5,
+      },
+      {
+        hour: "09:00",
+        hourlyRevenue: 220000,
+        hourlyCupsSold: 11,
+        totalTransactions: 7,
+      },
+      {
+        hour: "14:00",
+        hourlyRevenue: 340000,
+        hourlyCupsSold: 15,
+        totalTransactions: 10,
+      },
+      {
+        hour: "19:00",
+        hourlyRevenue: 180000,
+        hourlyCupsSold: 8,
+        totalTransactions: 6,
+      },
+    ],
+  },
+};
+
+export const mockDashboardDaily = {
+  success: true,
+  message: "Data dashboard rentang tanggal berhasil didapatkan",
+  filter: {
+    startDate: "2026-08-01T00:00:00.000Z",
+    endDate: "2026-08-07T23:59:59.999Z",
+  },
+  data: {
+    kpi: {
+      totalRevenue: 14250000,
+      totalCupsSold: 680,
+    },
+    dailyTrend: [
+      {
+        date: "2026-08-01",
+        dailyRevenue: 1850000,
+        dailyCupsSold: 88,
+        totalTransactions: 52,
+      },
+      {
+        date: "2026-08-02",
+        dailyRevenue: 2100000,
+        dailyCupsSold: 102,
+        totalTransactions: 61,
+      },
+    ],
+  },
+};
+
+export const mockDashboardEmpty = {
+  success: true,
+  message: "Data dashboard berhasil didapatkan (kosong)",
+  filter: {
+    selectedDate: "2026-08-08",
+    startDate: "2026-08-08T00:00:00.000Z",
+    endDate: "2026-08-08T23:59:59.999Z",
+  },
+  data: {
+    kpi: {
+      totalRevenue: 0,
+      totalCupsSold: 0,
+    },
+    hourlyTrend: [],
+    dailyTrend: [],
+  },
+};

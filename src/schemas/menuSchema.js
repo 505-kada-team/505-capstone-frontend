@@ -10,7 +10,7 @@
  * Referensi: 505_Database Schema_resep.md — section Flow tiap endpoint
  */
 
-import { z } from 'zod';
+import { z } from "zod";
 
 // =============================================================================
 // Sub-skema: ingredient item
@@ -33,10 +33,10 @@ import { z } from 'zod';
  *   dari input HTML (type="number") bisa berupa string — coerce handles both.
  */
 const ingredientItemSchema = z.object({
-  inventoryId: z.string().min(1, 'Inventory wajib dipilih'),
+  inventoryId: z.string().min(1, "Inventory wajib dipilih"),
   quantityNeeded: z.coerce
-    .number({ error: 'Kuantitas harus berupa angka' })
-    .positive('Kuantitas harus lebih dari 0'),
+    .number({ error: "Kuantitas harus berupa angka" })
+    .positive("Kuantitas harus lebih dari 0"),
 });
 
 // =============================================================================
@@ -66,15 +66,15 @@ const ingredientItemSchema = z.object({
  */
 export const createMenuSchema = z
   .object({
-    name: z.string().min(1, 'Nama menu wajib diisi'),
+    name: z.string().min(1, "Nama menu wajib diisi"),
     description: z.string().optional(),
     image: z.string().optional(),
     sellingPrice: z.coerce
-      .number({ error: 'Harga jual harus berupa angka' })
-      .positive('Harga jual harus lebih dari 0'),
+      .number({ error: "Harga jual harus berupa angka" })
+      .positive("Harga jual harus lebih dari 0"),
     ingredients: z
       .array(ingredientItemSchema)
-      .min(1, 'Menu harus memiliki minimal 1 ingredient'),
+      .min(1, "Menu harus memiliki minimal 1 ingredient"),
   })
   .refine(
     (data) => {
@@ -82,8 +82,9 @@ export const createMenuSchema = z
       return ids.length === new Set(ids).size;
     },
     {
-      message: 'Setiap inventory hanya boleh muncul satu kali dalam daftar ingredient',
-      path: ['ingredients'],
+      message:
+        "Setiap inventory hanya boleh muncul satu kali dalam daftar ingredient",
+      path: ["ingredients"],
     },
   );
 
@@ -116,16 +117,16 @@ export const createMenuSchema = z
  */
 export const updateMenuSchema = z
   .object({
-    name: z.string().min(1, 'Nama menu tidak boleh kosong').optional(),
+    name: z.string().min(1, "Nama menu tidak boleh kosong").optional(),
     description: z.string().optional(),
     image: z.string().optional(),
     sellingPrice: z.coerce
-      .number({ error: 'Harga jual harus berupa angka' })
-      .positive('Harga jual harus lebih dari 0')
+      .number({ error: "Harga jual harus berupa angka" })
+      .positive("Harga jual harus lebih dari 0")
       .optional(),
     ingredients: z
       .array(ingredientItemSchema)
-      .min(1, 'Jika ingredients dikirim, minimal harus ada 1 item')
+      .min(1, "Jika ingredients dikirim, minimal harus ada 1 item")
       .optional(),
   })
   .refine(
@@ -136,7 +137,8 @@ export const updateMenuSchema = z
       return ids.length === new Set(ids).size;
     },
     {
-      message: 'Setiap inventory hanya boleh muncul satu kali dalam daftar ingredient',
-      path: ['ingredients'],
+      message:
+        "Setiap inventory hanya boleh muncul satu kali dalam daftar ingredient",
+      path: ["ingredients"],
     },
   );

@@ -1,5 +1,5 @@
 /**
- * services/api.js — Modul Inventory + Menu/Resep + Production Plan + Selling + Plan Report
+ * services/api.js — Modul Inventory + Menu/Resep + Production Plan + Selling + Plan Report + Dashboard
  *
  * ATURAN (dari CONVENTIONS.md):
  * - Semua pemanggilan API WAJIB lewat file ini. Jangan import axios langsung di komponen.
@@ -12,16 +12,16 @@
  * - Bentuk data mock di lib/mockData.js WAJIB identik dengan response API asli.
  *
  * Referensi endpoint:
- *   - 505_Database Schema_inventory.md      (14 endpoint)
+ * Referensi endpoint: 505_Database Schema_inventory.md (14 endpoint, section 5)
  *   - 505_Database Schema_resep.md          (6 endpoint)
  *   - 505_Database Schema_producitonplan.md (10 endpoint)
  *   - 505_Database Schema_selling.md        (3 endpoint)
  *   - 505_Database Schema_planreport.md     (4 endpoint)
+ *   - 505_Database Schema_dashboard.md      (1 endpoint)
  */
 
-import axios from 'axios';
+import axios from "axios";
 import {
-  // ── Inventory (Endpoint 1–14) ───────────────────────────────────────────────
   // Endpoint 1 — POST /api/inventory
   mockAddInventory,
   // Endpoint 2 — GET /api/inventory
@@ -50,6 +50,7 @@ import {
   mockDeductReverse,
   // Endpoint 14 — GET /api/history-usage
   mockHistoryUsage,
+
   // ── Menu/Resep (Endpoint 1–6) ───────────────────────────────────────────────
   // Endpoint 1 — POST /api/menu
   mockMenuCreated,
@@ -100,6 +101,8 @@ import {
   mockReviewPlanReport,
   // Endpoint C4 — POST /api/plan-reports/:id/add-inventory
   mockAddInventoryReplacement,
+  // ── Dashboard (Endpoint D1) ─────────────────────────────────────────────
+  mockDashboardHourly, // ganti ke mockDashboardDaily atau mockDashboardEmpty untuk testing UI
 } from '../lib/mockData';
 
 /* ==========================================================================
@@ -118,8 +121,8 @@ const api = axios.create({
   baseURL: import.meta.env.VITE_API_URL,
   withCredentials: true,
   headers: {
-    'Content-Type': 'application/json',
-    'x-platform': 'web',
+    "Content-Type": "application/json",
+    "x-platform": "web",
   },
 });
 
@@ -151,8 +154,7 @@ export const clearAccessToken = () => {
  * begitu shape response backend dikonfirmasi, hapus salah satu cabang ini
  * supaya kesalahan shape tidak tertutup diam-diam.
  */
-export const extractAccessToken = (data) =>
-  data?.accessToken ?? data?.token;
+export const extractAccessToken = (data) => data?.accessToken ?? data?.token;
 
 /* ==========================================================================
  * AUTH CALLBACK HANDLERS
@@ -170,10 +172,7 @@ export const extractAccessToken = (data) =>
 let onTokenRefreshed = null;
 let onSessionExpired = null;
 
-export const setAuthHandlers = ({
-  onRefreshed,
-  onExpired,
-}) => {
+export const setAuthHandlers = ({ onRefreshed, onExpired }) => {
   onTokenRefreshed = onRefreshed;
   onSessionExpired = onExpired;
 };
@@ -196,18 +195,18 @@ export const refreshAccessToken = () => {
     return refreshPromise;
   }
 
-  refreshPromise = api.post('/auth/refresh').then((response) => {
-      const refreshResult =
-        response.data?.data ?? response.data;
+  refreshPromise = api
+    .post("/auth/refresh")
+    .then((response) => {
+      const refreshResult = response.data?.data ?? response.data;
 
       //console.log('[REFRESH RESPONSE]', refreshResult);
 
-      const newToken =
-        extractAccessToken(refreshResult);
+      const newToken = extractAccessToken(refreshResult);
 
       if (!newToken) {
         throw new Error(
-          'Backend tidak mengembalikan access token saat refresh.',
+          "Backend tidak mengembalikan access token saat refresh.",
         );
       }
 
@@ -233,8 +232,7 @@ export const refreshAccessToken = () => {
 api.interceptors.request.use(
   (config) => {
     if (accessToken) {
-      config.headers.Authorization =
-        `Bearer ${accessToken}`;
+      config.headers.Authorization = `Bearer ${accessToken}`;
     }
 
     return config;
@@ -253,13 +251,13 @@ api.interceptors.request.use(
  * atau refresh token sendiri mengembalikan status 401.
  */
 const EXCLUDE_REFRESH = [
-  '/auth/login',
-  '/auth/register',
-  '/auth/refresh',
-  '/auth/logout',
-  '/auth/forgot-password',
-  '/auth/reset-password',
-  '/auth/verify-email',
+  "/auth/login",
+  "/auth/register",
+  "/auth/refresh",
+  "/auth/logout",
+  "/auth/forgot-password",
+  "/auth/reset-password",
+  "/auth/verify-email",
 ];
 
 let isRefreshing = false;
@@ -269,22 +267,18 @@ let refreshQueue = [];
  * Menjalankan kembali request yang sebelumnya menunggu refresh token.
  */
 const resolveRefreshQueue = (newToken) => {
-  refreshQueue.forEach(
-    ({ resolve, originalRequest }) => {
-      originalRequest.headers =
-        originalRequest.headers ?? {};
+  refreshQueue.forEach(({ resolve, originalRequest }) => {
+    originalRequest.headers = originalRequest.headers ?? {};
 
-      originalRequest.headers.Authorization =
-        `Bearer ${newToken}`;
+    originalRequest.headers.Authorization = `Bearer ${newToken}`;
 
-      // Tandai request yang di-queue ini juga sudah pernah di-retry,
-      // supaya kalau token baru ternyata tetap gagal, tidak memicu
-      // siklus refresh baru lagi.
-      originalRequest._retry = true;
+    // Tandai request yang di-queue ini juga sudah pernah di-retry,
+    // supaya kalau token baru ternyata tetap gagal, tidak memicu
+    // siklus refresh baru lagi.
+    originalRequest._retry = true;
 
-      resolve(api(originalRequest));
-    },
-  );
+    resolve(api(originalRequest));
+  });
 
   refreshQueue = [];
 };
@@ -319,9 +313,7 @@ api.interceptors.response.use(
     );
 
     const shouldRefresh =
-      error.response?.status === 401 &&
-      !originalRequest._retry &&
-      !isExcluded;
+      error.response?.status === 401 && !originalRequest._retry && !isExcluded;
 
     if (!shouldRefresh) {
       return Promise.reject(error);
@@ -355,15 +347,13 @@ api.interceptors.response.use(
        * Request ini tetap diletakkan di service layer dan tidak
        * dipanggil dari komponen.
        */
-      const refreshResult =
-        await refreshAccessToken();
+      const refreshResult = await refreshAccessToken();
 
-      const newToken =
-        extractAccessToken(refreshResult);
+      const newToken = extractAccessToken(refreshResult);
 
       if (!newToken) {
         throw new Error(
-          'Backend tidak mengembalikan access token saat refresh.',
+          "Backend tidak mengembalikan access token saat refresh.",
         );
       }
 
@@ -372,11 +362,9 @@ api.interceptors.response.use(
        */
       resolveRefreshQueue(newToken);
 
-      originalRequest.headers =
-        originalRequest.headers ?? {};
+      originalRequest.headers = originalRequest.headers ?? {};
 
-      originalRequest.headers.Authorization =
-        `Bearer ${newToken}`;
+      originalRequest.headers.Authorization = `Bearer ${newToken}`;
 
       return api(originalRequest);
     } catch (refreshError) {
@@ -398,7 +386,93 @@ export default api;
 // ---------------------------------------------------------------------------
 // Flag mock global — ubah ke false saat backend sudah siap
 // ---------------------------------------------------------------------------
-const USE_MOCK = true;
+const USE_MOCK = false;
+
+// Helper untuk sorting dan paginasi mock data
+const processMockList = (mockObj, params) => {
+  if (!params || !mockObj.data) return Promise.resolve({ data: mockObj });
+
+  let result = [...mockObj.data];
+
+  // Filter search jika ada
+  if (params.search) {
+    const q = params.search.toLowerCase();
+    result = result.filter(
+      (item) =>
+        (item.name && item.name.toLowerCase().includes(q)) ||
+        (item._id && item._id.toLowerCase().includes(q)),
+    );
+  }
+
+  // Sorting
+  if (params.sort) {
+    result.sort((a, b) => {
+      switch (params.sort) {
+        case "name_asc":
+          return (a.name || "").localeCompare(b.name || "");
+        case "name_desc":
+          return (b.name || "").localeCompare(a.name || "");
+        case "stock_high":
+          return (
+            (b.currentStock || b.quantity || 0) -
+            (a.currentStock || a.quantity || 0)
+          );
+        case "stock_low":
+          return (
+            (a.currentStock || a.quantity || 0) -
+            (b.currentStock || b.quantity || 0)
+          );
+        case "cost_high":
+          return (
+            (b.cost || b.price || b.estimatedCost || 0) -
+            (a.cost || a.price || a.estimatedCost || 0)
+          );
+        case "cost_low":
+          return (
+            (a.cost || a.price || a.estimatedCost || 0) -
+            (b.cost || b.price || b.estimatedCost || 0)
+          );
+        case "date_newest":
+          return (
+            new Date(
+              b.createdAt || b.incidentAt || b.date || b.updatedAt || 0,
+            ) -
+            new Date(a.createdAt || a.incidentAt || a.date || a.updatedAt || 0)
+          );
+        case "date_oldest":
+          return (
+            new Date(
+              a.createdAt || a.incidentAt || a.date || a.updatedAt || 0,
+            ) -
+            new Date(b.createdAt || b.incidentAt || b.date || b.updatedAt || 0)
+          );
+        default:
+          return 0;
+      }
+    });
+  }
+
+  // Paginasi simulasi (hanya berlaku jika endpoint mengirim pagination logic, asumsikan default 10)
+  const page = parseInt(params.page) || 1;
+  const limit = parseInt(params.limit) || 10;
+  const startIndex = (page - 1) * limit;
+  const endIndex = startIndex + limit;
+
+  const slicedData = result.slice(startIndex, endIndex);
+
+  return Promise.resolve({
+    data: {
+      ...mockObj,
+      data: slicedData,
+      pagination: {
+        currentPage: page,
+        totalPage: Math.ceil(result.length / limit),
+        totalData: result.length,
+        limit: limit,
+      },
+    },
+  });
+};
 
 // =============================================================================
 // ENDPOINT 1 — POST /api/inventory
@@ -408,7 +482,7 @@ const USE_MOCK = true;
 export const createInventory = (payload) =>
   USE_MOCK
     ? Promise.resolve({ data: mockAddInventory })
-    : api.post('/api/inventory', payload);
+    : api.post("/inventory", payload);
 
 // =============================================================================
 // ENDPOINT 2 — GET /api/inventory
@@ -417,8 +491,8 @@ export const createInventory = (payload) =>
 // =============================================================================
 export const getInventoryList = (params) =>
   USE_MOCK
-    ? Promise.resolve({ data: mockInventoryList })
-    : api.get('/api/inventory', { params });
+    ? processMockList(mockInventoryList, params)
+    : api.get("/inventory", { params });
 
 // =============================================================================
 // ENDPOINT 3 — GET /api/inventory/dropdown
@@ -429,7 +503,7 @@ export const getInventoryList = (params) =>
 export const getInventoryDropdown = (params) =>
   USE_MOCK
     ? Promise.resolve({ data: mockInventoryDropdown })
-    : api.get('/api/inventory/dropdown', { params });
+    : api.get("/inventory/dropdown", { params });
 
 // =============================================================================
 // ENDPOINT 4 — GET /api/inventory/:id
@@ -501,7 +575,7 @@ export const archiveSubInventory = (subInventoryId, payload) =>
 export const getHistorySubInventory = (params) =>
   USE_MOCK
     ? Promise.resolve({ data: mockHistorySubInventory })
-    : api.get('/api/history-sub-inventory', { params });
+    : api.get("/history-sub-inventory", { params });
 
 // =============================================================================
 // ENDPOINT 11 — POST /api/subinventory/check-availability
@@ -513,7 +587,7 @@ export const getHistorySubInventory = (params) =>
 export const checkAvailability = (payload) =>
   USE_MOCK
     ? Promise.resolve({ data: mockCheckAvailabilitySufficient })
-    : api.post('/api/subinventory/check-availability', payload);
+    : api.post("/subinventory/check-availability", payload);
 
 // =============================================================================
 // ENDPOINT 12 — POST /api/subinventory/deduct
@@ -525,7 +599,7 @@ export const checkAvailability = (payload) =>
 export const deductStock = (payload) =>
   USE_MOCK
     ? Promise.resolve({ data: mockDeductStock })
-    : api.post('/api/subinventory/deduct', payload);
+    : api.post("/subinventory/deduct", payload);
 
 // =============================================================================
 // ENDPOINT 13 — POST /api/subinventory/deduct/reverse
@@ -535,7 +609,7 @@ export const deductStock = (payload) =>
 export const reverseDeductStock = (payload) =>
   USE_MOCK
     ? Promise.resolve({ data: mockDeductReverse })
-    : api.post('/api/subinventory/deduct/reverse', payload);
+    : api.post("/subinventory/deduct/reverse", payload);
 
 // =============================================================================
 // ENDPOINT 14 — GET /api/history-usage
@@ -545,7 +619,7 @@ export const reverseDeductStock = (payload) =>
 export const getHistoryUsage = (params) =>
   USE_MOCK
     ? Promise.resolve({ data: mockHistoryUsage })
-    : api.get('/api/history-usage', { params });
+    : api.get("/history-usage", { params });
 
 // =============================================================================
 // MODUL MENU / RESEP — 505_Database Schema_resep.md
@@ -562,7 +636,7 @@ export const getHistoryUsage = (params) =>
 export const createMenu = (payload) =>
   USE_MOCK
     ? Promise.resolve({ data: mockMenuCreated })
-    : api.post('/api/menu', payload);
+    : api.post("/menu", payload);
 
 // =============================================================================
 // ENDPOINT 2 — GET /api/menu
@@ -574,7 +648,7 @@ export const createMenu = (payload) =>
 export const getMenuList = (params) =>
   USE_MOCK
     ? Promise.resolve({ data: mockMenuList })
-    : api.get('/api/menu', { params });
+    : api.get("/menu", { params });
 
 // =============================================================================
 // ENDPOINT 3 — GET /api/menu/:id
@@ -631,7 +705,7 @@ export const archiveMenu = (id) =>
 export const getMenuDropdown = (params) =>
   USE_MOCK
     ? Promise.resolve({ data: mockMenuDropdown })
-    : api.get('/api/menu/dropdown', { params });
+    : api.get("/menu/dropdown", { params });
 
 // =============================================================================
 // MODUL PRODUCTION PLAN — 505_Database Schema_producitonplan.md
@@ -645,7 +719,7 @@ export const getMenuDropdown = (params) =>
 export const createPlan = (payload) =>
   USE_MOCK
     ? Promise.resolve({ data: mockCreatePlan })
-    : api.post('/api/plan', payload);
+    : api.post("/plan", payload);
 
 // =============================================================================
 // ENDPOINT A2 — GET /api/plan
@@ -655,7 +729,7 @@ export const createPlan = (payload) =>
 export const getPlanList = (params) =>
   USE_MOCK
     ? Promise.resolve({ data: mockPlanList })
-    : api.get('/api/plan', { params });
+    : api.get("/plan", { params });
 
 // =============================================================================
 // ENDPOINT A3 — GET /api/plan/:id
@@ -663,8 +737,8 @@ export const getPlanList = (params) =>
 // =============================================================================
 export const getPlanDetail = (id) =>
   USE_MOCK
-    // TODO: Ganti ke mockPlanDetailActive kalau ingin test UI state active
-    ? Promise.resolve({ data: mockPlanDetailDraft })
+    ? // TODO: Ganti ke mockPlanDetailActive kalau ingin test UI state active
+      Promise.resolve({ data: mockPlanDetailDraft })
     : api.get(`/api/plan/${id}`);
 
 // =============================================================================
@@ -747,7 +821,7 @@ export const deleteMenuDiscount = (id, menuId) =>
 export const getSellingActiveList = () =>
   USE_MOCK
     ? Promise.resolve({ data: mockSellingActiveList })
-    : api.get('/api/selling/active');
+    : api.get("/selling/active");
 
 // =============================================================================
 // ENDPOINT B2 — POST /api/selling
@@ -756,9 +830,9 @@ export const getSellingActiveList = () =>
 // =============================================================================
 export const createSale = (payload) =>
   USE_MOCK
-    // TODO: Ganti ke mockCreateSaleDiscount / NotStarted / Insufficient kalau ingin test flow UI spesifik
-    ? Promise.resolve({ data: mockCreateSaleNormal })
-    : api.post('/api/selling', payload);
+    ? // TODO: Ganti ke mockCreateSaleDiscount / NotStarted / Insufficient kalau ingin test flow UI spesifik
+      Promise.resolve({ data: mockCreateSaleNormal })
+    : api.post("/selling", payload);
 
 // =============================================================================
 // ENDPOINT B3 — GET /api/selling/history
@@ -768,7 +842,7 @@ export const createSale = (payload) =>
 export const getSellingHistory = (params) =>
   USE_MOCK
     ? Promise.resolve({ data: mockSellingHistory })
-    : api.get('/api/selling/history', { params });
+    : api.get("/selling/history", { params });
 
 // =============================================================================
 // MODUL PLAN REPORT — 505_Database Schema_planreport.md
@@ -781,9 +855,9 @@ export const getSellingHistory = (params) =>
 // =============================================================================
 export const createPlanReport = (payload) =>
   USE_MOCK
-    // TODO: Ganti ke mock variasi lain kalau ingin test error state atau form kasir vs admin
-    ? Promise.resolve({ data: mockCreatePlanReportMenuDiscount })
-    : api.post('/api/plan-reports', payload);
+    ? // TODO: Ganti ke mock variasi lain kalau ingin test error state atau form kasir vs admin
+      Promise.resolve({ data: mockCreatePlanReportMenuDiscount })
+    : api.post("/plan-reports", payload);
 
 // =============================================================================
 // ENDPOINT C2 — GET /api/plan-reports
@@ -793,7 +867,7 @@ export const createPlanReport = (payload) =>
 export const getPlanReportList = (params) =>
   USE_MOCK
     ? Promise.resolve({ data: mockPlanReportList })
-    : api.get('/api/plan-reports', { params });
+    : api.get("/plan-reports", { params });
 
 // =============================================================================
 // ENDPOINT C3 — PUT /api/plan-reports/:id/review
@@ -814,3 +888,17 @@ export const addInventoryReplacement = (id, payload) =>
   USE_MOCK
     ? Promise.resolve({ data: mockAddInventoryReplacement })
     : api.post(`/api/plan-reports/${id}/add-inventory`, payload);
+
+// =============================================================================
+// MODUL DASHBOARD — 505_Database Schema_dashboard.md
+// =============================================================================
+
+// =============================================================================
+// ENDPOINT D1 — GET /api/dashboard/summary
+// Ringkasan KPI & Tren Penjualan
+// Params opsional: { date, startDate, endDate }
+// =============================================================================
+export const getDashboardSummary = (params) =>
+  USE_MOCK
+    ? Promise.resolve({ data: mockDashboardHourly })
+    : api.get("/api/dashboard/summary", { params });

@@ -4,13 +4,16 @@
  * ATURAN (dari CONVENTIONS.md & MODULE_SETUP_TEMPLATE.md):
  * - 1 form = 1 skema. Jangan tulis validasi manual (if/else) di dalam komponen.
  * - Untuk SETIAP payload request POST/PUT di contract, ada 1 skema di sini.
- * - Validasi kondisional yang tidak bisa dihandle Zod langsung (field A wajib
- *   kalau field B = X) → dicatat sebagai komentar, divalidasi manual saat submit.
+ * - Validasi kondisional yang tidak bisa dihandle Zod langsung
+ *   (field A wajib kalau field B = X) dicatat sebagai komentar dan
+ *   ditangani saat submit bila membutuhkan data dari luar payload.
  *
- * Referensi: 505_Database Schema_inventory.md — section Flow tiap endpoint
+ * Referensi:
+ * - Inventory backend contract
+ * - Inventory Management Flow Documentation v4
  */
 
-import { z } from 'zod';
+import { z } from "zod";
 
 // =============================================================================
 // ENDPOINT 1 — POST /api/inventory
@@ -21,21 +24,27 @@ import { z } from 'zod';
  * createInventorySchema
  * Dipakai di: form tambah inventory baru (halaman admin)
  *
- * Aturan dari contract:
- * - nameInventory: wajib, case-insensitive duplicate check ada di backend
- * - category: wajib, hanya boleh 'ingredients' atau 'packaging'
- * - unit: wajib, hanya boleh 'gr', 'ml', atau 'pcs'
+ * Aturan dari contract backend aktual:
+ * - name: wajib, duplicate check case-insensitive dilakukan backend
+ * - itemCode: wajib
+ * - category: wajib, hanya 'ingredients' atau 'packaging'
+ * - unit: wajib, hanya 'gr', 'ml', atau 'pcs'
  * - description: opsional
  */
 export const createInventorySchema = z.object({
-  nameInventory: z.string().min(1, 'Nama inventory wajib diisi'),
-  category: z.enum(['ingredients', 'packaging'], {
-    error: 'Pilih kategori yang valid: ingredients atau packaging',
+  name: z.string().trim().min(1, "Nama inventory wajib diisi"),
+
+  itemCode: z.string().trim().min(1, "Kode inventory wajib diisi"),
+
+  category: z.enum(["ingredients", "packaging"], {
+    error: "Pilih kategori yang valid: ingredients atau packaging",
   }),
-  unit: z.enum(['gr', 'ml', 'pcs'], {
-    error: 'Pilih satuan yang valid: gr, ml, atau pcs',
+
+  unit: z.enum(["gr", "ml", "pcs"], {
+    error: "Pilih satuan yang valid: gr, ml, atau pcs",
   }),
-  description: z.string().optional(),
+
+  description: z.string().trim().optional(),
 });
 
 // =============================================================================
@@ -48,19 +57,20 @@ export const createInventorySchema = z.object({
  * Dipakai di: form edit inventory (halaman admin)
  *
  * Aturan dari contract:
- * - nameInventory dan description keduanya opsional di level field,
- *   tapi minimal salah satu harus diisi (divalidasi lewat .refine di bawah)
- * - category dan unit TERKUNCI — JANGAN ditambahkan ke form ini,
- *   backend tolak 400 kalau field ini disertakan di payload
+ * - name dan description opsional di level field
+ * - minimal salah satu harus dikirim
+ * - category dan unit TERKUNCI
+ * - itemCode belum dimasukkan karena contract update yang tersedia
+ *   belum menyatakan itemCode dapat diedit
  */
 export const updateInventorySchema = z
   .object({
-    nameInventory: z.string().min(1, 'Nama inventory wajib diisi').optional(),
-    description: z.string().optional(),
+    name: z.string().trim().min(1, "Nama inventory wajib diisi").optional(),
+    description: z.string().trim().optional(),
   })
-  .refine((data) => data.nameInventory !== undefined || data.description !== undefined, {
-    message: 'Minimal satu field (nama atau deskripsi) harus diisi',
-    path: ['nameInventory'],
+  .refine((data) => data.name !== undefined || data.description !== undefined, {
+    message: "Minimal satu field (nama atau deskripsi) harus diisi",
+    path: ["name"],
   });
 
 // =============================================================================
@@ -74,117 +84,128 @@ export const updateInventorySchema = z
  *
  * Aturan dari contract:
  * - quantity dan costPrices wajib > 0
- * - inDate wajib diisi (tanggal batch masuk)
- * - expired: KONDISIONAL — wajib diisi untuk kategori 'ingredients',
- *   paksa null untuk kategori 'packaging'.
- *   → Validasi ini TIDAK bisa dihandle Zod murni di sini karena category
- *     bukan bagian dari payload subinventory (ada di parent inventory).
- *     Lakukan validasi manual saat submit:
- *       if (inventoryCategory === 'ingredients' && !formData.expired) {
- *         setError('expired', { message: 'Expired wajib diisi untuk ingredients' });
- *       }
- * - nameResponsible: nama PIC yang bertanggung jawab atas batch ini
+ * - inDate wajib diisi
  *
- * Catatan z.coerce.number(): input number dari HTML form datang sebagai string.
- * z.coerce.number() otomatis konversi string → number sebelum validasi.
+ * - expired KONDISIONAL:
+ *   wajib untuk category = ingredients
+ *   null untuk category = packaging
+ *
+ * category berasal dari parent Inventory, bukan payload SubInventory.
+ * Karena itu pemeriksaan category dilakukan saat submit berdasarkan
+ * inventoryCategory yang sudah dimiliki halaman detail.
+ *
+ * - nameResponsible: PIC batch
+ *
+ * z.coerce.number():
+ * input dari form dapat masuk sebagai string, kemudian dikonversi
+ * menjadi number sebelum divalidasi.
  */
 export const addSubInventorySchema = z.object({
   quantity: z.coerce
-    .number({ error: 'Quantity harus berupa angka' })
-    .positive('Quantity harus lebih dari 0'),
+    .number({ error: "Quantity harus berupa angka" })
+    .positive("Quantity harus lebih dari 0"),
+
   costPrices: z.coerce
-    .number({ error: 'Harga per unit harus berupa angka' })
-    .positive('Harga per unit harus lebih dari 0'),
-  inDate: z.string().min(1, 'Tanggal masuk batch wajib diisi'),
-  // null = packaging (tidak perlu expired), string ISO = ingredients
-  // Validasi kondisional: lakukan manual saat submit (lihat komentar di atas)
+    .number({ error: "Harga per unit harus berupa angka" })
+    .positive("Harga per unit harus lebih dari 0"),
+
+  inDate: z.string().min(1, "Tanggal masuk batch wajib diisi"),
+
+  // null = packaging
+  // string ISO/date = ingredients
   expired: z.string().nullable(),
-  nameResponsible: z.string().min(1, 'Nama penanggung jawab wajib diisi'),
 });
 
 // =============================================================================
 // ENDPOINT 9 — DELETE /api/subinventory/:id
-// Arsipkan batch secara manual (body opsional)
+// Arsipkan batch secara manual
 // =============================================================================
 
 /**
  * deleteSubInventorySchema
- * Dipakai di: confirm dialog hapus batch (body payload opsional, tapi baik untuk divalidasi)
+ * Dipakai di: confirm dialog hapus/archive batch
  *
  * Aturan dari contract:
- * - deletedBy dan reason keduanya opsional di contract,
- *   tapi dianjurkan diisi untuk keperluan audit trail
+ * - deletedBy opsional
+ * - reason opsional
+ * - keduanya tetap berguna untuk audit trail
  */
 export const deleteSubInventorySchema = z.object({
-  deletedBy: z.string().min(1, 'Nama penghapus wajib diisi').optional(),
-  reason: z.string().min(1, 'Alasan penghapusan wajib diisi').optional(),
+  deletedBy: z.string().trim().min(1, "Nama penghapus wajib diisi").optional(),
+  reason: z.string().trim().min(1, "Alasan penghapusan wajib diisi").optional(),
 });
 
 // =============================================================================
 // ENDPOINT 11 — POST /api/subinventory/check-availability
-// Cek ketersediaan stok (dry-run, tanpa mutasi)
-// Biasanya dipanggil oleh modul Production Plan, bukan form inventory langsung
+// Cek ketersediaan stok (dry-run)
 // =============================================================================
 
 /**
  * checkAvailabilitySchema
- * Dipakai di: modul Production Plan (saat simulasi draft sebelum approve)
+ * Biasanya digunakan Production Plan.
  *
  * Aturan dari contract:
- * - inventoryId: wajib — ID inventory yang akan dicek
- * - quantityNeeded: wajib, > 0 — kebutuhan bahan untuk plan
- * - availableUntil: wajib — tanggal akhir plan (dipakai untuk evaluasi batchSafetyStatus)
+ * - inventoryId wajib
+ * - quantityNeeded wajib > 0
+ * - availableUntil wajib
+ *
+ * availableUntil digunakan backend untuk menentukan
+ * batchSafetyStatus: safe / unsafe.
  */
 export const checkAvailabilitySchema = z.object({
-  inventoryId: z.string().min(1, 'inventoryId wajib diisi'),
+  inventoryId: z.string().min(1, "inventoryId wajib diisi"),
+
   quantityNeeded: z.coerce
-    .number({ error: 'Quantity harus berupa angka' })
-    .positive('Quantity yang dibutuhkan harus lebih dari 0'),
-  availableUntil: z.string().min(1, 'Tanggal akhir plan wajib diisi'),
+    .number({ error: "Quantity harus berupa angka" })
+    .positive("Quantity yang dibutuhkan harus lebih dari 0"),
+
+  availableUntil: z.string().min(1, "Tanggal akhir plan wajib diisi"),
 });
 
 // =============================================================================
 // ENDPOINT 12 — POST /api/subinventory/deduct
-// Potong stok FEFO (mutasi nyata)
-// Biasanya dipanggil oleh modul Production Plan saat approve
+// Potong stok menggunakan FEFO
 // =============================================================================
 
 /**
  * deductStockSchema
- * Dipakai di: modul Production Plan (saat approve plan)
+ * Biasanya digunakan Production Plan ketika approve plan.
  *
- * Aturan dari contract:
- * - inventoryId: wajib
- * - quantityNeeded: wajib, > 0
- * - planId: wajib — dipakai sebagai guard double-deduct di backend
- * - availableUntil: OPSIONAL secara teknis, tapi wajib dikirim oleh Production Plan.
- *   Jika tidak dikirim, backend tidak mengevaluasi batchSafetyStatus (nilainya null).
- *   → Beri catatan di UI Production Plan bahwa field ini wajib diisi.
+ * Aturan:
+ * - inventoryId wajib
+ * - quantityNeeded wajib > 0
+ * - planId wajib
+ * - availableUntil opsional pada contract Inventory
+ *
+ * Jika Production Plan ingin memperoleh batchSafetyStatus,
+ * availableUntil perlu dikirim.
  */
 export const deductStockSchema = z.object({
-  inventoryId: z.string().min(1, 'inventoryId wajib diisi'),
+  inventoryId: z.string().min(1, "inventoryId wajib diisi"),
+
   quantityNeeded: z.coerce
-    .number({ error: 'Quantity harus berupa angka' })
-    .positive('Quantity yang dibutuhkan harus lebih dari 0'),
-  planId: z.string().min(1, 'planId wajib diisi'),
-  availableUntil: z.string().optional(), // wajib dikirim Production Plan, tapi opsional di contract
+    .number({ error: "Quantity harus berupa angka" })
+    .positive("Quantity yang dibutuhkan harus lebih dari 0"),
+
+  planId: z.string().min(1, "planId wajib diisi"),
+
+  availableUntil: z.string().optional(),
 });
 
 // =============================================================================
 // ENDPOINT 13 — POST /api/subinventory/deduct/reverse
 // Batalkan pemotongan stok
-// Biasanya dipanggil oleh modul Production Plan saat plan dibatalkan
 // =============================================================================
 
 /**
  * reverseDeductSchema
- * Dipakai di: modul Production Plan (saat plan dibatalkan/di-reject)
+ * Biasanya digunakan Production Plan ketika plan dibatalkan.
  *
- * Aturan dari contract:
- * - planId: wajib — backend cari semua HistoryUsage dengan planId ini yang belum direverse
- * - reason: opsional — dianjurkan diisi untuk audit trail
+ * Aturan:
+ * - planId wajib
+ * - reason opsional
  */
 export const reverseDeductSchema = z.object({
-  planId: z.string().min(1, 'planId wajib diisi'),
+  planId: z.string().min(1, "planId wajib diisi"),
   reason: z.string().optional(),
 });

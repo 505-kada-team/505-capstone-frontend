@@ -1,25 +1,42 @@
-import { X } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { formatCurrency } from '@/lib/FormatCurrency';
+import { X } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { formatCurrency } from "@/lib/formatCurrency";
 
 /**
  * Panel keranjang di sisi kiri halaman transaksi kasir.
  * Menerima data & handler lewat props (tidak ada state/fetch di sini).
+ *
+ * `min-h-0` di root & list item WAJIB ada — tanpa ini, flex item dengan
+ * `flex-1` defaultnya tetap `min-height: auto` (nggak mau menyusut),
+ * jadi dia ikut membesar sesuai isi konten alih-alih dibatasi tinggi
+ * parent-nya. Efeknya `overflow-y-auto` di list nggak pernah kepakai,
+ * dan tombol Total/Checkout di bawah malah ikut terdorong keluar layar
+ * saat item di cart banyak.
  */
-export default function CartPanel({ cashierName, date, items, onRemoveItem, onCheckout, onCancel, total }) {
+export default function CartPanel({
+  cashierName,
+  date,
+  items,
+  onRemoveItem,
+  onCheckout,
+  onCancel,
+  total,
+}) {
   const isEmpty = items.length === 0;
 
   return (
-    <div className="flex h-full flex-col rounded-lg border border-neutral-200 p-6">
+    <div className="flex h-full min-h-0 flex-col rounded-lg border border-neutral-200 p-6">
       <div>
-        <p className="text-lg font-semibold text-foreground">Cashier: {cashierName}</p>
+        <p className="text-lg font-semibold text-foreground">
+          Cashier: {cashierName}
+        </p>
         <p className="text-muted-foreground text-xs">{date}</p>
       </div>
 
-      <div className="mt-6 flex-1 divide-y divide-neutral-100 overflow-y-auto">
+      <div className="mt-6 min-h-0 flex-1 divide-y divide-neutral-100 overflow-y-auto">
         {isEmpty ? (
           <p className="text-muted-foreground py-8 text-center text-sm">
-            Belum ada item, pilih produk di sebelah kanan.
+            No items yet, select a product on the right.
           </p>
         ) : (
           items.map((item) => (
@@ -42,14 +59,21 @@ export default function CartPanel({ cashierName, date, items, onRemoveItem, onCh
         )}
       </div>
 
-      <div className="mt-6 border-t border-neutral-200 pt-4">
+      <div className="mt-6 shrink-0 border-t border-neutral-200 pt-4">
         <div className="mb-4 flex items-center justify-between">
           <p className="text-base font-semibold text-foreground">Total</p>
-          <p className="font-mono text-accent text-lg font-semibold">{formatCurrency(total)}</p>
+          <p className="font-mono text-accent text-lg font-semibold">
+            {formatCurrency(total)}
+          </p>
         </div>
         <div className="flex gap-3">
-          <Button variant="outline" className="flex-1 rounded-md" onClick={onCancel} disabled={isEmpty}>
-            Batal
+          <Button
+            variant="outline"
+            className="flex-1 rounded-md"
+            onClick={onCancel}
+            disabled={isEmpty}
+          >
+            Cancel
           </Button>
           <Button
             className="bg-accent hover:bg-accent/90 flex-1 rounded-md text-white"
