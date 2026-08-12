@@ -42,9 +42,9 @@ export function useSortable(initialSortKey = 'newest') {
           
         // Date / Time
         case 'date_newest':
-          return new Date(b.createdAt || b.incidentAt || b.date || b.updatedAt || 0) - new Date(a.createdAt || a.incidentAt || a.date || a.updatedAt || 0);
+          return new Date(b.createdAt || b.startDate || b.incidentAt || b.date || b.updatedAt || 0) - new Date(a.createdAt || a.startDate || a.incidentAt || a.date || a.updatedAt || 0);
         case 'date_oldest':
-          return new Date(a.createdAt || a.incidentAt || a.date || a.updatedAt || 0) - new Date(b.createdAt || b.incidentAt || b.date || b.updatedAt || 0);
+          return new Date(a.createdAt || a.startDate || a.incidentAt || a.date || a.updatedAt || 0) - new Date(b.createdAt || b.startDate || b.incidentAt || b.date || b.updatedAt || 0);
           
         default:
           return 0; // fallback to original order

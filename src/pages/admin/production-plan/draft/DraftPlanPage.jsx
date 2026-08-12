@@ -1,24 +1,31 @@
 import { useState, useEffect } from 'react';
+import { useSearchParams, useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
-import { History } from 'lucide-react';
+import { History, ArrowLeft } from 'lucide-react';
 
 import PageHeader from '@/components/shared/PageHeader';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { getMenuDropdown, createPlan } from '@/services/api';
+import { planApi } from '@/services/plan/plan.api';
+import { getMenuDropdown } from '@/services/api'; // kept temporarily for menu dropdown
 import PlanDetailModal from './components/PlanDetailModal';
 import PlanHistoryView from './components/PlanHistoryView';
 
 export default function DraftPlanPage() {
-  const [view, setView] = useState('create'); // 'create' | 'history'
-  const [step, setStep] = useState(1);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const navigate = useNavigate();
+  const editPlanId = searchParams.get('edit');
+
+  const [view, setView] = useState(editPlanId ? 'create' : 'create');
+  const [step, setStep] = useState(editPlanId ? 2 : 1);
   
   // API State
   const [availableMenus, setAvailableMenus] = useState([]);
   const [createdPlanId, setCreatedPlanId] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isLoadingPlan, setIsLoadingPlan] = useState(!!editPlanId);
 
   // Form State
   const [planName, setPlanName] = useState('');
@@ -30,11 +37,59 @@ export default function DraftPlanPage() {
   const [selectedMenu, setSelectedMenu] = useState('');
   const [quantity, setQuantity] = useState('1');
 
+  // Load existing plan data for edit mode
+  useEffect(() => {
+    if (!editPlanId) return;
+    setIsLoadingPlan(true);
+    planApi.detail(editPlanId)
+      .then(res => {
+        const plan = res?.data;
+        if (!plan) {
+          toast.error('Plan not found');
+          navigate('/admin/production-plan/draft');
+          return;
+        }
+        setPlanName(plan.name || '');
+        const sd = plan.startDate ? new Date(plan.startDate) : null;
+        const ed = plan.endDate ? new Date(plan.endDate) : null;
+        if (sd) setStartDate(sd.toISOString().split('T')[0]);
+        if (ed) setEndDate(ed.toISOString().split('T')[0]);
+        // Map plan menus to cart items
+        if (Array.isArray(plan.menus)) {
+          setCart(plan.menus.map(m => ({
+            _id: m.menuId,
+            name: m.name || 'Menu',
+            price: m.frozenSellingPrice || m.effectiveSellingPrice || 0,
+            qty: m.quantityPlanned || 0,
+            subtotal: (m.frozenSellingPrice || m.effectiveSellingPrice || 0) * (m.quantityPlanned || 0),
+          })));
+        }
+      })
+      .catch(() => {
+        toast.error('Failed to load plan data');
+        navigate('/admin/production-plan/draft');
+      })
+      .finally(() => setIsLoadingPlan(false));
+  }, [editPlanId, navigate]);
+
+  // Load menu dropdown for step 2
   useEffect(() => {
     if (step === 2 && availableMenus.length === 0) {
       getMenuDropdown().then(res => {
-        if (res.data?.success) {
-          setAvailableMenus(res.data.data);
+        let data = null;
+        if (Array.isArray(res?.data?.data)) {
+          data = res.data.data;
+        } else if (Array.isArray(res?.data)) {
+          data = res.data;
+        }
+
+        if (Array.isArray(data) && data.length > 0) {
+          setAvailableMenus(data.map(m => ({
+            ...m,
+            _id: m._id || m.id,
+            name: m.name || m.menuName || 'Unnamed Menu',
+            sellingPrice: m.sellingPrice || 0,
+          })));
         }
       }).catch(() => toast.error('Failed to load menu'));
     }
@@ -43,6 +98,10 @@ export default function DraftPlanPage() {
   const handleNext = () => {
     if (!planName || !startDate || !endDate) {
       toast.error('Please complete plan name and period');
+      return;
+    }
+    if (new Date(endDate) < new Date(startDate)) {
+      toast.error('End date cannot be before start date');
       return;
     }
     setStep(2);
@@ -93,13 +152,13 @@ export default function DraftPlanPage() {
     
     setIsSubmitting(true);
     try {
-      // Hitung duration (hari)
       const start = new Date(startDate);
       const end = new Date(endDate);
       const duration = Math.max(1, Math.ceil((end - start) / (1000 * 60 * 60 * 24)));
       
       const payload = {
         name: planName,
+        tags: [],
         startDate: new Date(startDate).toISOString(),
         duration,
         menus: cart.map(item => ({
@@ -108,15 +167,29 @@ export default function DraftPlanPage() {
         }))
       };
       
-      const res = await createPlan(payload);
-      if (res.data?.success) {
-        toast.success(res.data.message);
-        setCreatedPlanId(res.data.data._id);
+      if (editPlanId) {
+        // Edit mode: update existing plan
+        const res = await planApi.update(editPlanId, payload);
+        if (res?.data?._id) {
+          toast.success(res.message || 'Plan updated');
+          navigate('/admin/production-plan/draft');
+        } else {
+          toast.error(res?.message || 'Failed to update plan');
+        }
       } else {
-        toast.error('Failed to create draft plan');
+        // Create mode: create new plan
+        const res = await planApi.create(payload);
+        const planData = res?.data;
+        if (planData?._id) {
+          toast.success(res.message || 'Plan created');
+          setCreatedPlanId(planData._id);
+        } else {
+          toast.error(res?.message || 'Failed to create draft plan');
+        }
       }
-    } catch {
-      toast.error('System error');
+    } catch (err) {
+      const msg = err?.response?.data?.message || err?.message || 'System error';
+      toast.error(msg);
     } finally {
       setIsSubmitting(false);
     }
@@ -126,13 +199,44 @@ export default function DraftPlanPage() {
     return <PlanHistoryView onNavigateToCreate={() => setView('create')} />;
   }
 
+  if (isLoadingPlan) {
+    return (
+      <div className="flex flex-col gap-6">
+        <PageHeader 
+          title="Production Planning" 
+          badges={[{ label: 'EDIT DRAFT PLAN', variant: 'low stock' }]} 
+        />
+        <Card className="w-full shadow-sm">
+          <CardContent className="flex flex-col items-center justify-center py-24 gap-3 animate-pulse">
+            <div className="w-8 h-8 rounded-full border-2 border-muted-foreground/30 border-t-muted-foreground animate-spin" />
+            <p className="text-sm text-muted-foreground">Loading plan data...</p>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  const isEditMode = !!editPlanId;
+
   return (
     <div className="flex flex-col gap-6">
       <div className="flex items-center justify-between">
-        <PageHeader 
-          title="Production Planning" 
-          badges={[{ label: 'DRAFT PLAN', variant: 'low stock' }]} 
-        />
+        <div className="flex items-center gap-3">
+          {isEditMode && (
+            <Button
+              variant="outline"
+              size="icon"
+              className="h-9 w-9"
+              onClick={() => navigate('/admin/production-plan/draft')}
+            >
+              <ArrowLeft className="w-4 h-4" />
+            </Button>
+          )}
+          <PageHeader 
+            title="Production Planning" 
+            badges={[{ label: isEditMode ? 'EDIT DRAFT PLAN' : 'DRAFT PLAN', variant: 'low stock' }]} 
+          />
+        </div>
         <Button
             className="bg-[#F97316] hover:bg-[#F97316]/90 text-white gap-2 font-medium"
             onClick={() => setView('history')}
@@ -167,6 +271,7 @@ export default function DraftPlanPage() {
                     type="date"
                     value={startDate}
                     onChange={(e) => setStartDate(e.target.value)}
+                    min={new Date().toISOString().split('T')[0]}
                   />
                 </div>
                 <div className="space-y-2">
@@ -175,6 +280,7 @@ export default function DraftPlanPage() {
                     type="date"
                     value={endDate}
                     onChange={(e) => setEndDate(e.target.value)}
+                    min={startDate || new Date().toISOString().split('T')[0]}
                   />
                 </div>
               </div>
@@ -197,7 +303,12 @@ export default function DraftPlanPage() {
                   <label className="text-sm font-medium text-foreground capitalize">Choose Menu</label>
                   <Select value={selectedMenu} onValueChange={setSelectedMenu}>
                     <SelectTrigger className="w-full">
-                      <SelectValue placeholder="Select menu item..." />
+                      <SelectValue placeholder="Select menu item...">
+                        {(value) => {
+                          const found = availableMenus.find(m => m._id === value);
+                          return found ? found.name : value;
+                        }}
+                      </SelectValue>
                     </SelectTrigger>
                     <SelectContent>
                       {availableMenus.map(m => (
@@ -272,7 +383,7 @@ export default function DraftPlanPage() {
                     Back
                   </Button>
                   <Button className="bg-[#F97316] hover:bg-[#F97316]/90 text-white font-medium px-6" onClick={handleCreatePlan} disabled={isSubmitting}>
-                    {isSubmitting ? 'Prosessing...' : 'Create Plan'}
+                    {isSubmitting ? 'Processing...' : (editPlanId ? 'Update Plan' : 'Create Plan')}
                   </Button>
                 </div>
               </div>
