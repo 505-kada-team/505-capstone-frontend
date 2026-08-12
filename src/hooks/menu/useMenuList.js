@@ -46,7 +46,7 @@ export function useMenuList({
       const res = await menuApi.list(toGetMenusParams(params));
       if (res.success) {
         setRawRecipes((res.data ?? []).map(mapMenuListItem));
-        setPagination(mapPagination(res.pagination));
+        setPagination(mapPagination(res.pagination ?? res.meta?.pagination));
       }
     } catch (err) {
       setError(
