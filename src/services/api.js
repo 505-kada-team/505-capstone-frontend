@@ -482,7 +482,7 @@ const processMockList = (mockObj, params) => {
 export const createInventory = (payload) =>
   USE_MOCK
     ? Promise.resolve({ data: mockAddInventory })
-    : api.post("/api/inventory", payload);
+    : api.post("/inventory", payload);
 
 // =============================================================================
 // ENDPOINT 2 — GET /api/inventory
@@ -492,7 +492,7 @@ export const createInventory = (payload) =>
 export const getInventoryList = (params) =>
   USE_MOCK
     ? processMockList(mockInventoryList, params)
-    : api.get("/api/inventory", { params });
+    : api.get("/inventory", { params });
 
 // =============================================================================
 // ENDPOINT 3 — GET /api/inventory/dropdown
@@ -503,7 +503,7 @@ export const getInventoryList = (params) =>
 export const getInventoryDropdown = (params) =>
   USE_MOCK
     ? Promise.resolve({ data: mockInventoryDropdown })
-    : api.get("/api/inventory/dropdown", { params });
+    : api.get("/inventory/dropdown", { params });
 
 // =============================================================================
 // ENDPOINT 4 — GET /api/inventory/:id
@@ -575,7 +575,7 @@ export const archiveSubInventory = (subInventoryId, payload) =>
 export const getHistorySubInventory = (params) =>
   USE_MOCK
     ? Promise.resolve({ data: mockHistorySubInventory })
-    : api.get("/api/history-sub-inventory", { params });
+    : api.get("/history-sub-inventory", { params });
 
 // =============================================================================
 // ENDPOINT 11 — POST /api/subinventory/check-availability
@@ -587,7 +587,7 @@ export const getHistorySubInventory = (params) =>
 export const checkAvailability = (payload) =>
   USE_MOCK
     ? Promise.resolve({ data: mockCheckAvailabilitySufficient })
-    : api.post("/api/subinventory/check-availability", payload);
+    : api.post("/subinventory/check-availability", payload);
 
 // =============================================================================
 // ENDPOINT 12 — POST /api/subinventory/deduct
@@ -599,7 +599,7 @@ export const checkAvailability = (payload) =>
 export const deductStock = (payload) =>
   USE_MOCK
     ? Promise.resolve({ data: mockDeductStock })
-    : api.post("/api/subinventory/deduct", payload);
+    : api.post("/subinventory/deduct", payload);
 
 // =============================================================================
 // ENDPOINT 13 — POST /api/subinventory/deduct/reverse
@@ -609,7 +609,7 @@ export const deductStock = (payload) =>
 export const reverseDeductStock = (payload) =>
   USE_MOCK
     ? Promise.resolve({ data: mockDeductReverse })
-    : api.post("/api/subinventory/deduct/reverse", payload);
+    : api.post("/subinventory/deduct/reverse", payload);
 
 // =============================================================================
 // ENDPOINT 14 — GET /api/history-usage
@@ -619,7 +619,7 @@ export const reverseDeductStock = (payload) =>
 export const getHistoryUsage = (params) =>
   USE_MOCK
     ? Promise.resolve({ data: mockHistoryUsage })
-    : api.get("/api/history-usage", { params });
+    : api.get("/history-usage", { params });
 
 // =============================================================================
 // MODUL MENU / RESEP — 505_Database Schema_resep.md
@@ -636,7 +636,7 @@ export const getHistoryUsage = (params) =>
 export const createMenu = (payload) =>
   USE_MOCK
     ? Promise.resolve({ data: mockMenuCreated })
-    : api.post("/api/menu", payload);
+    : api.post("/menu", payload);
 
 // =============================================================================
 // ENDPOINT 2 — GET /api/menu
@@ -648,7 +648,7 @@ export const createMenu = (payload) =>
 export const getMenuList = (params) =>
   USE_MOCK
     ? Promise.resolve({ data: mockMenuList })
-    : api.get("/api/menu", { params });
+    : api.get("/menu", { params });
 
 // =============================================================================
 // ENDPOINT 3 — GET /api/menu/:id
@@ -705,7 +705,7 @@ export const archiveMenu = (id) =>
 export const getMenuDropdown = (params) =>
   USE_MOCK
     ? Promise.resolve({ data: mockMenuDropdown })
-    : api.get("/api/menu/dropdown", { params });
+    : api.get("/menu/dropdown", { params });
 
 // =============================================================================
 // MODUL PRODUCTION PLAN — 505_Database Schema_producitonplan.md
@@ -719,7 +719,7 @@ export const getMenuDropdown = (params) =>
 export const createPlan = (payload) =>
   USE_MOCK
     ? Promise.resolve({ data: mockCreatePlan })
-    : api.post("/api/plan", payload);
+    : api.post("/plan", payload);
 
 // =============================================================================
 // ENDPOINT A2 — GET /api/plan
@@ -729,7 +729,7 @@ export const createPlan = (payload) =>
 export const getPlanList = (params) =>
   USE_MOCK
     ? Promise.resolve({ data: mockPlanList })
-    : api.get("/api/plan", { params });
+    : api.get("/plan", { params });
 
 // =============================================================================
 // ENDPOINT A3 — GET /api/plan/:id
@@ -821,7 +821,7 @@ export const deleteMenuDiscount = (id, menuId) =>
 export const getSellingActiveList = () =>
   USE_MOCK
     ? Promise.resolve({ data: mockSellingActiveList })
-    : api.get("/api/selling/active");
+    : api.get("/selling/active");
 
 // =============================================================================
 // ENDPOINT B2 — POST /api/selling
@@ -832,7 +832,7 @@ export const createSale = (payload) =>
   USE_MOCK
     ? // TODO: Ganti ke mockCreateSaleDiscount / NotStarted / Insufficient kalau ingin test flow UI spesifik
       Promise.resolve({ data: mockCreateSaleNormal })
-    : api.post("/api/selling", payload);
+    : api.post("/selling", payload);
 
 // =============================================================================
 // ENDPOINT B3 — GET /api/selling/history
@@ -842,7 +842,7 @@ export const createSale = (payload) =>
 export const getSellingHistory = (params) =>
   USE_MOCK
     ? Promise.resolve({ data: mockSellingHistory })
-    : api.get("/api/selling/history", { params });
+    : api.get("/selling/history", { params });
 
 // =============================================================================
 // MODUL PLAN REPORT — 505_Database Schema_planreport.md
@@ -857,7 +857,7 @@ export const createPlanReport = (payload) =>
   USE_MOCK
     ? // TODO: Ganti ke mock variasi lain kalau ingin test error state atau form kasir vs admin
       Promise.resolve({ data: mockCreatePlanReportMenuDiscount })
-    : api.post("/api/plan-reports", payload);
+    : api.post("/plan-reports", payload);
 
 // =============================================================================
 // ENDPOINT C2 — GET /api/plan-reports
@@ -867,7 +867,7 @@ export const createPlanReport = (payload) =>
 export const getPlanReportList = (params) =>
   USE_MOCK
     ? Promise.resolve({ data: mockPlanReportList })
-    : api.get("/api/plan-reports", { params });
+    : api.get("/plan-reports", { params });
 
 // =============================================================================
 // ENDPOINT C3 — PUT /api/plan-reports/:id/review
