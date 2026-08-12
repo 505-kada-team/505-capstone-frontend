@@ -38,27 +38,35 @@ export default function PlanHistoryView({ onNavigateToCreate }) {
   const [plans, setPlans] = useState([]);
   const [isLoadingList, setIsLoadingList] = useState(false);
   const [selectedPlanId, setSelectedPlanId] = useState(null);
+  const [filterStatus, setFilterStatus] = useState('all');
   const [sortBy, setSortBy] = useState('date_newest');
 
-  const sortedPlans = useMemo(() => {
-    const sorted = [...plans];
+  const filteredAndSortedPlans = useMemo(() => {
+    let result = [...plans];
+    
+    // Apply filter
+    if (filterStatus !== 'all') {
+      result = result.filter(plan => plan.status === filterStatus);
+    }
+    
+    // Apply sort
     if (sortBy === 'date_newest') {
-      return sorted.sort((a, b) => new Date(b.createdAt || b.startDate || 0) - new Date(a.createdAt || a.startDate || 0));
+      return result.sort((a, b) => new Date(b.createdAt || b.startDate || 0) - new Date(a.createdAt || a.startDate || 0));
     }
     if (sortBy === 'date_oldest') {
-      return sorted.sort((a, b) => new Date(a.createdAt || a.startDate || 0) - new Date(b.createdAt || b.startDate || 0));
+      return result.sort((a, b) => new Date(a.createdAt || a.startDate || 0) - new Date(b.createdAt || b.startDate || 0));
     }
-    return sorted;
-  }, [plans, sortBy]);
+    return result;
+  }, [plans, filterStatus, sortBy]);
 
   const { currentPage, totalPages, paginatedItems: paginatedPlans, setPage, resetPage } = usePagination(
-    sortedPlans,
+    filteredAndSortedPlans,
     5
   );
 
   useEffect(() => {
     resetPage();
-  }, [sortBy, plans, resetPage]);
+  }, [filterStatus, sortBy, plans, resetPage]);
 
   // ── Fetch plan list ──────────────────────────────────────────────────────
   const fetchPlans = useCallback(async (showLoading = true) => {
@@ -125,19 +133,34 @@ export default function PlanHistoryView({ onNavigateToCreate }) {
       <div className="flex gap-6 flex-1 min-h-0">
 
         {/* ── Left: Plan History List ───────────────────────────────────── */}
-        <aside className="w-72 shrink-0 flex flex-col gap-3">
+        <aside className="w-86 shrink-0 flex flex-col gap-3">
           {/* List header */}
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col gap-2">
             <h2 className="text-base font-semibold font-heading">Plan History</h2>
-            <Select value={sortBy} onValueChange={setSortBy}>
-              <SelectTrigger className="w-[100px] h-7 gap-1 text-muted-foreground text-xs border-none bg-transparent hover:bg-muted font-normal px-2">
-                <SelectValue placeholder="Sort" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="date_newest">Newest</SelectItem>
-                <SelectItem value="date_oldest">Oldest</SelectItem>
-              </SelectContent>
-            </Select>
+            <div className="flex flex-wrap items-center gap-2">
+              <Select value={filterStatus} onValueChange={setFilterStatus}>
+                <SelectTrigger className="w-[110px] h-7 gap-1 text-muted-foreground text-xs font-normal">
+                  <SelectValue placeholder="Status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Statuses</SelectItem>
+                  <SelectItem value="draft">Draft</SelectItem>
+                  <SelectItem value="active">Active</SelectItem>
+                  <SelectItem value="completed">Completed</SelectItem>
+                  <SelectItem value="stopped">Stopped</SelectItem>
+                  <SelectItem value="cancelled">Cancelled</SelectItem>
+                </SelectContent>
+              </Select>
+              <Select value={sortBy} onValueChange={setSortBy}>
+                <SelectTrigger className="w-[100px] h-7 gap-1 text-muted-foreground text-xs font-normal">
+                  <SelectValue placeholder="Sort" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="date_newest">Newest</SelectItem>
+                  <SelectItem value="date_oldest">Oldest</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
 
           {/* List content */}
@@ -148,6 +171,11 @@ export default function PlanHistoryView({ onNavigateToCreate }) {
               <div className="flex flex-col items-center gap-2 py-12 text-muted-foreground">
                 <ClipboardList className="w-8 h-8 text-muted-foreground/40" strokeWidth={1.5} />
                 <p className="text-xs text-center">No plans found</p>
+              </div>
+            ) : filteredAndSortedPlans.length === 0 ? (
+              <div className="flex flex-col items-center gap-2 py-12 text-muted-foreground">
+                <ClipboardList className="w-8 h-8 text-muted-foreground/40" strokeWidth={1.5} />
+                <p className="text-xs text-center">No plans found for selected status</p>
               </div>
             ) : (
               paginatedPlans.map((plan) => (
@@ -165,7 +193,7 @@ export default function PlanHistoryView({ onNavigateToCreate }) {
             <Pagination
               currentPage={currentPage}
               totalPage={totalPages}
-              totalData={sortedPlans.length}
+              totalData={filteredAndSortedPlans.length}
               limit={4}
               onPageChange={setPage}
             />
