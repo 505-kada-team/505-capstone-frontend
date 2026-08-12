@@ -21,14 +21,33 @@
 import api from "../api";
 import { menuEndpoints } from "./menu.endpoints";
 
+function buildMenuFormData(payload, imageFile) {
+  const fd = new FormData();
+  if (payload.name !== undefined) fd.append("name", payload.name);
+  if (payload.description !== undefined)
+    fd.append("description", payload.description);
+  if (payload.sellingPrice !== undefined)
+    fd.append("sellingPrice", payload.sellingPrice);
+  if (payload.ingredients !== undefined) {
+    // backend parseJsonFields('ingredients') expect ini sebagai JSON string
+    fd.append("ingredients", JSON.stringify(payload.ingredients));
+  }
+  if (imageFile) fd.append("image", imageFile); // field name harus "image" — cocok sama uploadSingleImage('image')
+  return fd;
+}
+
 export const menuApi = {
   /**
    * POST /menu
-   * Body: { name, description?, image?, sellingPrice, ingredients: [{ inventoryId, quantityNeeded }] }
+   * multipart/form-data: { name, description?, sellingPrice,
+   *   ingredients: JSON string, image?: File }
    */
-  create: (payload) =>
-    api.post(menuEndpoints.create(), payload).then((res) => res.data),
-
+  create: (payload, imageFile) =>
+    api
+      .post(menuEndpoints.create(), buildMenuFormData(payload, imageFile), {
+        headers: { "Content-Type": "multipart/form-data" },
+      })
+      .then((res) => res.data),
   /**
    * GET /menu
    * Query: { page?, limit?, includeDeleted?, search? }
@@ -41,10 +60,15 @@ export const menuApi = {
 
   /**
    * PUT /menu/:id
-   * Body: subset dari { name, description, image, sellingPrice, ingredients }
+   * multipart/form-data: subset dari { name, description, sellingPrice,
+   *   ingredients: JSON string, image?: File }
    */
-  update: (id, payload) =>
-    api.put(menuEndpoints.update(id), payload).then((res) => res.data),
+  update: (id, payload, imageFile) =>
+    api
+      .put(menuEndpoints.update(id), buildMenuFormData(payload, imageFile), {
+        headers: { "Content-Type": "multipart/form-data" },
+      })
+      .then((res) => res.data),
 
   /** DELETE /menu/:id (soft-delete / arsip) */
   remove: (id) => api.delete(menuEndpoints.remove(id)).then((res) => res.data),
