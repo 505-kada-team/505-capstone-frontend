@@ -24,6 +24,7 @@ import InventoryPage from "@/pages/admin/inventory/InventoryPage";
 import ProtectedRoute from "@/routes/ProtectedRoute";
 import RootRedirect from "@/routes/RootRedirect";
 import SettingsPage from "@/pages/admin/settings/SettingPage";
+import ReportsPage from "@/pages/admin/reports/ReportPage";
 
 // Kasir routes
 import CashierLayout from "@/layouts/CashierLayout"
@@ -82,7 +83,7 @@ export default function App() {
             <Route path="production-plan/draft" element={<DraftPlanPage />} />
             <Route path="production-plan/active" element={<ActivePlanPage />} />
             <Route path="production-plan/report" element={<PlanReportPage />} />
-            <Route path="report" element={<ComingSoon name="Report" />} />
+            <Route path="reports" element={<ReportsPage />} />
             <Route path="settings" element={<SettingsPage />} />
             <Route
               path="ai-scan"
