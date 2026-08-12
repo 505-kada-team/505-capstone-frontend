@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { toast } from 'sonner';
 import { Clock, Plus } from 'lucide-react';
 import PageHeader from '@/components/shared/PageHeader';
@@ -7,7 +7,9 @@ import StatusBadge from '@/components/shared/StatusBadge';
 import SearchInput from '@/components/shared/SearchInput';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { getPlanReportList } from '@/services/api';
+//import { getPlanReportList } from '@/services/api';
+import { planApi } from '@/services/plan/plan.api';
+import { mapPlanReportList } from '@/services/plan/plan.mapper';
 import { useSortable } from '@/hooks/useSortable';
 
 import ReviewReportModal from './components/ReviewReportModal';
@@ -32,32 +34,65 @@ export default function PlanReportPage() {
 
   const fetchData = async () => {
     setIsLoading(true);
+
     try {
       const params = {
         ...(filterStatus !== 'all' && { status: filterStatus }),
         ...(filterCategory !== 'all' && { category: filterCategory }),
-        ...(search && { search }),
-        ...(sortBy && { sort: sortBy })
       };
 
-      const res = await getPlanReportList(params);
-      if (res.data?.success) {
-        setReports(res.data.data || []);
+      console.log('[PLAN REPORT PARAMS]', params);
+
+      const res = await planApi.listReports(params);
+
+      console.log('[PLAN REPORT RESPONSE]', res);
+
+      if (res.success) {
+        setReports(mapPlanReportList(res.data));
       }
-    } catch {
-      toast.error('Gagal mengambil daftar laporan');
+    } catch (error) {
+      console.error('[PLAN REPORT ERROR]', error);
+      console.error('[PLAN REPORT RESPONSE ERROR]', error.response?.data);
+
+      toast.error(
+        error.response?.data?.message ??
+        error.message ??
+        'Gagal mengambil daftar laporan'
+      );
     } finally {
       setIsLoading(false);
     }
   };
 
   useEffect(() => {
-    const delay = setTimeout(() => {
-      fetchData();
-    }, 300);
-    return () => clearTimeout(delay);
+  fetchData();
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [filterStatus, filterCategory, search, sortBy]);
+  }, [filterStatus, filterCategory]);
+
+  const filteredReports = useMemo(() => {
+  const keyword = search.trim().toLowerCase();
+
+  return [...reports]
+    .filter((report) => {
+      if (!keyword) return true;
+
+      return [
+        report.nameRef,
+        report.reason,
+        report.reportedBy,
+      ].some((value) =>
+        String(value ?? '').toLowerCase().includes(keyword)
+      );
+    })
+    .sort((a, b) => {
+      const aDate = new Date(a.incidentAt).getTime();
+      const bDate = new Date(b.incidentAt).getTime();
+
+      return sortBy === 'date_oldest'
+        ? aDate - bDate
+        : bDate - aDate;
+    });
+}, [reports, search, sortBy]);
 
   const columns = [
     {
@@ -81,7 +116,9 @@ export default function PlanReportPage() {
       render: (row) => (
         <div className="flex flex-col">
           <span className="font-semibold capitalize text-foreground">{row.category}</span>
-          <span className="text-sm text-muted-foreground truncate max-w-[150px]">{row.refId}</span>
+          <span className="text-sm text-muted-foreground truncate max-w-[150px]">
+            {row.nameRef ?? row.refId}
+          </span>
         </div>
       ),
     },
@@ -205,7 +242,7 @@ export default function PlanReportPage() {
       <div className="rounded-lg border border-border bg-card shadow-sm overflow-hidden">
         <DataTable
           columns={columns}
-          data={reports}
+          data={filteredReports}
           loading={isLoading}
           emptyMessage="Tidak ada riwayat laporan insiden."
         />

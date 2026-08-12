@@ -4,7 +4,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogD
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { reviewPlanReport } from '@/services/api';
+import { planApi } from '@/services/plan/plan.api';
 
 export default function ReviewReportModal({ open, report, onClose, onRefresh, readOnly = false }) {
   const [adminNote, setAdminNote] = useState(report?.adminNote || '');
@@ -14,15 +14,37 @@ export default function ReviewReportModal({ open, report, onClose, onRefresh, re
 
   const handleReview = async (decision) => {
     setIsSubmitting(true);
+
     try {
-      const res = await reviewPlanReport(report._id, { decision, adminNote });
-      if (res.data?.success) {
-        toast.success(`Laporan berhasil di-${decision === 'approved' ? 'setujui' : 'tolak'}`);
-        onRefresh();
+      const payload = {
+        decision,
+        adminNote: adminNote.trim() || null,
+      };
+
+      console.log('[REVIEW REPORT]', {
+        reportId: report.id,
+        payload,
+      });
+
+      const res = await planApi.reviewReport(report.id, payload);
+
+      console.log('[REVIEW RESPONSE]', res);
+
+      if (res.success) {
+        toast.success(res.message);
+        await onRefresh();
         onClose();
       }
-    } catch {
-      toast.error('Gagal memproses laporan');
+    } catch (error) {
+      console.error('[REVIEW ERROR]', error);
+      console.error('[REVIEW RESPONSE ERROR]', error.response?.data);
+      console.error('[REVIEW DETAILS]', error.response?.data?.details);
+
+      toast.error(
+        error.response?.data?.details?.[0] ??
+        error.response?.data?.message ??
+        'Gagal memproses laporan'
+      );
     } finally {
       setIsSubmitting(false);
     }
