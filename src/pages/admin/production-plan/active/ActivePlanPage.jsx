@@ -13,12 +13,14 @@ import SearchInput from '@/components/shared/SearchInput';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { getPlanList, getPlanDetail, stopPlan } from '@/services/api';
 import { useSortable } from '@/hooks/useSortable';
+import Pagination from '@/components/shared/Pagination';
+import { usePagination } from '@/hooks/usePagination';
 
 function formatDate(dateStr) {
   if (!dateStr) return '-';
   const date = new Date(dateStr);
   return `${String(date.getDate()).padStart(2, '0')} ${
-    ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'][date.getMonth()]
+    ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][date.getMonth()]
   } ${date.getFullYear()}`;
 }
 
@@ -57,6 +59,15 @@ export default function ActivePlanPage() {
     const matchStatus = filterStatus === 'all' || plan.status === filterStatus;
     return matchSearch && matchStatus;
   }));
+
+  const { currentPage, totalPages, paginatedItems: paginatedPlans, setPage, resetPage } = usePagination(
+    filteredPlans,
+    5
+  );
+
+  useEffect(() => {
+    resetPage();
+  }, [searchHistory, filterStatus, sortBy, resetPage]);
 
   const fetchData = async () => {
       setIsLoading(true);
@@ -326,10 +337,10 @@ export default function ActivePlanPage() {
                 <tbody className="divide-y divide-border/50">
                   {isLoading ? (
                     <tr><td colSpan="4" className="py-10 text-center text-muted-foreground">Loading data...</td></tr>
-                  ) : filteredPlans.length === 0 ? (
+                  ) : paginatedPlans.length === 0 ? (
                     <tr><td colSpan="4" className="py-10 text-center text-muted-foreground">No plan history</td></tr>
                   ) : (
-                    filteredPlans.map((p) => {
+                    paginatedPlans.map((p) => {
                       // Status mapping to match UI
                       let displayStatus = p.status;
                       if (p.status === 'completed') displayStatus = 'Executed';
@@ -362,7 +373,18 @@ export default function ActivePlanPage() {
             </div>
           </CardContent>
         </Card>
+
+        {paginatedPlans.length > 0 && (
+          <Pagination
+            currentPage={currentPage}
+            totalPage={totalPages}
+            totalData={filteredPlans.length}
+            limit={5}
+            onPageChange={setPage}
+          />
+        )}
       </div>
+
 
       {hasActive && (
         <ConfirmDialog
