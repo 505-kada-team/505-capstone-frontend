@@ -34,8 +34,14 @@ export default function DraftPlanPage() {
   useEffect(() => {
     if (step === 2 && availableMenus.length === 0) {
       getMenuDropdown().then(res => {
-        if (res.data?.success) {
-          setAvailableMenus(res.data.data);
+        // Handle both raw API envelope and mapped response
+        const data = res.data?.data ?? res.data;
+        if (Array.isArray(data)) {
+          // Normalize: ensure each item has _id field
+          setAvailableMenus(data.map(m => ({
+            ...m,
+            _id: m._id || m.id,
+          })));
         }
       }).catch(() => toast.error('Failed to load menu'));
     }
@@ -101,6 +107,7 @@ export default function DraftPlanPage() {
       
       const payload = {
         name: planName,
+        tags: [],
         startDate: new Date(startDate).toISOString(),
         duration,
         menus: cart.map(item => ({
@@ -110,12 +117,14 @@ export default function DraftPlanPage() {
       };
       
       const res = await planApi.create(payload);
-      // planApi.create returns the envelope directly: { data: planObject, message }
-      if (res?.data?._id) {
+      // planApi.create returns the envelope: { data: planObject, message }
+      // planApi already unwraps res.data, so res = { data: ..., message: ... }
+      const planData = res?.data;
+      if (planData?._id) {
         toast.success(res.message || 'Plan created');
-        setCreatedPlanId(res.data._id);
+        setCreatedPlanId(planData._id);
       } else {
-        toast.error('Failed to create draft plan');
+        toast.error(res?.message || 'Failed to create draft plan');
       }
     } catch {
       toast.error('System error');

@@ -1,10 +1,12 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { RefreshCw, PlusCircle, Filter, ClipboardList } from 'lucide-react';
 
 import PageHeader from '@/components/shared/PageHeader';
 import PlanListCard from '@/components/shared/PlanListCard';
 import PlanDetailPane from '@/pages/admin/production-plan/components/PlanDetailPane';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { usePlanList } from '@/hooks/plan/usePlanList';
 
 // ─── Empty state for the right pane when no plan is selected ─────────────────
@@ -32,6 +34,16 @@ function ListSkeleton() {
 export default function PlanHistoryView({ onNavigateToCreate }) {
   const { plans, isLoading: isLoadingList, refetch } = usePlanList();
   const [selectedPlanId, setSelectedPlanId] = useState(null);
+  const [search, setSearch] = useState('');
+  const [filterStatus, setFilterStatus] = useState('all');
+
+  const filteredPlans = useMemo(() => {
+    return plans.filter(plan => {
+      const matchSearch = plan.name?.toLowerCase().includes(search.toLowerCase());
+      const matchStatus = filterStatus === 'all' || plan.status === filterStatus;
+      return matchSearch && matchStatus;
+    });
+  }, [plans, search, filterStatus]);
 
   // ── Handlers ─────────────────────────────────────────────────────────────
   const handleSelectPlan = (id) => {
@@ -76,23 +88,42 @@ export default function PlanHistoryView({ onNavigateToCreate }) {
           {/* List header */}
           <div className="flex items-center justify-between">
             <h2 className="text-base font-semibold font-heading">Plan History</h2>
-            <Button variant="ghost" size="sm" className="gap-1.5 text-muted-foreground text-xs h-7 px-2">
-              <Filter className="w-3.5 h-3.5" />
-              Filter
-            </Button>
+          </div>
+
+          {/* Filter controls */}
+          <div className="flex flex-col gap-2">
+            <Input
+              placeholder="Search plan..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="h-8 text-sm"
+            />
+            <Select value={filterStatus} onValueChange={setFilterStatus}>
+              <SelectTrigger className="h-8 text-xs text-muted-foreground">
+                <SelectValue placeholder="Filter status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Semua Status</SelectItem>
+                <SelectItem value="draft">Draft</SelectItem>
+                <SelectItem value="active">Active</SelectItem>
+                <SelectItem value="completed">Completed</SelectItem>
+                <SelectItem value="stopped">Stopped</SelectItem>
+                <SelectItem value="cancelled">Cancelled</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
 
           {/* List content */}
           <div className="flex flex-col gap-2 overflow-y-auto pr-1">
             {isLoadingList ? (
               <ListSkeleton />
-            ) : plans.length === 0 ? (
+            ) : filteredPlans.length === 0 ? (
               <div className="flex flex-col items-center gap-2 py-12 text-muted-foreground">
                 <ClipboardList className="w-8 h-8 text-muted-foreground/40" strokeWidth={1.5} />
                 <p className="text-xs text-center">No plans found</p>
               </div>
             ) : (
-              plans.map((plan) => (
+              filteredPlans.map((plan) => (
                 <PlanListCard
                   key={plan._id}
                   plan={plan}

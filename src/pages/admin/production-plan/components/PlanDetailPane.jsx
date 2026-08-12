@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { toast } from 'sonner';
 import { Printer, Edit, CheckCircle, StopCircle, Eye, Lightbulb, Link } from 'lucide-react';
 
 import StatusBadge from '@/components/shared/StatusBadge';
@@ -129,11 +130,11 @@ export default function PlanDetailPane({ planId, onRefreshList }) {
             <p className="text-muted-foreground text-sm">Plan your selling and estimate the flow.</p>
           </div>
           <div className="flex items-center gap-2">
-            <Button variant="outline" size="icon" className="h-9 w-9">
+            <Button variant="outline" size="icon" className="h-9 w-9" onClick={() => window.print()}>
               <Printer className="w-4 h-4 text-muted-foreground" />
             </Button>
             {isDraft && (
-              <Button variant="outline" size="icon" className="h-9 w-9">
+              <Button variant="outline" size="icon" className="h-9 w-9" onClick={() => toast.info('Edit mode coming soon')}>
                 <Edit className="w-4 h-4 text-muted-foreground" />
               </Button>
             )}
@@ -277,7 +278,7 @@ export default function PlanDetailPane({ planId, onRefreshList }) {
             <Button variant="outline" onClick={() => setConfirmStopOpen(false)}>Cancel</Button>
             <Button
               variant="destructive"
-              onClick={() => stop({ reason: 'Dihentikan admin', stoppedBy: 'Admin' }).then(result => {
+              onClick={() => stop({ reason: 'Dihentikan manual oleh admin', stoppedBy: 'Admin' }).then(result => {
                 if (result?.ok) { setConfirmStopOpen(false); }
               })}
               disabled={isMutating}

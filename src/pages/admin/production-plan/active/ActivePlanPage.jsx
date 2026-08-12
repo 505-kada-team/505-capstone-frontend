@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
-import { Calendar, Plus, TriangleAlert, ChevronLeft, ChevronRight, StopCircle } from 'lucide-react';
+import { Calendar, Plus, TriangleAlert, ChevronLeft, ChevronRight, StopCircle, Eye } from 'lucide-react';
 
 import StatusBadge from '@/components/shared/StatusBadge';
 import ConfirmDialog from '@/components/shared/ConfirmDialog';
@@ -13,6 +13,7 @@ import SearchInput from '@/components/shared/SearchInput';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useActivePlanOverview } from '@/hooks/plan/usePlanOverview';
 import { useSortable } from '@/hooks/useSortable';
+import PlanDetailPane from '@/pages/admin/production-plan/components/PlanDetailPane';
 
 function formatDate(dateStr) {
   if (!dateStr) return '-';
@@ -55,16 +56,17 @@ export default function ActivePlanPage() {
   const [filterStatus, setFilterStatus] = useState('all');
   const { sortBy, setSortBy, sortData } = useSortable('date_newest');
   const [isStopDialogOpen, setIsStopDialogOpen] = useState(false);
+  const [selectedPlanId, setSelectedPlanId] = useState(null);
 
   const filteredPlans = sortData(plans.filter(plan => {
     if (plan.status === 'active') return false;
-    const matchSearch = plan.name.toLowerCase().includes(searchHistory.toLowerCase());
+    const matchSearch = plan.name?.toLowerCase().includes(searchHistory.toLowerCase());
     const matchStatus = filterStatus === 'all' || plan.status === filterStatus;
     return matchSearch && matchStatus;
-  }));
+  }), 'date_newest');
 
   const handleStopPlan = async () => {
-    const result = await stopActivePlan({ reason: 'Dihentikan manual' });
+    const result = await stopActivePlan({ reason: 'Dihentikan manual oleh admin', stoppedBy: 'Admin Dapur' });
     if (result?.ok) {
       setIsStopDialogOpen(false);
     }
@@ -213,7 +215,7 @@ export default function ActivePlanPage() {
                           <td className="py-4 px-4 text-center">
                             <button 
                               className="text-[#F97316] font-medium text-sm hover:underline"
-                              onClick={() => toast.info('Detail menu ' + menu.name)}
+                              onClick={() => setSelectedPlanId(activePlanDetail._id)}
                             >
                               Detail
                             </button>
@@ -256,9 +258,11 @@ export default function ActivePlanPage() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Semua Status</SelectItem>
-                <SelectItem value="completed">Executed</SelectItem>
-                <SelectItem value="cancelled">Cancelled</SelectItem>
+                <SelectItem value="draft">Draft</SelectItem>
+                <SelectItem value="active">Active</SelectItem>
+                <SelectItem value="completed">Completed</SelectItem>
                 <SelectItem value="stopped">Stopped</SelectItem>
+                <SelectItem value="cancelled">Cancelled</SelectItem>
               </SelectContent>
             </Select>
 
@@ -298,7 +302,6 @@ export default function ActivePlanPage() {
                       let displayStatus = p.status;
                       if (p.status === 'completed') displayStatus = 'Executed';
                       if (p.status === 'cancelled' || p.status === 'stopped') displayStatus = 'Terminated';
-                      if (p.status === 'draft') return null; // Typically history shouldn't show active drafts, but we'll map all for now
 
                       return (
                         <tr key={p._id} className="hover:bg-muted/30">
@@ -312,7 +315,7 @@ export default function ActivePlanPage() {
                           <td className="py-4 px-6 text-center">
                             <button 
                               className="text-[#F97316] font-medium hover:underline text-sm"
-                              onClick={() => toast.info('Navigating to detail: ' + p.name)}
+                              onClick={() => setSelectedPlanId(p._id)}
                             >
                               Detail
                             </button>
@@ -340,6 +343,23 @@ export default function ActivePlanPage() {
           loading={isStopping}
           variant="destructive"
         />
+      )}
+
+      {/* Plan Detail Pane (shown when Detail is clicked) */}
+      {selectedPlanId && (
+        <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
+          <div className="bg-background rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] overflow-hidden">
+            <PlanDetailPane
+              planId={selectedPlanId}
+              onRefreshList={refetch}
+            />
+            <div className="p-3 border-t flex justify-end">
+              <Button variant="outline" onClick={() => setSelectedPlanId(null)}>
+                Close
+              </Button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
