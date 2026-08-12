@@ -1,77 +1,57 @@
-import { useState, useEffect } from 'react';
-import { getMenuList, archiveMenu } from '@/services/api';
-import { useSortable } from '@/hooks/useSortable';
-import PageHeader from '@/components/shared/PageHeader';
-import SearchInput from '@/components/shared/SearchInput';
-import Pagination from '@/components/shared/Pagination';
-import RecipeCard from './components/RecipeCard';
-import AddRecipeModal from './components/AddRecipeModal';
-import DetailRecipeModal from './components/DetailRecipeModal';
-import ConfirmDialog from '@/components/shared/ConfirmDialog';
-import { Button } from '@/components/ui/button';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { toast } from 'sonner';
+import { useState } from "react";
+import { useMenuList } from "@/hooks/menu/useMenuList";
+import { useArchiveMenu } from "@/hooks/menu/useArchiveMenu";
+import PageHeader from "@/components/shared/PageHeader";
+import SearchInput from "@/components/shared/SearchInput";
+import Pagination from "@/components/shared/Pagination";
+import RecipeCard from "./components/RecipeCard";
+import AddRecipeModal from "./components/AddRecipeModal";
+import EditRecipeModal from "./components/EditRecipeModal";
+import DetailRecipeModal from "./components/DetailRecipeModal";
+import ConfirmDialog from "@/components/shared/ConfirmDialog";
+import { Button } from "@/components/ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { toast } from "sonner";
 
 export default function RecipePage() {
-  const [recipes, setRecipes] = useState([]);
-  const [pagination, setPagination] = useState({ currentPage: 1, totalPage: 1 });
-  const [search, setSearch] = useState('');
-  const [filterStatus, setFilterStatus] = useState('active');
-  const { sortBy, setSortBy } = useSortable('name_asc');
-  const [isLoading, setIsLoading] = useState(true);
+  const {
+    recipes,
+    pagination,
+    filters,
+    isLoading,
+    setSearch,
+    setIncludeDeleted,
+    setSort,
+    setPage,
+    refetch,
+  } = useMenuList();
+  const { archiveRecipe } = useArchiveMenu();
 
-  // Modal states
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [detailModalId, setDetailModalId] = useState(null);
-  
-  // Archive Confirmation
+  const [editTargetId, setEditTargetId] = useState(null);
   const [archiveTarget, setArchiveTarget] = useState(null);
 
-  const fetchRecipes = async (page = 1, searchQuery = '', status = 'active', sort = 'name_asc') => {
-    setIsLoading(true);
-    try {
-      const params = { 
-        page, 
-        limit: 12, 
-        search: searchQuery, 
-        status,
-        sort 
-      };
-      const res = await getMenuList(params);
-      if (res.data.success) {
-        setRecipes(res.data.data);
-        setPagination(res.data.pagination);
-      }
-    } catch (err) {
-      toast.error(err?.message || 'Gagal memuat resep');
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    const delay = setTimeout(() => {
-      fetchRecipes(1, search, filterStatus, sortBy);
-    }, 300);
-    return () => clearTimeout(delay);
-  }, [search, filterStatus, sortBy]);
-
-  const handlePageChange = (newPage) => {
-    if (newPage > 0 && newPage <= pagination.totalPage) {
-      fetchRecipes(newPage, search, filterStatus, sortBy);
-    }
-  };
+  const displayedRecipes = filters.includeDeleted
+    ? recipes.filter((recipe) => recipe.status === "deleted")
+    : recipes;
 
   const handleArchive = async () => {
     if (!archiveTarget) return;
     try {
-      const res = await archiveMenu(archiveTarget);
-      if (res.data.success) {
-        toast.success(res.data.message);
-        fetchRecipes(pagination.currentPage, search, filterStatus);
+      const res = await archiveRecipe(archiveTarget);
+      if (res.success) {
+        toast.success(res.message);
+        refetch();
       }
     } catch (err) {
-      toast.error(err?.message || 'Gagal mengarsipkan resep');
+      toast.error(err?.response?.data?.message || "Gagal mengarsipkan resep");
     } finally {
       setArchiveTarget(null);
     }
@@ -96,12 +76,18 @@ export default function RecipePage() {
         <div className="flex justify-between items-center gap-2">
           <SearchInput
             placeholder="Search by name or ingredient..."
-            value={search}
+            value={filters.search}
             onChange={setSearch}
             className="w-[400px]"
           />
           <div className="flex items-center gap-3">
-            <Select value={filterStatus} onValueChange={setFilterStatus}>
+            {/* includeDeleted: false -> "Active", true -> "Archived" (backend cuma punya param ini, bukan status string) */}
+          <Select
+              value={filters.includeDeleted ? "archived" : "active"}
+              onValueChange={(val) =>
+                setIncludeDeleted(val === "archived")
+              }
+            >
               <SelectTrigger className="w-[160px] h-9 text-muted-foreground font-normal">
                 <SelectValue placeholder="Status" />
               </SelectTrigger>
@@ -111,8 +97,8 @@ export default function RecipePage() {
               </SelectContent>
             </Select>
 
-            {/* Sort By Dropdown */}
-            <Select value={sortBy} onValueChange={setSortBy}>
+            {/* Sort ini client-side, hanya untuk item di halaman saat ini */}
+            <Select value={filters.sort} onValueChange={setSort}>
               <SelectTrigger className="w-[160px] gap-2 h-9 text-muted-foreground font-normal">
                 <SelectValue placeholder="Sort By" />
               </SelectTrigger>
@@ -126,54 +112,68 @@ export default function RecipePage() {
           </div>
         </div>
 
-        {/* Content Area */}
-        <div className="flex-1 relative">
+<div className="flex-1 relative">
           {isLoading ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
               {[...Array(8)].map((_, i) => (
-                <div key={i} className="h-72 bg-muted/20 animate-pulse rounded-lg border"></div>
+                <div
+                  key={i}
+                  className="h-72 bg-muted/20 animate-pulse rounded-lg border"
+                />
               ))}
             </div>
-          ) : recipes.length === 0 ? (
+          ) : displayedRecipes.length === 0 ? (
             <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
               <div className="w-12 h-12 rounded-full bg-muted/50 flex items-center justify-center mb-4">
-                <span className="text-muted-foreground text-xl">🍽️</span>
+                <span className="text-muted-foreground text-xl">
+                  🍽️
+                </span>
               </div>
-              <h3 className="text-lg font-semibold text-foreground">Tidak ada resep</h3>
-              <p className="text-sm text-muted-foreground">Silakan tambah resep baru atau coba pencarian lain.</p>
+
+              <h3 className="text-lg font-semibold text-foreground">
+                {filters.includeDeleted
+                  ? "Belum ada resep yang diarsipkan"
+                  : "Tidak ada resep"}
+              </h3>
+
+              <p className="text-sm text-muted-foreground">
+                {filters.includeDeleted
+                  ? "Resep yang sudah diarsipkan akan muncul di sini."
+                  : "Silakan tambah resep baru atau coba pencarian lain."}
+              </p>
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-              {recipes.map((recipe) => (
+              {displayedRecipes.map((recipe) => (
                 <RecipeCard
-                  key={recipe._id}
+                  key={recipe.id}
                   recipe={recipe}
-                  onDetail={() => setDetailModalId(recipe._id)}
+                  onDetail={() =>
+                    setDetailModalId(recipe.id)
+                  }
                 />
               ))}
             </div>
           )}
         </div>
 
-        {/* Pagination */}
-        {recipes.length > 0 && pagination.totalPage > 1 && (
+        {displayedRecipes.length > 0 && pagination && pagination.totalPage > 1 && (
           <div className="mt-auto">
             <Pagination
               currentPage={pagination.currentPage}
               totalPage={pagination.totalPage}
               totalData={pagination.totalData}
               limit={pagination.limit}
-              onPageChange={handlePageChange}
+              onPageChange={setPage}
             />
           </div>
         )}
       </div>
 
-      {/* Modals */}
       <AddRecipeModal
         isOpen={isAddModalOpen}
         onClose={() => setIsAddModalOpen(false)}
-        onSuccess={() => fetchRecipes(1, search)}
+        onSuccess={refetch}
       />
 
       {detailModalId && (
@@ -185,13 +185,22 @@ export default function RecipePage() {
             setDetailModalId(null);
             setArchiveTarget(id);
           }}
-          onEdit={() => {
-            toast.info('Fitur edit akan digabung dengan modal form nanti');
+          onEdit={(id) => {
+            setDetailModalId(null);
+            setEditTargetId(id);
           }}
         />
       )}
 
-      {/* Archive Confirmation */}
+      {editTargetId && (
+        <EditRecipeModal
+          isOpen={!!editTargetId}
+          recipeId={editTargetId}
+          onClose={() => setEditTargetId(null)}
+          onSuccess={refetch}
+        />
+      )}
+
       <ConfirmDialog
         open={!!archiveTarget}
         title="Arsipkan Resep?"

@@ -8,6 +8,9 @@ import AlertSummaryCard from '@/components/shared/AlertSummaryCard';
 import PlanMenuAccordion from '@/components/shared/PlanMenuAccordion';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import DiscountModal from '../draft/components/DiscountModal';
+import DiscountDetailModal from '../draft/components/DiscountDetailModal';
+import { deleteMenuDiscount } from '@/services/api';
 
 /**
  * Helper to derive badge variant.
@@ -41,11 +44,14 @@ export default function PlanDetailPane({ planId, onRefreshList }) {
   const [isProcessing, setIsProcessing] = useState(false);
   
   const [confirmStopOpen, setConfirmStopOpen] = useState(false);
+  
+  const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
+  const [isDiscountModalOpen, setIsDiscountModalOpen] = useState(false);
+  const [editPromo, setEditPromo] = useState(null);
 
-  useEffect(() => {
+  const fetchDetail = async () => {
     if (!planId) return;
-    const fetchDetail = async () => {
-      setIsLoading(true);
+    setIsLoading(true);
       try {
         const res = await getPlanDetail(planId);
         if (res.data?.success) {
@@ -53,10 +59,11 @@ export default function PlanDetailPane({ planId, onRefreshList }) {
         }
       } catch {
         toast.error('Failed to load plan detail');
-      } finally {
-        setIsLoading(false);
-      }
-    };
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
     fetchDetail();
   }, [planId]);
 
@@ -166,8 +173,45 @@ export default function PlanDetailPane({ planId, onRefreshList }) {
   // Calculate Total Target
   const totalTarget = plan.menus?.reduce((sum, menu) => sum + (menu.quantityPlanned || 0), 0) || 0;
   
-  // Check if plan has discount
-  const hasPlanDiscount = plan.menus?.some(m => m.discount?.discountPercentage > 0);
+  // Check if plan has discount and extract it
+  const promoGroup = (() => {
+    if (!plan?.menus) return null;
+    const discountedMenus = plan.menus.filter(m => m.discount?.discountPercentage > 0);
+    if (discountedMenus.length === 0) return null;
+    
+    const firstDiscount = discountedMenus[0].discount;
+    return {
+      reason: firstDiscount.reason || 'Promo',
+      startDate: firstDiscount.startDate,
+      endDate: firstDiscount.endDate,
+      menus: discountedMenus.map(m => ({
+        menuId: m.menuId,
+        name: m.name,
+        originalPrice: m.effectiveSellingPrice || m.currentPrice || 0,
+        discountPercentage: m.discount.discountPercentage,
+        discountedPrice: m.discount.discountedPrice || 0
+      }))
+    };
+  })();
+  const hasPlanDiscount = !!promoGroup;
+
+  const handleEditDiscount = (promo) => {
+    setEditPromo(promo);
+    setIsDetailModalOpen(false);
+    setIsDiscountModalOpen(true);
+  };
+
+  const handleDeleteDiscount = async (promo) => {
+    if (!plan?._id) return;
+    try {
+      const promises = promo.menus.map(m => deleteMenuDiscount(plan._id, m.menuId));
+      await Promise.all(promises);
+      toast.success('Promo berhasil dihapus');
+      fetchDetail();
+    } catch (err) {
+      console.error(err);
+    }
+  };
 
   return (
     <div className="flex flex-col h-full bg-card rounded-lg border border-border shadow-sm overflow-hidden">
@@ -239,7 +283,7 @@ export default function PlanDetailPane({ planId, onRefreshList }) {
             variant="success"
             icon={<Lightbulb className="w-5 h-5" />}
             action={
-              <Button variant="outline" size="sm" onClick={() => toast.info('View discount info')}>
+              <Button variant="outline" size="sm" onClick={() => setIsDetailModalOpen(true)}>
                 <Link className="w-4 h-4 mr-2" /> Lihat Diskon
               </Button>
             }
@@ -333,6 +377,21 @@ export default function PlanDetailPane({ planId, onRefreshList }) {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+      <DiscountModal 
+        isOpen={isDiscountModalOpen} 
+        onClose={() => setIsDiscountModalOpen(false)} 
+        plan={plan}
+        editPromo={editPromo}
+        onApply={() => fetchDetail()}
+      />
+      
+      <DiscountDetailModal
+        isOpen={isDetailModalOpen}
+        onClose={() => setIsDetailModalOpen(false)}
+        promo={promoGroup}
+        onEdit={handleEditDiscount}
+        onDelete={handleDeleteDiscount}
+      />
     </div>
   );
 }

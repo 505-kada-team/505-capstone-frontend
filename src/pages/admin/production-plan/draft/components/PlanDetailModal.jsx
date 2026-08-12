@@ -6,17 +6,18 @@ import StatusBadge from '@/components/shared/StatusBadge';
 import AlertSummaryCard from '@/components/shared/AlertSummaryCard';
 import PlanMenuAccordion from '@/components/shared/PlanMenuAccordion';
 import DiscountModal from './DiscountModal';
+import DiscountDetailModal from './DiscountDetailModal';
 import { toast } from 'sonner';
-import { getPlanDetail, approvePlan, cancelPlan } from '@/services/api';
+import { getPlanDetail, approvePlan, cancelPlan, deleteMenuDiscount } from '@/services/api';
 
 export default function PlanDetailModal({ isOpen, onClose, planId }) {
   const [isDiscountModalOpen, setIsDiscountModalOpen] = useState(false);
+  const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
+  const [editPromo, setEditPromo] = useState(null);
+  
   const [plan, setPlan] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
-  
-  // Local state to simulate discount flow since mock data already contains it
-  const [isDiscountAppliedLocally, setIsDiscountAppliedLocally] = useState(false);
 
   const fetchPlanDetail = useCallback(async () => {
     if (!planId) return;
@@ -35,20 +36,15 @@ export default function PlanDetailModal({ isOpen, onClose, planId }) {
 
   useEffect(() => {
     if (isOpen && planId) {
-      Promise.resolve().then(() => {
-        setIsDiscountAppliedLocally(false); // Reset local state when modal opens
-        fetchPlanDetail();
-      });
+      fetchPlanDetail();
     } else {
-      Promise.resolve().then(() => {
-        setPlan(null);
-      });
+      setPlan(null);
+      setEditPromo(null);
     }
   }, [isOpen, planId, fetchPlanDetail]);
 
   const handleApplyDiscount = () => {
-    setIsDiscountModalOpen(false);
-    setIsDiscountAppliedLocally(true); // Simulate that discount is now applied
+    fetchPlanDetail(); // Refresh data from backend
   };
 
   const handleAccept = async () => {
@@ -105,21 +101,47 @@ export default function PlanDetailModal({ isOpen, onClose, planId }) {
     }
   }, [plan]);
   
-  // Only show discount if the user explicitly added it during this session
-  const displayMenus = useMemo(() => {
-    if (!menus) return [];
-    if (!isDiscountAppliedLocally) {
-      return menus.map(m => {
-        const rest = { ...m };
-        delete rest.discount;
-        return rest;
-      });
-    }
-    return menus;
-  }, [menus, isDiscountAppliedLocally]);
+  // Extract single grouped promo from menus
+  const promoGroup = useMemo(() => {
+    if (!plan?.menus) return null;
+    const discountedMenus = plan.menus.filter(m => m.discount?.discountPercentage > 0);
+    if (discountedMenus.length === 0) return null;
+    
+    const firstDiscount = discountedMenus[0].discount;
+    return {
+      reason: firstDiscount.reason || 'Promo',
+      startDate: firstDiscount.startDate,
+      endDate: firstDiscount.endDate,
+      menus: discountedMenus.map(m => ({
+        menuId: m.menuId,
+        name: m.name,
+        originalPrice: m.effectiveSellingPrice || m.currentPrice || 0,
+        discountPercentage: m.discount.discountPercentage,
+        discountedPrice: m.discount.discountedPrice || 0
+      }))
+    };
+  }, [plan]);
 
-  // Aggregate if there is any discount applied
-  const hasDiscount = displayMenus?.some(m => m.discount?.discountPercentage > 0);
+  const hasDiscount = !!promoGroup;
+  const displayMenus = menus || [];
+
+  const handleEditDiscount = (promo) => {
+    setEditPromo(promo);
+    setIsDetailModalOpen(false);
+    setIsDiscountModalOpen(true);
+  };
+
+  const handleDeleteDiscount = async (promo) => {
+    if (!plan?._id) return;
+    try {
+      const promises = promo.menus.map(m => deleteMenuDiscount(plan._id, m.menuId));
+      await Promise.all(promises);
+      toast.success('Promo berhasil dihapus');
+      fetchPlanDetail();
+    } catch (err) {
+      console.error(err);
+    }
+  };
 
   // Convert checkResult to ingredients format for the accordion
   const mappedIngredients = useMemo(() => {
@@ -178,8 +200,8 @@ export default function PlanDetailModal({ isOpen, onClose, planId }) {
                     variant="success"
                     icon={<Lightbulb className="w-5 h-5" />}
                     action={
-                      <Button variant="outline" size="sm" onClick={() => setIsDiscountModalOpen(true)}>
-                        <Link className="w-4 h-4 mr-2" /> View Discount
+                      <Button variant="outline" size="sm" onClick={() => setIsDetailModalOpen(true)}>
+                        <Link className="w-4 h-4 mr-2" /> Lihat Diskon
                       </Button>
                     }
                   />
@@ -190,8 +212,8 @@ export default function PlanDetailModal({ isOpen, onClose, planId }) {
                     variant="success"
                     icon={<Lightbulb className="w-5 h-5" />}
                     action={
-                      <Button size="sm" onClick={() => setIsDiscountModalOpen(true)}>
-                        <PlusCircle className="w-4 h-4 mr-2" /> Add Discount
+                      <Button size="sm" onClick={() => { setEditPromo(null); setIsDiscountModalOpen(true); }}>
+                        <PlusCircle className="w-4 h-4 mr-2" /> Tambah Diskon
                       </Button>
                     }
                   />
@@ -244,9 +266,17 @@ export default function PlanDetailModal({ isOpen, onClose, planId }) {
       <DiscountModal 
         isOpen={isDiscountModalOpen} 
         onClose={() => setIsDiscountModalOpen(false)} 
-        planId={planId}
-        menuId={menus?.[0]?.menuId} // Simplify: apply discount to first menu
+        plan={plan}
+        editPromo={editPromo}
         onApply={handleApplyDiscount}
+      />
+      
+      <DiscountDetailModal
+        isOpen={isDetailModalOpen}
+        onClose={() => setIsDetailModalOpen(false)}
+        promo={promoGroup}
+        onEdit={handleEditDiscount}
+        onDelete={handleDeleteDiscount}
       />
     </>
   );
