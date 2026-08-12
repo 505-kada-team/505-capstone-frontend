@@ -22,6 +22,7 @@ import {
   Play,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import ChatWidget from '@/AI/chatbot/ui/ChatWidget';
 
 // ── Nav item tunggal ────────────────────────────────────────
 function NavItem({ to, icon, label, className }) {
@@ -155,6 +156,7 @@ export default function AdminLayout() {
           <Outlet />
         </main>
       </div>
+      <ChatWidget />
     </div>
   );
 }
