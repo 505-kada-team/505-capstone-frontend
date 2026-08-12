@@ -10,6 +10,8 @@ import { getPlanList } from '@/services/api';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import Pagination from '@/components/shared/Pagination';
 import { usePagination } from '@/hooks/usePagination';
+import { Input } from '@/components/ui/input';
+import { usePlanList } from '@/hooks/plan/usePlanList';
 
 // ─── Empty state for the right pane when no plan is selected ─────────────────
 function RightPaneEmpty() {
@@ -34,9 +36,7 @@ function ListSkeleton() {
 
 // ─── Main Component ─────────────────────────────────────────────────────────────
 export default function PlanHistoryView({ onNavigateToCreate }) {
-
-  const [plans, setPlans] = useState([]);
-  const [isLoadingList, setIsLoadingList] = useState(false);
+  const { plans, isLoading: isLoadingList, refetch } = usePlanList();
   const [selectedPlanId, setSelectedPlanId] = useState(null);
   const [filterStatus, setFilterStatus] = useState('all');
   const [sortBy, setSortBy] = useState('date_newest');
@@ -68,38 +68,20 @@ export default function PlanHistoryView({ onNavigateToCreate }) {
     resetPage();
   }, [filterStatus, sortBy, plans, resetPage]);
 
-  // ── Fetch plan list ──────────────────────────────────────────────────────
-  const fetchPlans = useCallback(async (showLoading = true) => {
-    if (showLoading) setIsLoadingList(true);
-    try {
-      const res = await getPlanList();
-      if (res.data?.success) {
-        setPlans(res.data.data ?? []);
-      }
-    } catch {
-      toast.error('Failed to load plan history');
-    } finally {
-      if (showLoading) setIsLoadingList(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    // Use timeout to push the initial fetch to the next tick, avoiding synchronous setState
-    const timer = setTimeout(() => {
-      fetchPlans();
-    }, 0);
-    return () => clearTimeout(timer);
-  }, [fetchPlans]);
+  const filteredPlans = useMemo(() => {
+    return plans.filter(plan => {
+      const matchSearch = plan.name?.toLowerCase().includes(search.toLowerCase());
+      const matchStatus = filterStatus === 'all' || plan.status === filterStatus;
+      return matchSearch && matchStatus;
+    });
+  }, [plans, search, filterStatus]);
 
   // ── Handlers ─────────────────────────────────────────────────────────────
   const handleSelectPlan = (id) => {
     setSelectedPlanId(id);
-    // Detail pane will be built in the next step
   };
 
-  const handleReload = () => {
-    fetchPlans();
-  };
+  const handleReload = () => refetch();
 
   return (
     <div className="flex flex-col gap-0 h-full">
@@ -167,7 +149,7 @@ export default function PlanHistoryView({ onNavigateToCreate }) {
           <div className="flex flex-col gap-2 overflow-y-auto pr-1 flex-1">
             {isLoadingList ? (
               <ListSkeleton />
-            ) : plans.length === 0 ? (
+            ) : filteredPlans.length === 0 ? (
               <div className="flex flex-col items-center gap-2 py-12 text-muted-foreground">
                 <ClipboardList className="w-8 h-8 text-muted-foreground/40" strokeWidth={1.5} />
                 <p className="text-xs text-center">No plans found</p>
@@ -210,7 +192,7 @@ export default function PlanHistoryView({ onNavigateToCreate }) {
           {!selectedPlanId ? (
             <RightPaneEmpty />
           ) : (
-            <PlanDetailPane planId={selectedPlanId} onRefreshList={fetchPlans} />
+            <PlanDetailPane planId={selectedPlanId} onRefreshList={refetch} />
           )}
         </section>
       </div>

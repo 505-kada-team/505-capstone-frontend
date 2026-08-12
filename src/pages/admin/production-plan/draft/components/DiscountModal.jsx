@@ -7,70 +7,19 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Calendar } from '@/components/ui/calendar';
 import { format } from 'date-fns';
 import { Calendar as CalendarIcon, Lightbulb } from 'lucide-react';
-import { useState, useEffect } from 'react';
-import { toast } from 'sonner';
-import { setMenuDiscount, deleteMenuDiscount } from '@/services/api';
+import { usePlanDiscountForm } from '@/hooks/plan/usePlanDiscount';
 import { cn } from '@/lib/utils';
 
 export default function DiscountModal({ isOpen, onClose, plan, initialSelectedMenuId, editPromo, onApply }) {
-  const [reason, setReason] = useState('');
-  const [date, setDate] = useState({ from: undefined, to: undefined });
-  const [mode, setMode] = useState('sama_rata');
-  const [globalPercent, setGlobalPercent] = useState('15');
-  const [selectedMenus, setSelectedMenus] = useState({});
-  const [menuPercents, setMenuPercents] = useState({});
-  const [isSubmitting, setIsSubmitting] = useState(false);
-
-  useEffect(() => {
-    if (isOpen) {
-      if (editPromo) {
-        setReason(editPromo.reason);
-        setDate({ from: new Date(editPromo.startDate), to: new Date(editPromo.endDate) });
-        const uniquePercents = new Set(editPromo.menus.map(m => m.discountPercentage));
-        if (uniquePercents.size === 1) {
-          setMode('sama_rata');
-          setGlobalPercent(String(Array.from(uniquePercents)[0]));
-        } else {
-          setMode('beda_per_menu');
-        }
-        const sel = {};
-        const perc = {};
-        editPromo.menus.forEach(m => {
-          sel[m.menuId] = true;
-          perc[m.menuId] = String(m.discountPercentage);
-        });
-        setSelectedMenus(sel);
-        setMenuPercents(perc);
-      } else {
-        setReason('');
-        setDate({ from: undefined, to: undefined });
-        setMode('sama_rata');
-        setGlobalPercent('15');
-        if (initialSelectedMenuId) {
-          setSelectedMenus({ [initialSelectedMenuId]: true });
-          setMenuPercents({ [initialSelectedMenuId]: '15' });
-        } else {
-          setSelectedMenus({});
-          setMenuPercents({});
-        }
-      }
-    }
-  }, [isOpen, editPromo, initialSelectedMenuId]);
-
-  const toggleSelectAll = () => {
-    const allSelected = plan?.menus?.every(m => selectedMenus[m.menuId]);
-    if (allSelected) {
-      setSelectedMenus({});
-    } else {
-      const sel = {};
-      plan?.menus?.forEach(m => { sel[m.menuId] = true; });
-      setSelectedMenus(sel);
-    }
-  };
-
-  const toggleMenu = (menuId) => {
-    setSelectedMenus(prev => ({ ...prev, [menuId]: !prev[menuId] }));
-  };
+  const {
+    reason, setReason,
+    date, setDate,
+    mode, setMode,
+    globalPercent, setGlobalPercent,
+    selectedMenus, toggleMenu, toggleSelectAll, allSelected,
+    menuPercents, setMenuPercent,
+    isSubmitting, submit,
+  } = usePlanDiscountForm({ isOpen, plan, editPromo, initialSelectedMenuId, onApplied: onApply });
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -122,7 +71,6 @@ export default function DiscountModal({ isOpen, onClose, plan, initialSelectedMe
     ? new Date(Math.max(new Date().getTime(), new Date(plan.startDate).getTime()))
     : new Date();
   const maxDate = plan?.endDate ? new Date(plan.endDate) : undefined;
-  const allSelected = plan?.menus?.every(m => selectedMenus[m.menuId]) || false;
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -253,7 +201,7 @@ export default function DiscountModal({ isOpen, onClose, plan, initialSelectedMe
                         <Input
                           type="number" min="1" max="100"
                           value={menuPercents[menu.menuId] || ''}
-                          onChange={e => setMenuPercents(prev => ({ ...prev, [menu.menuId]: e.target.value }))}
+                          onChange={e => setMenuPercent(menu.menuId, e.target.value)}
                           className="h-8 pr-7 font-mono text-sm"
                           required
                         />

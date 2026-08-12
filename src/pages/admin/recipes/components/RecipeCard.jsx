@@ -7,7 +7,7 @@ export default function RecipeCard({ recipe, onDetail }) {
   return (
     <Card className="overflow-hidden hover:shadow-md transition-shadow flex flex-col h-full">
       <div className="relative h-48 bg-muted w-full flex-shrink-0">
-        <div className="absolute top-3 left-3 z-10">
+        <div className="absolute top-3 left-3">
           <StatusBadge variant={recipe.status} />
         </div>
         {recipe.image ? (
@@ -37,10 +37,10 @@ export default function RecipeCard({ recipe, onDetail }) {
 
         <div className="flex items-end justify-between mt-auto">
           <div>
-            <p className="text-xs text-muted-foreground mb-0.5">Ext. Cost</p>
+            <p className="text-xs text-muted-foreground mb-0.5">Selling Price</p>
             <p className="font-mono text-sm text-foreground">
               {recipe.costComplete
-                ? formatCurrency(recipe.currentCostEstimate)
+                ? formatCurrency(recipe.sellingPrice)
                 : "Rp -"}
             </p>
           </div>

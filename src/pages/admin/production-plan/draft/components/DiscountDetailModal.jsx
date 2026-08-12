@@ -2,11 +2,15 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { Button } from '@/components/ui/button';
 import { Trash2, Pencil, Calendar as CalendarIcon, Coffee } from 'lucide-react';
 import { format } from 'date-fns';
-import { useState } from 'react';
-import { toast } from 'sonner';
+import { useDeletePlanPromo } from '@/hooks/plan/usePlanDiscount';
 
-export default function DiscountDetailModal({ isOpen, onClose, promo, onEdit, onDelete }) {
-  const [isDeleting, setIsDeleting] = useState(false);
+export default function DiscountDetailModal({ isOpen, onClose, planId, promo, onEdit, onDelete }) {
+  const { isDeleting, deletePromo } = useDeletePlanPromo(planId, {
+    onDeleted: () => {
+      onDelete?.();
+      onClose();
+    },
+  });
 
   if (!isOpen || !promo) return null;
 
