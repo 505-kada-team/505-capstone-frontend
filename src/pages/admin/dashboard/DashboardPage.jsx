@@ -111,17 +111,30 @@ export default function DashboardPage() {
   // Fetch Pending Reports Count
   useEffect(() => {
     async function fetchPendingReports() {
+      if (!activePlan?._id) {
+        setPendingReportsCount(0);
+        return;
+      }
+
       try {
-        const res = await getPlanReportList({ status: 'pending' });
+        const res = await getPlanReportList({
+          planId: activePlan._id,
+          status: 'pending',
+        });
+
         if (res.data?.success) {
           setPendingReportsCount(res.data.data?.length || 0);
+        } else {
+          setPendingReportsCount(0);
         }
       } catch (err) {
         console.error('Failed to load pending reports:', err);
+        setPendingReportsCount(0);
       }
     }
+
     fetchPendingReports();
-  }, []);
+  }, [activePlan]);
 
   // Fetch Dashboard Summary Data for Selected Date
   useEffect(() => {
@@ -414,7 +427,7 @@ export default function DashboardPage() {
               <p className="text-xs text-muted-foreground mt-1">Incident reports currently pending review from admin.</p>
             </div>
 
-            <Button variant="outline" size="sm" onClick={() => navigate('/admin/production-plan/report')} className="w-full justify-between mt-1 text-xs border-border">
+            <Button variant="outline" size="sm" onClick={() => navigate(`/admin/production-plan/report?planId=${activePlan?._id}`)} className="w-full justify-between mt-1 text-xs border-border">
               <span>View Reports</span>
               <ChevronRight size={14} />
             </Button>
