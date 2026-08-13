@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
-import { DollarSign, Coffee, Calendar as CalendarIcon, Sparkles, Clock, Package, AlertTriangle, ChevronRight, TrendingUp, Layers } from 'lucide-react';
+import { DollarSign, Coffee, Calendar as CalendarIcon, Sparkles, Clock, Package, AlertTriangle, ChevronRight, TrendingUp, Layers, Activity } from 'lucide-react';
 import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip } from 'recharts';
 
 import { format } from 'date-fns';
@@ -67,6 +67,14 @@ export default function DashboardPage() {
   const [activePlan, setActivePlan] = useState(null);
   const [pendingReportsCount, setPendingReportsCount] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
+
+  // Format Currency
+  const formatRupiah = (val) =>
+    new Intl.NumberFormat('id-ID', {
+      style: 'currency',
+      currency: 'IDR',
+      minimumFractionDigits: 0,
+    }).format(val || 0);
 
   // Fetch Active Plan (to constrain date range & display Active Plan card)
   useEffect(() => {
@@ -214,13 +222,73 @@ export default function DashboardPage() {
   const dashboardHourlyTrends = summaryData?.hourlyTrends || [];
   const dashboardMenuBreakdown = summaryData?.menuBreakdown || [];
 
-  // Format Currency
-  const formatRupiah = (val) =>
-    new Intl.NumberFormat('id-ID', {
-      style: 'currency',
-      currency: 'IDR',
-      minimumFractionDigits: 0,
-    }).format(val || 0);
+  // ============================================================
+  // Dashboard Derived Analytics
+  // ============================================================
+
+  const averageRevenuePerCup = useMemo(() => {
+    const totalRevenue = Number(summaryData?.totalRevenue || 0);
+    const totalUnitsSold = Number(summaryData?.totalUnitsSold || 0);
+
+    if (totalUnitsSold <= 0) {
+      return 0;
+    }
+
+    return totalRevenue / totalUnitsSold;
+  }, [summaryData]);
+
+  const salesConcentration = useMemo(() => {
+    const totalRevenue = Number(summaryData?.totalRevenue || 0);
+
+    if (totalRevenue <= 0) {
+      return {
+        percentage: 0,
+        revenue: 0,
+        hours: [],
+      };
+    }
+
+    const topHours = [...dashboardHourlyTrends]
+      .filter((item) => Number(item.revenue || 0) > 0)
+      .sort((a, b) => Number(b.revenue || 0) - Number(a.revenue || 0))
+      .slice(0, 3);
+
+    const concentratedRevenue = topHours.reduce((sum, item) => sum + Number(item.revenue || 0), 0);
+
+    return {
+      percentage: (concentratedRevenue / totalRevenue) * 100,
+      revenue: concentratedRevenue,
+      hours: topHours,
+    };
+  }, [summaryData, dashboardHourlyTrends]);
+
+  const topMenuRevenueShare = useMemo(() => {
+    const totalRevenue = Number(summaryData?.totalRevenue || 0);
+
+    if (totalRevenue <= 0 || dashboardMenuBreakdown.length === 0) {
+      return {
+        menu: null,
+        percentage: 0,
+      };
+    }
+
+    const topMenu = [...dashboardMenuBreakdown].sort((a, b) => Number(b.revenue || 0) - Number(a.revenue || 0)).at(0);
+
+    return {
+      menu: topMenu,
+      percentage: (Number(topMenu.revenue || 0) / totalRevenue) * 100,
+    };
+  }, [summaryData, dashboardMenuBreakdown]);
+
+  const bestRevenueHour = useMemo(() => {
+    const activeHours = dashboardHourlyTrends.filter((item) => Number(item.revenue || 0) > 0);
+
+    if (activeHours.length === 0) {
+      return null;
+    }
+
+    return [...activeHours].sort((a, b) => Number(b.revenue || 0) - Number(a.revenue || 0))[0];
+  }, [dashboardHourlyTrends]);
 
   // Format Date for Card
   const formatDateRange = (start, end) => {
@@ -311,10 +379,10 @@ export default function DashboardPage() {
       />
 
       {/* KPI Cards Row */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
         <StatCard title="Total Revenue" value={formatRupiah(kpi.totalRevenue)} subtitle={`Sales on ${selectedDate}`} icon={DollarSign} />
         <StatCard title="Total Cups Sold" value={`${kpi.totalCupsSold.toLocaleString()} cups`} subtitle={`Volume on ${selectedDate}`} icon={Coffee} />
-
+        <StatCard title="Avg. Revenue / Cup" value={formatRupiah(averageRevenuePerCup)} subtitle={kpi.totalCupsSold > 0 ? `Based on ${kpi.totalCupsSold} cups sold` : 'No sales recorded'} icon={TrendingUp} />
         {/* Active Plan Card */}
         <Card className="bg-card border-border shadow-xs">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
@@ -408,6 +476,133 @@ export default function DashboardPage() {
 
           <AdminTopFiveMenuCard menus={dashboardMenuBreakdown} />
         </div>
+      </div>
+
+      {/* Derived Sales Analytics */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        {/* Sales Concentration */}
+        <Card className="bg-card border-border shadow-xs">
+          <CardHeader className="flex flex-row items-center justify-between pb-3">
+            <CardTitle className="text-xs uppercase tracking-wider font-semibold text-muted-foreground">Sales Concentration</CardTitle>
+            <Activity className="h-4 w-4 text-orange-600" />
+          </CardHeader>
+
+          <CardContent>
+            {salesConcentration.percentage <= 0 ? (
+              <div className="flex min-h-[120px] flex-col items-center justify-center gap-2 text-center text-muted-foreground">
+                <Activity className="h-5 w-5" />
+                <p className="text-xs">No sales activity recorded for this date.</p>
+              </div>
+            ) : (
+              <>
+                <div className="flex items-end justify-between">
+                  <div>
+                    <p className="font-mono text-3xl font-bold text-foreground">{salesConcentration.percentage.toFixed(1)}%</p>
+
+                    <p className="mt-1 text-xs text-muted-foreground">Revenue from top 3 sales hours</p>
+                  </div>
+                </div>
+
+                <div className="mt-4 h-2 overflow-hidden rounded-full bg-muted">
+                  <div
+                    className="h-full rounded-full bg-orange-600"
+                    style={{
+                      width: `${Math.min(salesConcentration.percentage, 100)}%`,
+                    }}
+                  />
+                </div>
+
+                <div className="mt-4 flex items-center justify-between">
+                  <span className="text-xs text-muted-foreground">Concentrated revenue</span>
+
+                  <span className="font-mono text-xs font-semibold text-foreground">{formatRupiah(salesConcentration.revenue)}</span>
+                </div>
+
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {salesConcentration.hours.map((hour) => (
+                    <span key={hour.hour} className="rounded-md bg-muted px-2 py-1 font-mono text-[11px] text-muted-foreground">
+                      {hour.timeBucket}
+                    </span>
+                  ))}
+                </div>
+              </>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Top Menu Revenue Share */}
+        <Card className="bg-card border-border shadow-xs">
+          <CardHeader className="flex flex-row items-center justify-between pb-3">
+            <CardTitle className="text-xs uppercase tracking-wider font-semibold text-muted-foreground">Top Menu Revenue Share</CardTitle>
+
+            <Coffee className="h-4 w-4 text-orange-600" />
+          </CardHeader>
+
+          <CardContent>
+            {!topMenuRevenueShare.menu ? (
+              <div className="flex min-h-[120px] flex-col items-center justify-center gap-2 text-center text-muted-foreground">
+                <Coffee className="h-5 w-5" />
+                <p className="text-xs">No menu sales recorded for this date.</p>
+              </div>
+            ) : (
+              <div className="flex gap-3">
+                {topMenuRevenueShare.menu.image ? (
+                  <img src={topMenuRevenueShare.menu.image} alt={topMenuRevenueShare.menu.name || 'Menu'} className="h-12 w-12 shrink-0 rounded-md object-cover" />
+                ) : (
+                  <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-md bg-muted">
+                    <Coffee className="h-5 w-5 text-muted-foreground" />
+                  </div>
+                )}
+
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-sm font-semibold text-foreground">{topMenuRevenueShare.menu.name}</p>
+
+                  <p className="mt-1 font-mono text-xl font-bold text-foreground">{topMenuRevenueShare.percentage.toFixed(1)}%</p>
+
+                  <p className="mt-1 text-xs text-muted-foreground">{formatRupiah(topMenuRevenueShare.menu.revenue)} of daily revenue</p>
+                </div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Best Revenue Hour */}
+        <Card className="bg-card border-border shadow-xs">
+          <CardHeader className="flex flex-row items-center justify-between pb-3">
+            <CardTitle className="text-xs uppercase tracking-wider font-semibold text-muted-foreground">Best Revenue Hour</CardTitle>
+
+            <Clock className="h-4 w-4 text-orange-600" />
+          </CardHeader>
+
+          <CardContent>
+            {!bestRevenueHour ? (
+              <div className="flex min-h-[120px] flex-col items-center justify-center gap-2 text-center text-muted-foreground">
+                <Clock className="h-5 w-5" />
+                <p className="text-xs">No sales activity recorded for this date.</p>
+              </div>
+            ) : (
+              <>
+                <p className="font-mono text-3xl font-bold text-foreground">{bestRevenueHour.timeBucket}</p>
+
+                <p className="mt-1 text-xs text-muted-foreground">Highest hourly revenue</p>
+
+                <div className="mt-4 grid grid-cols-2 gap-3">
+                  <div className="rounded-lg bg-muted p-3">
+                    <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Revenue</p>
+
+                    <p className="mt-1 font-mono text-sm font-semibold text-foreground">{formatRupiah(bestRevenueHour.revenue)}</p>
+                  </div>
+
+                  <div className="rounded-lg bg-muted p-3">
+                    <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Cups</p>
+
+                    <p className="mt-1 font-mono text-lg font-semibold text-foreground">{bestRevenueHour.unitsSold}</p>
+                  </div>
+                </div>
+              </>
+            )}
+          </CardContent>
+        </Card>
       </div>
 
       {/* Bottom Grid: Peak Activity, Most Used Inventory, and Plan Report Status */}
