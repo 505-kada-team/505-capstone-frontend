@@ -16,6 +16,10 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 
 import { getDashboardSummary, getPlanList, getPlanReportList } from '@/services/api';
 
+import AdminTopFiveMenuCard from '@/components/shared/admin/AdminTopFiveMenuCard';
+import AdminPeakActivityCard from '@/components/shared/admin/AdminPeakActivityCard';
+import AdminAIInsightsCard from '@/components/shared/admin/AdminAIInsightsCard';
+
 export default function DashboardPage() {
   const navigate = useNavigate();
 
@@ -82,7 +86,7 @@ export default function DashboardPage() {
           if (plan.startDate && plan.endDate) {
             const planStart = plan.startDate.split('T')[0];
             const planEnd = plan.endDate.split('T')[0];
-            
+
             if (todayStr >= planStart && todayStr <= planEnd) {
               // Hari ini masih berada dalam periode plan
               setSelectedDate(todayStr);
@@ -193,6 +197,9 @@ export default function DashboardPage() {
       };
     });
   }, [summaryData]);
+
+  const dashboardHourlyTrends = summaryData?.hourlyTrends || [];
+  const dashboardMenuBreakdown = summaryData?.menuBreakdown || [];
 
   // Format Currency
   const formatRupiah = (val) =>
@@ -384,14 +391,15 @@ export default function DashboardPage() {
 
         {/* Right Panel: AI Insights & Top 5 Menu (Coming Soon) */}
         <div className="flex flex-col gap-6">
-          <ComingSoonCard title="AI Insights" description="Smart recommendations and anomaly detection based on daily sales trends." icon={Sparkles} className="flex-1" />
-          <ComingSoonCard title="Top 5 Menu" description="Ranking breakdown of best-selling products by quantity and revenue." icon={Coffee} className="flex-1" />
+          <AdminAIInsightsCard hourlyTrends={dashboardHourlyTrends} menuBreakdown={dashboardMenuBreakdown} />
+
+          <AdminTopFiveMenuCard menus={dashboardMenuBreakdown} />
         </div>
       </div>
 
       {/* Bottom Grid: Peak Activity, Most Used Inventory, and Plan Report Status */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <ComingSoonCard title="Peak Activity" description="Busiest operating hours and peak sales day pattern analytics." icon={Clock} />
+        <AdminPeakActivityCard hourlyTrends={dashboardHourlyTrends} />
         <ComingSoonCard title="Most Used Inventory" description="Raw ingredient consumption metrics and usage rate tracking." icon={Package} />
 
         {/* Live Plan Report Card */}
