@@ -25,11 +25,13 @@ const PAGE_SIZE = 12;
 export default function RecipePage() {
   const {
     recipes,
+    pagination,
     filters,
     isLoading,
     setSearch,
     setIncludeDeleted,
     setSort,
+    setPage,
     refetch,
   } = useMenuList();
 
@@ -46,8 +48,10 @@ export default function RecipePage() {
     : recipes;
 
   // Pagination lokal
-  const { currentPage, totalPages, paginatedItems, setPage, resetPage } =
-    usePagination(displayedRecipes, PAGE_SIZE);
+  const { currentPage, totalPages, paginatedItems, resetPage } = usePagination(
+    displayedRecipes,
+    PAGE_SIZE,
+  );
 
   // Reset ke halaman 1 ketika filter berubah
   useEffect(() => {
@@ -157,7 +161,7 @@ export default function RecipePage() {
         ) : (
           <>
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 xl:grid-cols-6 gap-3">
-              {paginatedItems.map((recipe, i) => (
+              {displayedRecipes.map((recipe, i) => (
                 <div
                   key={recipe.id}
                   style={{ animationDelay: `${Math.min(i, 8) * 40}ms` }}
@@ -174,14 +178,18 @@ export default function RecipePage() {
             {displayedRecipes.length > 0 && (
               <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-3 mt-6 border-t border-border/60">
                 <div className="text-sm text-muted-foreground whitespace-nowrap">
-                  Showing {(currentPage - 1) * PAGE_SIZE + 1} -{" "}
-                  {Math.min(currentPage * PAGE_SIZE, displayedRecipes.length)}{" "}
-                  of {displayedRecipes.length} items
+                  Showing {((pagination?.currentPage ?? 1) - 1) * PAGE_SIZE + 1}{" "}
+                  -{" "}
+                  {Math.min(
+                    (pagination?.currentPage ?? 1) * PAGE_SIZE,
+                    pagination?.totalData ?? 0,
+                  )}{" "}
+                  of {pagination?.totalData ?? 0} items
                 </div>
                 <Pagination
-                  currentPage={currentPage}
-                  totalPage={totalPages}
-                  totalData={displayedRecipes.length}
+                  currentPage={pagination?.currentPage ?? 1}
+                  totalPage={pagination?.totalPage ?? 1}
+                  totalData={pagination?.totalData ?? 0}
                   limit={PAGE_SIZE}
                   onPageChange={setPage}
                   showInfo={false}

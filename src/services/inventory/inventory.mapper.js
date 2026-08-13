@@ -81,13 +81,42 @@ export function mapInventory(raw) {
 
 export function mapInventoryDropdownItem(raw) {
   if (!raw) return null;
+
+  const hasPricing = raw.lastCostPricePerBaseUnit != null;
+
   return {
     id: raw._id ?? raw.id,
     name: raw.name ?? raw.nameInventory ?? "",
     itemCode: raw.itemCode,
     category: raw.category,
-    unit: raw.unit,
+    unit: raw.unit, // unit asli inventory, misal "kg"
+    baseUnit: raw.baseUnit, // unit basis utk display/kalkulasi, misal "gr"
+    lastCostBatch: raw.lastCostBatch,
+    pricePerUnit: raw.lastCostPricePerUnit, // harga per kg/liter/pcs
+    pricePerBaseUnit: raw.lastCostPricePerBaseUnit, // harga per gr/ml/pcs — dipakai form
+    hasPricing, // false kalau item ini belum pernah punya batch
   };
+}
+
+/**
+ * Hitung estimasi cost satu baris ingredient berdasarkan quantity yang
+ * diketik user di form (dalam display unit / base unit — gr/ml/pcs),
+ * dikalikan langsung dengan pricePerBaseUnit dari dropdown.
+ *
+ * Tidak perlu konversi tambahan di sini — backend sudah menormalkan
+ * pricePerBaseUnit ke basis yang sama dengan apa yang diketik user
+ * (lihat toDisplayQuantity / resolveIngredientsForSubmit).
+ */
+export function estimateIngredientCost(quantityDisplay, inventoryItem) {
+  if (
+    !inventoryItem ||
+    !inventoryItem.hasPricing ||
+    quantityDisplay == null ||
+    Number.isNaN(Number(quantityDisplay))
+  ) {
+    return null;
+  }
+  return Number(quantityDisplay) * inventoryItem.pricePerBaseUnit;
 }
 
 export function mapInventoryList(rawResult) {

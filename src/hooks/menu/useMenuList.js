@@ -44,9 +44,10 @@ export function useMenuList({
     setError(null);
     try {
       const res = await menuApi.list(toGetMenusParams(params));
+      console.log("API response:", res);
       if (res.success) {
         setRawRecipes((res.data ?? []).map(mapMenuListItem));
-        setPagination(mapPagination(res.pagination));
+        setPagination(mapPagination(res.meta?.pagination));
       }
     } catch (err) {
       setError(
