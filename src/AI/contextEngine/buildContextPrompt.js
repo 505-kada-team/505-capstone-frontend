@@ -35,6 +35,7 @@ IMPORTANT:
 - Keep each recommendation natural, concise, and around 1-2 sentences.
 - Do not use overly formal or robotic language.
 - Do not invent numbers, percentages, quantities, dates, or relationships.
+- If weather_forecast includes a "coverage_note", it means weather data doesn't cover the full plan period. For days beyond that coverage, don't mention or imply anything about weather — instead, base any recommendation for those days purely on predicted sales and/or holidays if relevant. Never treat missing weather data as "clear/calm weather".
 - Return exactly 3 recommendations, ranked from most important to least important.
 
 PRIORITY:

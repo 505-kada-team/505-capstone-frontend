@@ -4,7 +4,7 @@ const BASE_URL = "https://generativelanguage.googleapis.com/v1beta/models";
 
 export class GeminiError extends Error {}
 
-async function callGemini(prompt, { jsonMode = false } = {}) {
+async function callGemini(prompt, { jsonMode = false, systemInstruction, temperature } = {}) {
   if (!API_KEY) {
     throw new GeminiError(
       "VITE_GEMINI_API_KEY is missing. Add it to your .env file."
@@ -18,9 +18,13 @@ async function callGemini(prompt, { jsonMode = false } = {}) {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         contents: [{ parts: [{ text: prompt }] }],
-        ...(jsonMode
-          ? { generationConfig: { responseMimeType: "application/json" } }
+        ...(systemInstruction
+          ? { system_instruction: { parts: [{ text: systemInstruction }] } }
           : {}),
+        generationConfig: {
+          ...(jsonMode ? { responseMimeType: "application/json" } : {}),
+          ...(temperature !== undefined ? { temperature } : {}),
+        },
       }),
     }
   );
@@ -42,12 +46,12 @@ async function callGemini(prompt, { jsonMode = false } = {}) {
   return text;
 }
 
-export async function generateJSON(prompt, { maxRetries = 1 } = {}) {
+export async function generateJSON(prompt, { maxRetries = 1, systemInstruction, temperature } = {}) {
   let lastError = null;
 
   for (let attempt = 0; attempt <= maxRetries; attempt++) {
     try {
-      const text = await callGemini(prompt, { jsonMode: true });
+      const text = await callGemini(prompt, { jsonMode: true, systemInstruction, temperature });
       return JSON.parse(text);
     } catch (err) {
       lastError = err;
@@ -60,12 +64,12 @@ export async function generateJSON(prompt, { maxRetries = 1 } = {}) {
   );
 }
 
-export async function generateText(prompt, { maxRetries = 1 } = {}) {
+export async function generateText(prompt, { maxRetries = 1, systemInstruction, temperature } = {}) {
   let lastError = null;
 
   for (let attempt = 0; attempt <= maxRetries; attempt++) {
     try {
-      return await callGemini(prompt, { jsonMode: false });
+      return await callGemini(prompt, { jsonMode: false, systemInstruction, temperature });
     } catch (err) {
       lastError = err;
       console.warn(`[geminiClient] Text generation failed (attempt ${attempt + 1}):`, err);
