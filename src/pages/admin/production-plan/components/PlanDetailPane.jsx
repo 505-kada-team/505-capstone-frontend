@@ -69,20 +69,22 @@ function formatDate(dateStr) {
   } ${date.getFullYear()}`;
 }
 
-function mapMenuIngredients(menu) {
-  if (!menu?.ingredientsDetail?.length) return [];
-  return menu.ingredientsDetail.map((ing) => {
+function mapMenuIngredients(menu, isDraft) {
+  const details = isDraft
+    ? menu?.ingredientsDetail
+    : menu?.committedIngredientsDetail;
+  if (!details?.length) return [];
+  return details.map((ing) => {
     let status = "safe";
     if (ing.hasUnsafeBatch) status = "unsafe";
-    else if (ing.shortfall > 0) status = "insufficient";
+
+    const available = isDraft ? ing.availableQuantity : ing.quantityAvailable;
 
     return {
       name: ing.nameInventory,
-      needed: `${ing.quantityNeeded} ${ing.unit || ""}`.trim(),
-      available: `${ing.availableQuantity} ${ing.unit || ""}`.trim(),
+      needed: `${ing.quantityNeeded ?? 0} ${ing.unit || ""}`.trim(),
+      available: `${available ?? 0} ${ing.unit || ""}`.trim(),
       status,
-      shortage:
-        ing.shortfall > 0 ? `${ing.shortfall} ${ing.unit || ""}`.trim() : "-",
       expired: ing.nearestExpiry ? formatDate(ing.nearestExpiry) : "-/-/-",
     };
   });
@@ -142,13 +144,20 @@ export default function PlanDetailPane({ planId, onRefreshList }) {
     0;
 
   return (
-    <div className="flex flex-col h-full bg-card rounded-lg border border-border shadow-sm overflow-hidden">
+    // h-full sengaja dilepas: section pembungkus di PlanHistoryView tidak lagi
+    // memberi tinggi pasti (kiri sekarang sticky, kanan mengikuti tinggi
+    // konten & halaman yang scroll). overflow-hidden aman dipertahankan di
+    // sini hanya untuk clipping sudut rounded, karena tinggi card sekarang
+    // selalu mengikuti kontennya sendiri (tidak pernah dipaksa kecil).
+    <div className="flex flex-col bg-card rounded-lg border border-border shadow-sm overflow-hidden min-w-0">
       {/* ── Header ────────────────────────────────────────────── */}
       <div className="p-6 border-b border-border">
-        <div className="flex items-start justify-between">
-          <div>
-            <div className="flex items-center gap-3 mb-2">
-              <h2 className="text-2xl font-bold font-heading text-foreground">
+        {/* flex-wrap + min-w-0 di kiri: judul panjang tidak lagi mendorong
+            tombol print/edit keluar layar di pane sempit */}
+        <div className="flex items-start justify-between gap-3 flex-wrap">
+          <div className="min-w-0">
+            <div className="flex items-center gap-3 mb-2 flex-wrap">
+              <h2 className="text-2xl font-bold font-heading text-foreground break-words">
                 {plan.name}
               </h2>
               <StatusBadge variant={badgeVariant} />
@@ -157,7 +166,7 @@ export default function PlanDetailPane({ planId, onRefreshList }) {
               Plan your selling and estimate the flow.
             </p>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 shrink-0">
             <Button
               variant="outline"
               size="icon"
@@ -181,21 +190,24 @@ export default function PlanDetailPane({ planId, onRefreshList }) {
           </div>
         </div>
 
-        <div className="flex items-center gap-12 mt-6">
-          <div className="flex flex-col gap-1">
+        {/* flex-wrap + gap yang lebih kecil di mobile: 3 blok info tidak lagi
+            memaksa scroll horizontal saat pane menyempit */}
+        <div className="flex flex-wrap items-start gap-x-8 gap-y-3 mt-6">
+          <div className="flex flex-col gap-1 min-w-0">
             <span className="text-xs text-muted-foreground">Period</span>
-            <span className="text-sm font-semibold flex items-center gap-1.5">
-              <Printer className="w-3.5 h-3.5 hidden" />
+            <span className="text-sm font-semibold flex items-center gap-1.5 whitespace-nowrap">
               {formatDate(plan.startDate)} - {formatDate(plan.endDate)}
             </span>
           </div>
-          <div className="flex flex-col gap-1">
+          <div className="flex flex-col gap-1 min-w-0">
             <span className="text-xs text-muted-foreground">Created By</span>
-            <span className="text-sm font-semibold">Admin Production</span>
+            <span className="text-sm font-semibold truncate">
+              Admin Production
+            </span>
           </div>
-          <div className="flex flex-col gap-1">
+          <div className="flex flex-col gap-1 min-w-0">
             <span className="text-xs text-muted-foreground">Total Target</span>
-            <span className="text-sm font-semibold">
+            <span className="text-sm font-semibold whitespace-nowrap">
               {totalTarget.toLocaleString("en-US")} units
             </span>
           </div>
@@ -203,7 +215,7 @@ export default function PlanDetailPane({ planId, onRefreshList }) {
       </div>
 
       {/* ── Body ──────────────────────────────────────────────── */}
-      <div className="flex-1 overflow-y-auto p-6 flex flex-col gap-6">
+      <div className="p-6 flex flex-col gap-6 min-w-0">
         {/* Alerts */}
         {plan.checkResultStale && (
           <AlertSummaryCard
@@ -239,14 +251,14 @@ export default function PlanDetailPane({ planId, onRefreshList }) {
           />
         )}
 
-        <div>
+        <div className="min-w-0">
           <h3 className="font-semibold text-lg mb-4">Production Items</h3>
 
-          <div className="flex flex-col gap-3">
+          <div className="flex flex-col gap-3 min-w-0">
             {plan.menus?.map((menu, idx) => {
               const disc = menu.discount || {};
               const menuHasDiscount = disc.discountPercentage > 0;
-              const menuIngredients = mapMenuIngredients(menu);
+              const menuIngredients = mapMenuIngredients(menu, isDraft);
 
               const summary = {
                 quantity: menu.quantityPlanned,
@@ -265,12 +277,10 @@ export default function PlanDetailPane({ planId, onRefreshList }) {
                   : {}),
               };
 
-              const hasShortage = menuIngredients.some(
+              const hasUnsafe = menuIngredients.some(
                 (ing) => ing.status !== "safe",
               );
-              // 'insufficient' / 'sufficient' — dulu ini 'kurang bahan' / 'cukup', TIDAK MATCH ke variantMap
-              // dan selalu jatuh ke fallback "Archived". Ini fix-nya.
-              const badges = hasShortage ? ["insufficient"] : ["sufficient"];
+              const badges = hasUnsafe ? ["insufficient"] : ["sufficient"];
 
               return (
                 <PlanMenuAccordion
@@ -292,7 +302,9 @@ export default function PlanDetailPane({ planId, onRefreshList }) {
       </div>
 
       {/* ── Footer Actions ────────────────────────────────────── */}
-      <div className="p-4 border-t border-border bg-muted/10 flex items-center justify-end gap-3">
+      {/* flex-wrap: di layar sempit tombol turun ke baris baru alih-alih
+          terpotong; flex-col-reverse di mobile biar tombol primary di atas */}
+      <div className="p-4 border-t border-border bg-muted/10 flex flex-wrap items-center justify-end gap-3">
         {isDraft && (
           <>
             <Button

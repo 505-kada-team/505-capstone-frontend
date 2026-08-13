@@ -4,6 +4,7 @@ import { toast } from "sonner";
 import { History, ArrowLeft } from "lucide-react";
 
 import PageHeader from "@/components/shared/PageHeader";
+import DataTable from "@/components/shared/DataTable";
 import {
   Card,
   CardContent,
@@ -211,6 +212,44 @@ export default function DraftPlanPage() {
     setCart(newCart);
   };
 
+  // Definisi kolom untuk DataTable
+  const cartColumns = [
+    {
+      key: "name",
+      header: "Menu",
+      render: (row) => (
+        <span className="text-foreground capitalize">{row.name}</span>
+      ),
+    },
+    {
+      key: "qty",
+      header: "Quantity",
+      headerClass: "text-center",
+      cellClass: "text-center font-mono",
+      render: (row) => row.qty,
+    },
+    {
+      key: "subtotal",
+      header: "Subtotal",
+      cellClass: "font-mono",
+      render: (row) => formatRp(row.subtotal),
+    },
+    {
+      key: "action",
+      header: "Action",
+      headerClass: "text-center",
+      cellClass: "text-center",
+      render: (row) => (
+        <button
+          className="text-destructive text-sm hover:underline"
+          onClick={() => handleRemoveFromCart(cart.indexOf(row))}
+        >
+          Remove
+        </button>
+      ),
+    },
+  ];
+
   const totalEstimated = cart.reduce((acc, item) => acc + item.subtotal, 0);
 
   const formatRp = (num) => `Rp ${num.toLocaleString("id-ID")}`;
@@ -269,8 +308,19 @@ export default function DraftPlanPage() {
   };
 
   // ── Mode: history ───────────────────────────────────────────────
+  // Dibungkus h-full + min-h-0 supaya PlanHistoryView bisa menyerap tinggi
+  // pasti dari layout admin di atasnya (biasanya <main> yang h-screen/h-full),
+  // lalu meneruskannya ke dalam agar kolom kanan bisa scroll SENDIRI di
+  // dalam batasnya, tanpa menyeret kolom kiri atau menggeser halaman.
+  // Mode lain (create/edit) sengaja tidak dibungkus begini karena memang
+  // dirancang untuk scroll natural sepanjang halaman seperti form biasa.
+  // ── Mode: history ───────────────────────────────────────────────
   if (isHistoryView) {
-    return <PlanHistoryView onNavigateToCreate={goToNewPlan} />;
+    return (
+      <div className="flex flex-col h-full">
+        <PlanHistoryView onNavigateToCreate={goToNewPlan} />
+      </div>
+    );
   }
 
   // ── Mode: loading data plan untuk edit ─────────────────────────
@@ -435,59 +485,14 @@ export default function DraftPlanPage() {
                 </Button>
               </div>
 
-              {/* Tabel Menu */}
-              <div className="border rounded-md overflow-x-auto mt-2">
-                <table className="w-full text-sm min-w-[520px]">
-                  <thead className="bg-muted text-muted-foreground">
-                    <tr>
-                      <th className="py-3 px-4 text-left font-medium capitalize">
-                        Menu
-                      </th>
-                      <th className="py-3 px-4 text-center font-medium capitalize">
-                        Quantity
-                      </th>
-                      <th className="py-3 px-4 text-left font-medium capitalize">
-                        Subtotal
-                      </th>
-                      <th className="py-3 px-4 text-center font-medium capitalize">
-                        Action
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y">
-                    {cart.map((item, index) => (
-                      <tr key={index}>
-                        <td className="py-3 px-4 text-foreground capitalize">
-                          {item.name}
-                        </td>
-                        <td className="py-3 px-4 text-center font-mono">
-                          {item.qty}
-                        </td>
-                        <td className="py-3 px-4 font-mono">
-                          {formatRp(item.subtotal)}
-                        </td>
-                        <td className="py-3 px-4 text-center">
-                          <button
-                            className="text-destructive text-sm hover:underline"
-                            onClick={() => handleRemoveFromCart(index)}
-                          >
-                            Remove
-                          </button>
-                        </td>
-                      </tr>
-                    ))}
-                    {cart.length === 0 && (
-                      <tr>
-                        <td
-                          colSpan={4}
-                          className="py-8 text-center text-muted-foreground"
-                        >
-                          No menu added yet
-                        </td>
-                      </tr>
-                    )}
-                  </tbody>
-                </table>
+              {/* Tabel Menu dengan DataTable */}
+              <div className="w-full min-w-0 rounded-lg border border-border bg-card shadow-sm overflow-x-auto mt-2">
+                <DataTable
+                  columns={cartColumns}
+                  data={cart}
+                  emptyMessage="No menu added yet"
+                  loading={false}
+                />
               </div>
 
               {/* Total Summary */}

@@ -22,6 +22,7 @@ export default function Pagination({
   totalData,
   limit,
   onPageChange,
+  showInfo = true, // ⬅️ baru
 }) {
   // Hitung range yang ditampilkan
   const start = totalData === 0 ? 0 : (currentPage - 1) * limit + 1;
@@ -43,20 +44,26 @@ export default function Pagination({
   if (totalPage <= 0) return null;
 
   return (
-    // Tambahkan lg:justify-center agar tombol ke tengah di desktop
-    <div className="flex items-center justify-between lg:justify-center mt-4 px-1">
-      {/* Info count - Tambahkan lg:hidden agar hilang di desktop */}
-      <p className="text-xs text-muted-foreground lg:hidden">
-        Showing{" "}
-        <span className="font-mono font-medium text-foreground">
-          {start}–{end}
-        </span>{" "}
-        of{" "}
-        <span className="font-mono font-medium text-foreground">
-          {totalData.toLocaleString("id-ID")}
-        </span>{" "}
-        items
-      </p>
+    <div
+      className={cn(
+        "flex items-center mt-4 px-1",
+        showInfo ? "justify-center lg:justify-between" : "justify-center",
+      )}
+    >
+      {/* Info count - hanya render kalau showInfo true */}
+      {showInfo && (
+        <p className="hidden lg:block text-xs text-muted-foreground">
+          Showing{" "}
+          <span className="font-mono font-medium text-foreground">
+            {start}–{end}
+          </span>{" "}
+          of{" "}
+          <span className="font-mono font-medium text-foreground">
+            {totalData.toLocaleString("id-ID")}
+          </span>{" "}
+          items
+        </p>
+      )}
 
       {/* Page buttons */}
       <div className="flex items-center gap-1">

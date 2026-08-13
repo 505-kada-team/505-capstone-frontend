@@ -513,7 +513,7 @@ export const getInventoryDropdown = (params) =>
 export const getInventoryDetail = (id) =>
   USE_MOCK
     ? Promise.resolve({ data: mockInventoryDetail })
-    : api.get(`/api/inventory/${id}`);
+    : api.get(`/inventory/${id}`);
 
 // =============================================================================
 // ENDPOINT 5 — PUT /api/inventory/:id
@@ -524,7 +524,7 @@ export const getInventoryDetail = (id) =>
 export const updateInventory = (id, payload) =>
   USE_MOCK
     ? Promise.resolve({ data: mockEditInventory })
-    : api.put(`/api/inventory/${id}`, payload);
+    : api.put(`/inventory/${id}`, payload);
 
 // =============================================================================
 // ENDPOINT 6 — DELETE /api/inventory/:id
@@ -534,7 +534,7 @@ export const updateInventory = (id, payload) =>
 export const archiveInventory = (id) =>
   USE_MOCK
     ? Promise.resolve({ data: mockDeleteInventory })
-    : api.delete(`/api/inventory/${id}`);
+    : api.delete(`/inventory/${id}`);
 
 // =============================================================================
 // ENDPOINT 7 — POST /api/inventory/:id/subinventory
@@ -545,7 +545,7 @@ export const archiveInventory = (id) =>
 export const addSubInventory = (inventoryId, payload) =>
   USE_MOCK
     ? Promise.resolve({ data: mockAddSubInventoryBatch })
-    : api.post(`/api/inventory/${inventoryId}/subinventory`, payload);
+    : api.post(`/inventory/${inventoryId}/subinventory`, payload);
 
 // =============================================================================
 // ENDPOINT 8 — GET /api/inventory/:id/subinventory
@@ -555,7 +555,7 @@ export const addSubInventory = (inventoryId, payload) =>
 export const getSubInventoryList = (inventoryId, params) =>
   USE_MOCK
     ? Promise.resolve({ data: mockSubInventoryList })
-    : api.get(`/api/inventory/${inventoryId}/subinventory`, { params });
+    : api.get(`/inventory/${inventoryId}/subinventory`, { params });
 
 // =============================================================================
 // ENDPOINT 9 — DELETE /api/subinventory/:id
@@ -565,7 +565,7 @@ export const getSubInventoryList = (inventoryId, params) =>
 export const archiveSubInventory = (subInventoryId, payload) =>
   USE_MOCK
     ? Promise.resolve({ data: mockDeleteSubInventory })
-    : api.delete(`/api/subinventory/${subInventoryId}`, { data: payload });
+    : api.delete(`/subinventory/${subInventoryId}`, { data: payload });
 
 // =============================================================================
 // ENDPOINT 10 — GET /api/history-sub-inventory
@@ -663,7 +663,7 @@ export const getMenuList = (params) =>
 export const getMenuDetail = (id) =>
   USE_MOCK
     ? Promise.resolve({ data: mockMenuDetail })
-    : api.get(`/api/menu/${id}`);
+    : api.get(`/menu/${id}`);
 
 // =============================================================================
 // ENDPOINT 4 — PUT /api/menu/:id
@@ -678,7 +678,7 @@ export const getMenuDetail = (id) =>
 export const updateMenu = (id, payload) =>
   USE_MOCK
     ? Promise.resolve({ data: mockEditMenu })
-    : api.put(`/api/menu/${id}`, payload);
+    : api.put(`/menu/${id}`, payload);
 
 // =============================================================================
 // ENDPOINT 5 — DELETE /api/menu/:id
@@ -691,7 +691,7 @@ export const updateMenu = (id, payload) =>
 export const archiveMenu = (id) =>
   USE_MOCK
     ? Promise.resolve({ data: mockDeleteMenu })
-    : api.delete(`/api/menu/${id}`);
+    : api.delete(`/menu/${id}`);
 
 // =============================================================================
 // ENDPOINT 6 — GET /api/menu/dropdown
@@ -739,7 +739,7 @@ export const getPlanDetail = (id) =>
   USE_MOCK
     ? // TODO: Ganti ke mockPlanDetailActive kalau ingin test UI state active
       Promise.resolve({ data: mockPlanDetailDraft })
-    : api.get(`/api/plan/${id}`);
+    : api.get(`/plan/${id}`);
 
 // =============================================================================
 // ENDPOINT A4 — PUT /api/plan/:id
@@ -749,7 +749,7 @@ export const getPlanDetail = (id) =>
 export const updatePlan = (id, payload) =>
   USE_MOCK
     ? Promise.resolve({ data: mockUpdatePlan })
-    : api.put(`/api/plan/${id}`, payload);
+    : api.put(`/plan/${id}`, payload);
 
 // =============================================================================
 // ENDPOINT A5 — POST /api/plan/:id/check-availability
@@ -759,7 +759,7 @@ export const updatePlan = (id, payload) =>
 export const checkAvailabilityPlan = (id) =>
   USE_MOCK
     ? Promise.resolve({ data: mockCheckAvailabilityPlan })
-    : api.post(`/api/plan/${id}/check-availability`);
+    : api.post(`/plan/${id}/check-availability`);
 
 // =============================================================================
 // ENDPOINT A6 — POST /api/plan/:id/approve
@@ -769,7 +769,7 @@ export const checkAvailabilityPlan = (id) =>
 export const approvePlan = (id) =>
   USE_MOCK
     ? Promise.resolve({ data: mockApprovePlan })
-    : api.post(`/api/plan/${id}/approve`);
+    : api.post(`/plan/${id}/approve`);
 
 // =============================================================================
 // ENDPOINT A7 — POST /api/plan/:id/stop
@@ -779,7 +779,7 @@ export const approvePlan = (id) =>
 export const stopPlan = (id, payload) =>
   USE_MOCK
     ? Promise.resolve({ data: mockStopPlan })
-    : api.post(`/api/plan/${id}/stop`, payload);
+    : api.post(`/plan/${id}/stop`, payload);
 
 // =============================================================================
 // ENDPOINT A8 — DELETE /api/plan/:id
@@ -788,7 +788,7 @@ export const stopPlan = (id, payload) =>
 export const cancelPlan = (id) =>
   USE_MOCK
     ? Promise.resolve({ data: mockCancelPlan })
-    : api.delete(`/api/plan/${id}`);
+    : api.delete(`/plan/${id}`);
 
 // =============================================================================
 // ENDPOINT A9 — PUT /api/plan/:id/menus/:menuId/discount
@@ -798,7 +798,7 @@ export const cancelPlan = (id) =>
 export const setMenuDiscount = (id, menuId, payload) =>
   USE_MOCK
     ? Promise.resolve({ data: mockSetDiscount })
-    : api.put(`/api/plan/${id}/menus/${menuId}/discount`, payload);
+    : api.put(`/plan/${id}/menus/${menuId}/discount`, payload);
 
 // =============================================================================
 // ENDPOINT A10 — DELETE /api/plan/:id/menus/:menuId/discount
@@ -807,7 +807,7 @@ export const setMenuDiscount = (id, menuId, payload) =>
 export const deleteMenuDiscount = (id, menuId) =>
   USE_MOCK
     ? Promise.resolve({ data: mockDeleteDiscount })
-    : api.delete(`/api/plan/${id}/menus/${menuId}/discount`);
+    : api.delete(`/plan/${id}/menus/${menuId}/discount`);
 
 // =============================================================================
 // MODUL SELLING — 505_Database Schema_selling.md
@@ -877,7 +877,7 @@ export const getPlanReportList = (params) =>
 export const reviewPlanReport = (id, payload) =>
   USE_MOCK
     ? Promise.resolve({ data: mockReviewPlanReport })
-    : api.put(`/api/plan-reports/${id}/review`, payload);
+    : api.put(`/plan-reports/${id}/review`, payload);
 
 // =============================================================================
 // ENDPOINT C4 — POST /api/plan-reports/:id/add-inventory
@@ -887,7 +887,7 @@ export const reviewPlanReport = (id, payload) =>
 export const addInventoryReplacement = (id, payload) =>
   USE_MOCK
     ? Promise.resolve({ data: mockAddInventoryReplacement })
-    : api.post(`/api/plan-reports/${id}/add-inventory`, payload);
+    : api.post(`/plan-reports/${id}/add-inventory`, payload);
 
 // =============================================================================
 // MODUL DASHBOARD — 505_Database Schema_dashboard.md
@@ -901,4 +901,4 @@ export const addInventoryReplacement = (id, payload) =>
 export const getDashboardSummary = (params) =>
   USE_MOCK
     ? Promise.resolve({ data: mockDashboardHourly })
-    : api.get("/api/dashboard/summary", { params });
+    : api.get("/dashboard/summary", { params });

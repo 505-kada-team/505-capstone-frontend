@@ -272,7 +272,7 @@ export default function InventoryPage() {
 
   // ── Render ────────────────────────────────────────────────
   return (
-    <div>
+    <div className="flex flex-col gap-4 w-full min-w-0">
       {/* Page Header */}
       <PageHeader
         title="Inventory"
@@ -290,20 +290,20 @@ export default function InventoryPage() {
       />
 
       {/* Filter Bar */}
-      <div className="flex items-center justify-between gap-2 mb-5">
+      <div className="flex flex-col md:flex-row md:items-center gap-3">
         <SearchInput
           id="inventory-search"
           placeholder="Search by name or ID..."
           value={search}
           onChange={handleSearch}
-          className="w-[400px]"
+          className="w-full md:flex-[3] md:min-w-0 h-9"
         />
 
-        <div className="flex items-center gap-3">
+        <div className="flex flex-nowrap items-center gap-2 w-full md:w-auto md:flex-[4] md:min-w-0">
           <Select value={category} onValueChange={handleCategory}>
             <SelectTrigger
               id="inventory-category-filter"
-              className="w-[160px] gap-2 h-9 text-muted-foreground font-normal"
+              className="flex-[3] min-w-0 md:w-[130px] md:flex-none h-9 text-muted-foreground font-normal text-xs"
             >
               <SelectValue />
             </SelectTrigger>
@@ -316,9 +316,8 @@ export default function InventoryPage() {
             </SelectContent>
           </Select>
 
-          {/* Sort By — client-side, lihat catatan di header file */}
           <Select value={sortBy} onValueChange={setSortBy}>
-            <SelectTrigger className="w-[160px] gap-2 h-9 text-muted-foreground font-normal">
+            <SelectTrigger className="flex-[4] min-w-0 md:w-[130px] md:flex-none h-9 text-muted-foreground font-normal text-xs">
               <SelectValue placeholder="Sort By" />
             </SelectTrigger>
             <SelectContent>
@@ -339,8 +338,7 @@ export default function InventoryPage() {
         </div>
       )}
 
-      {/* Table */}
-      <div className="rounded-lg border border-border bg-card shadow-sm overflow-hidden">
+      <div className="w-full min-w-0 rounded-lg border border-border bg-card shadow-sm overflow-x-auto">
         <DataTable
           columns={columns}
           data={sortedItems}
@@ -349,16 +347,15 @@ export default function InventoryPage() {
         />
       </div>
 
-      {/* Pagination — nama prop Pagination component beda sama shape hook,
-          jadi di-map manual di sini (page->currentPage, totalPages->totalPage,
-          total->totalData). */}
-      <Pagination
-        currentPage={pagination.page}
-        totalPage={pagination.totalPages}
-        totalData={pagination.total}
-        limit={pagination.limit}
-        onPageChange={setPage}
-      />
+      {pagination.total > 0 && (
+        <Pagination
+          currentPage={page}
+          totalPage={pagination.totalPages}
+          totalData={pagination.total}
+          limit={pagination.limit}
+          onPageChange={setPage}
+        />
+      )}
 
       {/* ── Dialogs ──────────────────────────────────────── */}
 
