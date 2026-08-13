@@ -21,7 +21,6 @@ import AdminPeakActivityCard from '@/components/shared/admin/AdminPeakActivityCa
 import AdminAIInsightsCard from '@/components/shared/admin/AdminAIInsightsCard';
 import AdminSalesConcentrationCard from '@/components/shared/admin/AdminSalesConcentrationCard';
 import AdminTopMenuRevenueShareCard from '@/components/shared/admin/AdminTopMenuRevenueShareCard';
-import AdminBestRevenueHourCard from '@/components/shared/admin/AdminBestRevenueHourCard';
 
 export default function DashboardPage() {
   const navigate = useNavigate();
@@ -49,7 +48,6 @@ export default function DashboardPage() {
     averageRevenuePerCup,
     salesConcentration,
     topMenuRevenueShare,
-    bestRevenueHour,
 
     datePickerMin,
     datePickerMax,
@@ -215,43 +213,35 @@ export default function DashboardPage() {
 
         {/* Right Panel: AI Insights & Top 5 Menu (Coming Soon) */}
         <div className="flex flex-col gap-6">
-          <AdminAIInsightsCard hourlyTrends={hourlyTrends} menuBreakdown={menuBreakdown} />
+          {/* Live Plan Report Card */}
+          <Card className="bg-card border-border shadow-xs flex flex-col justify-between">
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle className="text-xs uppercase tracking-wider font-semibold text-muted-foreground">Plan Report</CardTitle>
+              <AlertTriangle className="h-4 w-4 text-amber-600" />
+            </CardHeader>
+            <CardContent className="flex flex-col gap-4">
+              <div>
+                <div className="text-2xl font-bold font-mono text-amber-600">{pendingReportsCount} reports</div>
+                <p className="text-xs text-muted-foreground mt-1">Incident reports currently pending review from admin.</p>
+              </div>
+
+              <Button variant="outline" size="sm" onClick={() => navigate(`/admin/production-plan/report?planId=${activePlan?._id}`)} className="w-full justify-between mt-1 text-xs border-border">
+                <span>View Reports</span>
+                <ChevronRight size={14} />
+              </Button>
+            </CardContent>
+          </Card>
 
           <AdminTopFiveMenuCard menus={menuBreakdown} />
         </div>
       </div>
+      <AdminAIInsightsCard hourlyTrends={hourlyTrends} menuBreakdown={menuBreakdown} />
 
       {/* Derived Sales Analytics */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <AdminSalesConcentrationCard percentage={salesConcentration.percentage} revenue={salesConcentration.revenue} hours={salesConcentration.hours} />
-
-        <AdminTopMenuRevenueShareCard menu={topMenuRevenueShare.menu} percentage={topMenuRevenueShare.percentage} />
-
-        <AdminBestRevenueHourCard hour={bestRevenueHour} />
-      </div>
-
-      {/* Bottom Grid: Peak Activity, Most Used Inventory, and Plan Report Status */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <AdminPeakActivityCard hourlyTrends={hourlyTrends} />
-
-        {/* Live Plan Report Card */}
-        <Card className="bg-card border-border shadow-xs flex flex-col justify-between">
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-xs uppercase tracking-wider font-semibold text-muted-foreground">Plan Report</CardTitle>
-            <AlertTriangle className="h-4 w-4 text-amber-600" />
-          </CardHeader>
-          <CardContent className="flex flex-col gap-4">
-            <div>
-              <div className="text-2xl font-bold font-mono text-amber-600">{pendingReportsCount} reports</div>
-              <p className="text-xs text-muted-foreground mt-1">Incident reports currently pending review from admin.</p>
-            </div>
-
-            <Button variant="outline" size="sm" onClick={() => navigate(`/admin/production-plan/report?planId=${activePlan?._id}`)} className="w-full justify-between mt-1 text-xs border-border">
-              <span>View Reports</span>
-              <ChevronRight size={14} />
-            </Button>
-          </CardContent>
-        </Card>
+        <AdminSalesConcentrationCard percentage={salesConcentration.percentage} revenue={salesConcentration.revenue} hours={salesConcentration.hours} />
+        <AdminTopMenuRevenueShareCard menu={topMenuRevenueShare.menu} percentage={topMenuRevenueShare.percentage} />
       </div>
     </div>
   );
