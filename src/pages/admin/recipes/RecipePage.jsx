@@ -1,6 +1,7 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useMenuList } from "@/hooks/menu/useMenuList";
 import { useArchiveMenu } from "@/hooks/menu/useArchiveMenu";
+import { usePagination } from "@/hooks/usePagination";
 import PageHeader from "@/components/shared/PageHeader";
 import SearchInput from "@/components/shared/SearchInput";
 import Pagination from "@/components/shared/Pagination";
@@ -19,18 +20,19 @@ import {
 } from "@/components/ui/select";
 import { toast } from "sonner";
 
+const PAGE_SIZE = 12;
+
 export default function RecipePage() {
   const {
     recipes,
-    pagination,
     filters,
     isLoading,
     setSearch,
     setIncludeDeleted,
     setSort,
-    setPage,
     refetch,
   } = useMenuList();
+
   const { archiveRecipe } = useArchiveMenu();
 
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -38,9 +40,19 @@ export default function RecipePage() {
   const [editTargetId, setEditTargetId] = useState(null);
   const [archiveTarget, setArchiveTarget] = useState(null);
 
+  // Filter data client-side
   const displayedRecipes = filters.includeDeleted
     ? recipes.filter((recipe) => recipe.status === "deleted")
     : recipes;
+
+  // Pagination lokal
+  const { currentPage, totalPages, paginatedItems, setPage, resetPage } =
+    usePagination(displayedRecipes, PAGE_SIZE);
+
+  // Reset ke halaman 1 ketika filter berubah
+  useEffect(() => {
+    resetPage();
+  }, [filters.search, filters.includeDeleted, filters.sort, resetPage]);
 
   const handleArchive = async () => {
     if (!archiveTarget) return;
@@ -51,7 +63,7 @@ export default function RecipePage() {
         refetch();
       }
     } catch (err) {
-      toast.error(err?.response?.data?.message || "Gagal mengarsipkan resep");
+      toast.error(err?.response?.data?.message || "Failed to archive recipe");
     } finally {
       setArchiveTarget(null);
     }
@@ -59,36 +71,36 @@ export default function RecipePage() {
 
   return (
     <div className="flex flex-col h-full">
+      {/* Header - tetap di atas */}
       <PageHeader
         title="Recipes"
         subtitle="Manage your drink recipes and ingredient compositions"
         action={
           <Button
             onClick={() => setIsAddModalOpen(true)}
-            className="bg-[#F97316] hover:bg-[#F97316]/90 text-white gap-2 font-medium"
+            className="bg-[#F97316] hover:bg-[#F97316]/90 text-white gap-2 font-medium transition-transform active:scale-[0.97]"
           >
             + Add Recipe
           </Button>
         }
       />
 
-      <div className="p-6 flex-1 flex flex-col gap-6">
-        <div className="flex justify-between items-center gap-2">
+      {/* Filter toolbar - tetap di atas, tidak ikut scroll */}
+      <div className="flex-shrink-0 mt-4">
+        <div className="flex flex-col sm:flex-row sm:items-center gap-3 rounded-lg border border-border/60 bg-muted/20 p-3">
           <SearchInput
             placeholder="Search by name or ingredient..."
             value={filters.search}
             onChange={setSearch}
-            className="w-[400px]"
+            className="w-full sm:w-[320px] sm:flex-none h-9 bg-background"
           />
-          <div className="flex items-center gap-3">
-            {/* includeDeleted: false -> "Active", true -> "Archived" (backend cuma punya param ini, bukan status string) */}
-          <Select
+
+          <div className="grid grid-cols-2 sm:flex sm:items-center gap-2 sm:ml-auto">
+            <Select
               value={filters.includeDeleted ? "archived" : "active"}
-              onValueChange={(val) =>
-                setIncludeDeleted(val === "archived")
-              }
+              onValueChange={(val) => setIncludeDeleted(val === "archived")}
             >
-              <SelectTrigger className="w-[160px] h-9 text-muted-foreground font-normal">
+              <SelectTrigger className="w-full sm:w-[130px] h-9 bg-background text-muted-foreground font-normal text-xs">
                 <SelectValue placeholder="Status" />
               </SelectTrigger>
               <SelectContent>
@@ -97,79 +109,90 @@ export default function RecipePage() {
               </SelectContent>
             </Select>
 
-            {/* Sort ini client-side, hanya untuk item di halaman saat ini */}
             <Select value={filters.sort} onValueChange={setSort}>
-              <SelectTrigger className="w-[160px] gap-2 h-9 text-muted-foreground font-normal">
+              <SelectTrigger className="w-full sm:w-[130px] h-9 bg-background text-muted-foreground font-normal text-xs">
                 <SelectValue placeholder="Sort By" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="name_asc">Nama (A-Z)</SelectItem>
-                <SelectItem value="name_desc">Nama (Z-A)</SelectItem>
-                <SelectItem value="cost_high">Modal Tertinggi</SelectItem>
-                <SelectItem value="cost_low">Modal Terendah</SelectItem>
+                <SelectItem value="name_asc">Name (A-Z)</SelectItem>
+                <SelectItem value="name_desc">Name (Z-A)</SelectItem>
+                <SelectItem value="cost_high">Highest Cost</SelectItem>
+                <SelectItem value="cost_low">Lowest Cost</SelectItem>
               </SelectContent>
             </Select>
           </div>
         </div>
+      </div>
 
-<div className="flex-1 relative">
-          {isLoading ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-              {[...Array(8)].map((_, i) => (
-                <div
-                  key={i}
-                  className="h-72 bg-muted/20 animate-pulse rounded-lg border"
-                />
-              ))}
-            </div>
-          ) : displayedRecipes.length === 0 ? (
-            <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
-              <div className="w-12 h-12 rounded-full bg-muted/50 flex items-center justify-center mb-4">
-                <span className="text-muted-foreground text-xl">
-                  🍽️
-                </span>
-              </div>
-
-              <h3 className="text-lg font-semibold text-foreground">
-                {filters.includeDeleted
-                  ? "Belum ada resep yang diarsipkan"
-                  : "Tidak ada resep"}
-              </h3>
-
-              <p className="text-sm text-muted-foreground">
-                {filters.includeDeleted
-                  ? "Resep yang sudah diarsipkan akan muncul di sini."
-                  : "Silakan tambah resep baru atau coba pencarian lain."}
-              </p>
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-              {displayedRecipes.map((recipe) => (
-                <RecipeCard
-                  key={recipe.id}
-                  recipe={recipe}
-                  onDetail={() =>
-                    setDetailModalId(recipe.id)
-                  }
-                />
-              ))}
-            </div>
-          )}
-        </div>
-
-        {displayedRecipes.length > 0 && pagination && pagination.totalPage > 1 && (
-          <div className="mt-auto">
-            <Pagination
-              currentPage={pagination.currentPage}
-              totalPage={pagination.totalPage}
-              totalData={pagination.totalData}
-              limit={pagination.limit}
-              onPageChange={setPage}
-            />
+      {/* Area scroll untuk card + pagination */}
+      <div className="flex-1 min-h-0  mt-4">
+        {isLoading ? (
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 xl:grid-cols-6 gap-3">
+            {[...Array(PAGE_SIZE)].map((_, i) => (
+              <div
+                key={i}
+                style={{ animationDelay: `${i * 60}ms` }}
+                className="aspect-square bg-muted/20 animate-pulse rounded-lg border"
+              />
+            ))}
           </div>
+        ) : displayedRecipes.length === 0 ? (
+          <div className="flex flex-col items-center justify-center h-full text-center animate-in fade-in zoom-in-95 duration-300">
+            <div className="w-12 h-12 rounded-full bg-muted/50 flex items-center justify-center mb-4">
+              <span className="text-muted-foreground text-xl">🍽️</span>
+            </div>
+
+            <h3 className="text-lg font-semibold text-foreground">
+              {filters.includeDeleted
+                ? "No archived recipes yet"
+                : "No recipes found"}
+            </h3>
+
+            <p className="text-sm text-muted-foreground">
+              {filters.includeDeleted
+                ? "Archived recipes will appear here."
+                : "Please add a new recipe or try a different search."}
+            </p>
+          </div>
+        ) : (
+          <>
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 xl:grid-cols-6 gap-3">
+              {paginatedItems.map((recipe, i) => (
+                <div
+                  key={recipe.id}
+                  style={{ animationDelay: `${Math.min(i, 8) * 40}ms` }}
+                  className="animate-in fade-in slide-in-from-bottom-2 duration-300 fill-mode-both"
+                >
+                  <RecipeCard
+                    recipe={recipe}
+                    onDetail={() => setDetailModalId(recipe.id)}
+                  />
+                </div>
+              ))}
+            </div>
+            {/* Pagination */}
+            {displayedRecipes.length > 0 && (
+              <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-3 mt-6 border-t border-border/60">
+                <div className="text-sm text-muted-foreground whitespace-nowrap">
+                  Showing {(currentPage - 1) * PAGE_SIZE + 1} -{" "}
+                  {Math.min(currentPage * PAGE_SIZE, displayedRecipes.length)}{" "}
+                  of {displayedRecipes.length} items
+                </div>
+                <Pagination
+                  currentPage={currentPage}
+                  totalPage={totalPages}
+                  totalData={displayedRecipes.length}
+                  limit={PAGE_SIZE}
+                  onPageChange={setPage}
+                  showInfo={false}
+                />
+              </div>
+            )}
+          </>
         )}
       </div>
 
+      {/* Modal dan Dialog */}
       <AddRecipeModal
         isOpen={isAddModalOpen}
         onClose={() => setIsAddModalOpen(false)}
@@ -203,10 +226,10 @@ export default function RecipePage() {
 
       <ConfirmDialog
         open={!!archiveTarget}
-        title="Arsipkan Resep?"
-        description="Resep yang diarsipkan tidak akan muncul di daftar utama, tapi tetap dapat dilihat di riwayat plan."
-        confirmLabel="Arsipkan"
-        cancelLabel="Batal"
+        title="Archive Recipe?"
+        description="Archived recipes will not appear in the main list, but can still be viewed in plan history."
+        confirmLabel="Archive"
+        cancelLabel="Cancel"
         onConfirm={handleArchive}
         onClose={() => setArchiveTarget(null)}
         variant="destructive"
