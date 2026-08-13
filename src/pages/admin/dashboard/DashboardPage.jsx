@@ -1,20 +1,20 @@
-import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { toast } from 'sonner';
-import { DollarSign, Coffee, Calendar as CalendarIcon, Sparkles, Clock, Package, AlertTriangle, ChevronRight, TrendingUp, Layers, Activity } from 'lucide-react';
+import { DollarSign, Coffee, Calendar as CalendarIcon, Package, AlertTriangle, ChevronRight, TrendingUp, Layers } from 'lucide-react';
 import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip } from 'recharts';
-
 import { format } from 'date-fns';
+
 import { cn } from '@/lib/utils';
+import { parseLocalDate, getLocalDateTimestamp, formatDateRange } from '@/lib/dateUtils';
+import { formatRupiah } from '@/lib/formatCurrency';
+
 import PageHeader from '@/components/shared/PageHeader';
 import StatCard from '@/components/shared/StatCard';
-import ComingSoonCard from '@/components/shared/ComingSoonCard';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 
-import { getDashboardSummary, getPlanList, getPlanReportList } from '@/services/api';
+import useDashboardData from '@/hooks/useDashboardData';
 
 import AdminTopFiveMenuCard from '@/components/shared/admin/AdminTopFiveMenuCard';
 import AdminPeakActivityCard from '@/components/shared/admin/AdminPeakActivityCard';
@@ -26,318 +26,57 @@ import AdminBestRevenueHourCard from '@/components/shared/admin/AdminBestRevenue
 export default function DashboardPage() {
   const navigate = useNavigate();
 
-  // Helper for today YYYY-MM-DD
-  const todayStr = useMemo(() => {
-    const now = new Date();
+  const {
+    todayStr,
 
-    const wib = new Date(now.toLocaleString('en-US', { timeZone: 'Asia/Jakarta' }));
+    selectedDate,
+    setSelectedDate,
 
-    const yyyy = wib.getFullYear();
-    const mm = String(wib.getMonth() + 1).padStart(2, '0');
-    const dd = String(wib.getDate()).padStart(2, '0');
+    chartMetric,
+    setChartMetric,
 
-    return `${yyyy}-${mm}-${dd}`;
-  }, []);
+    activePlan,
+    pendingReportsCount,
 
-  const parseLocalDate = (dateString) => {
-    if (!dateString) return null;
+    isLoading,
 
-    const [year, month, day] = dateString.split('-').map(Number);
+    chartData,
+    hourlyTrends,
+    menuBreakdown,
 
-    return new Date(year, month - 1, day);
-  };
+    kpi,
 
-  const getLocalDateTimestamp = (dateString, endOfDay = false) => {
-    const date = parseLocalDate(dateString);
+    averageRevenuePerCup,
+    salesConcentration,
+    topMenuRevenueShare,
+    bestRevenueHour,
 
-    if (!date) return null;
+    datePickerMin,
+    datePickerMax,
+  } = useDashboardData();
 
-    if (endOfDay) {
-      date.setHours(23, 59, 59, 999);
-    } else {
-      date.setHours(0, 0, 0, 0);
-    }
-
-    return date.getTime();
-  };
-
-  // Filter & Data States
-  const [selectedDate, setSelectedDate] = useState(todayStr);
-  const [chartMetric, setChartMetric] = useState('revenue'); // "revenue" | "cups"
-
-  // Data State
-  const [summaryData, setSummaryData] = useState(null);
-  const [activePlan, setActivePlan] = useState(null);
-  const [pendingReportsCount, setPendingReportsCount] = useState(0);
-  const [isLoading, setIsLoading] = useState(true);
-
-  // Format Currency
-  const formatRupiah = (val) =>
-    new Intl.NumberFormat('id-ID', {
-      style: 'currency',
-      currency: 'IDR',
-      minimumFractionDigits: 0,
-    }).format(val || 0);
-
-  // Fetch Active Plan (to constrain date range & display Active Plan card)
-  useEffect(() => {
-    async function fetchActivePlan() {
-      try {
-        const res = await getPlanList({ status: 'active' });
-        if (res.data?.success && res.data.data?.length > 0) {
-          const plan = res.data.data[0];
-          setActivePlan(plan);
-          console.log('=== ACTIVE PLAN OBJECT ===');
-          console.log(plan);
-          console.log('=== POSSIBLE IDS ===');
-          console.log('_id:', plan?._id);
-          console.log('id:', plan?.id);
-          console.log('planId:', plan?.planId);
-
-          if (plan.startDate && plan.endDate) {
-            const planStart = plan.startDate.split('T')[0];
-            const planEnd = plan.endDate.split('T')[0];
-
-            if (todayStr >= planStart && todayStr <= planEnd) {
-              // Hari ini masih berada dalam periode plan
-              setSelectedDate(todayStr);
-            } else if (todayStr < planStart) {
-              // Plan belum dimulai
-              setSelectedDate(planStart);
-            } else {
-              // Plan sudah berakhir
-              setSelectedDate(planEnd);
-            }
-          }
-        } else {
-          setActivePlan(null);
-        }
-      } catch (err) {
-        console.error('Failed to load active plan:', err);
-      }
-    }
-    fetchActivePlan();
-  }, [todayStr]);
-
-  // Fetch Pending Reports Count
-  useEffect(() => {
-    async function fetchPendingReports() {
-      if (!activePlan?._id) {
-        setPendingReportsCount(0);
-        return;
-      }
-
-      try {
-        const res = await getPlanReportList({
-          planId: activePlan._id,
-          status: 'pending',
-        });
-
-        if (res.data?.success) {
-          setPendingReportsCount(res.data.data?.length || 0);
-        } else {
-          setPendingReportsCount(0);
-        }
-      } catch (err) {
-        console.error('Failed to load pending reports:', err);
-        setPendingReportsCount(0);
-      }
-    }
-
-    fetchPendingReports();
-  }, [activePlan]);
-
-  // Fetch Dashboard Summary Data for Selected Date
-  useEffect(() => {
-    async function fetchSummary() {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setIsLoading(true);
-      try {
-        const res = await getDashboardSummary({
-          planId: activePlan._id,
-          date: selectedDate,
-        });
-        if (res.data?.success) {
-          setSummaryData(res.data.data);
-          // }
-          // if (res.data?.success) {
-          //   const data = res.data.data;
-
-          //   // TEST MAPPING UI
-          //   data.totalRevenue = 100000;
-          //   data.totalUnitsSold = 8;
-
-          //   data.hourlyTrends = data.hourlyTrends.map((item) =>
-          //     item.hour === 10
-          //       ? {
-          //           ...item,
-          //           revenue: 50000,
-          //           unitsSold: 4,
-          //         }
-          //       : item,
-          //   );
-
-          //   console.log('TEST DATA:', data);
-
-          //   setSummaryData(data);
-        } else {
-          setSummaryData(null);
-        }
-      } catch (err) {
-        console.error('Failed to load dashboard summary:', err);
-        toast.error('Failed to retrieve dashboard summary');
-      } finally {
-        setIsLoading(false);
-      }
-    }
-    fetchSummary();
-  }, [activePlan, selectedDate]);
-
-  // Date Picker Boundaries based on Active Plan
-  const datePickerMin = useMemo(() => {
-    if (!activePlan?.startDate) return undefined;
-    return activePlan.startDate.split('T')[0];
-  }, [activePlan]);
-
-  const datePickerMax = useMemo(() => {
-    if (!activePlan?.endDate) return todayStr;
-    const planEnd = activePlan.endDate.split('T')[0];
-    return planEnd < todayStr ? planEnd : todayStr;
-  }, [activePlan, todayStr]);
-
-  // 24-Hour Continuous Chart Data
-  const chartData = useMemo(() => {
-    const rawHourly = summaryData?.hourlyTrends || [];
-
-    return Array.from({ length: 24 }, (_, i) => {
-      const hourStr = `${String(i).padStart(2, '0')}:00`;
-      const found = rawHourly.find((item) => item.hour === i);
-
-      return {
-        hour: hourStr,
-        revenue: found?.revenue || 0,
-        cups: found?.unitsSold || 0,
-        // transactions: found?.totalTransactions || 0,
-      };
-    });
-  }, [summaryData]);
-
-  const dashboardHourlyTrends = summaryData?.hourlyTrends || [];
-  const dashboardMenuBreakdown = summaryData?.menuBreakdown || [];
-
-  // ============================================================
-  // Dashboard Derived Analytics
-  // ============================================================
-
-  const averageRevenuePerCup = useMemo(() => {
-    const totalRevenue = Number(summaryData?.totalRevenue || 0);
-    const totalUnitsSold = Number(summaryData?.totalUnitsSold || 0);
-
-    if (totalUnitsSold <= 0) {
-      return 0;
-    }
-
-    return totalRevenue / totalUnitsSold;
-  }, [summaryData]);
-
-  const salesConcentration = useMemo(() => {
-    const totalRevenue = Number(summaryData?.totalRevenue || 0);
-
-    if (totalRevenue <= 0) {
-      return {
-        percentage: 0,
-        revenue: 0,
-        hours: [],
-      };
-    }
-
-    const topHours = [...dashboardHourlyTrends]
-      .filter((item) => Number(item.revenue || 0) > 0)
-      .sort((a, b) => Number(b.revenue || 0) - Number(a.revenue || 0))
-      .slice(0, 3);
-
-    const concentratedRevenue = topHours.reduce((sum, item) => sum + Number(item.revenue || 0), 0);
-
-    return {
-      percentage: (concentratedRevenue / totalRevenue) * 100,
-      revenue: concentratedRevenue,
-      hours: topHours,
-    };
-  }, [summaryData, dashboardHourlyTrends]);
-
-  const topMenuRevenueShare = useMemo(() => {
-    const totalRevenue = Number(summaryData?.totalRevenue || 0);
-
-    if (totalRevenue <= 0 || dashboardMenuBreakdown.length === 0) {
-      return {
-        menu: null,
-        percentage: 0,
-      };
-    }
-
-    const topMenu = [...dashboardMenuBreakdown].sort((a, b) => Number(b.revenue || 0) - Number(a.revenue || 0)).at(0);
-
-    return {
-      menu: topMenu,
-      percentage: (Number(topMenu.revenue || 0) / totalRevenue) * 100,
-    };
-  }, [summaryData, dashboardMenuBreakdown]);
-
-  const bestRevenueHour = useMemo(() => {
-    const activeHours = dashboardHourlyTrends.filter((item) => Number(item.revenue || 0) > 0);
-
-    if (activeHours.length === 0) {
+  const CustomChartTooltip = ({ active, payload, label }) => {
+    if (!active || !payload || !payload.length) {
       return null;
     }
 
-    return [...activeHours].sort((a, b) => Number(b.revenue || 0) - Number(a.revenue || 0))[0];
-  }, [dashboardHourlyTrends]);
+    const data = payload[0].payload;
 
-  // Format Date for Card
-  const formatDateRange = (start, end) => {
-    if (!start || !end) return '-';
-    const s = new Date(start).toLocaleDateString('en-US', {
-      day: 'numeric',
-      month: 'short',
-      year: 'numeric',
-    });
-    const e = new Date(end).toLocaleDateString('en-US', {
-      day: 'numeric',
-      month: 'short',
-      year: 'numeric',
-    });
-    return `${s} - ${e}`;
-  };
+    return (
+      <div className="bg-popover border border-border p-3 rounded-lg shadow-md text-xs font-sans space-y-1.5 min-w-[160px]">
+        <div className="font-bold text-foreground font-heading border-b border-border pb-1">Time: {label}</div>
 
-  // Custom Recharts Tooltip
-  // eslint-disable-next-line react/prop-types
-  const CustomChartTooltip = ({ active, payload, label }) => {
-    if (active && payload && payload.length) {
-      const data = payload[0].payload;
-      return (
-        <div className="bg-popover border border-border p-3 rounded-lg shadow-md text-xs font-sans space-y-1.5 min-w-[160px]">
-          <div className="font-bold text-foreground font-heading border-b border-border pb-1">Time: {label}</div>
-          <div className="flex justify-between items-center text-muted-foreground">
-            <span>Revenue:</span>
-            <span className="font-semibold font-mono text-foreground">{formatRupiah(data.revenue)}</span>
-          </div>
-          <div className="flex justify-between items-center text-muted-foreground">
-            <span>Cups Sold:</span>
-            <span className="font-semibold font-mono text-orange-600 dark:text-orange-400">{data.cups} cups</span>
-          </div>
-          {/* <div className="flex justify-between items-center text-muted-foreground">
-            <span>Transactions:</span>
-            <span className="font-semibold font-mono text-foreground">{data.transactions} txns</span>
-          </div> */}
+        <div className="flex justify-between items-center text-muted-foreground">
+          <span>Revenue:</span>
+          <span className="font-semibold font-mono text-foreground">{formatRupiah(data.revenue)}</span>
         </div>
-      );
-    }
-    return null;
-  };
 
-  const kpi = {
-    totalRevenue: summaryData?.totalRevenue || 0,
-    totalCupsSold: summaryData?.totalUnitsSold || 0,
+        <div className="flex justify-between items-center text-muted-foreground">
+          <span>Cups Sold:</span>
+          <span className="font-semibold font-mono text-orange-600 dark:text-orange-400">{data.cups} cups</span>
+        </div>
+      </div>
+    );
   };
 
   return (
@@ -386,6 +125,7 @@ export default function DashboardPage() {
         <StatCard title="Total Revenue" value={formatRupiah(kpi.totalRevenue)} subtitle={`Sales on ${selectedDate}`} icon={DollarSign} />
         <StatCard title="Total Cups Sold" value={`${kpi.totalCupsSold.toLocaleString()} cups`} subtitle={`Volume on ${selectedDate}`} icon={Coffee} />
         <StatCard title="Avg. Revenue / Cup" value={formatRupiah(averageRevenuePerCup)} subtitle={kpi.totalCupsSold > 0 ? `Based on ${kpi.totalCupsSold} cups sold` : 'No sales recorded'} icon={TrendingUp} />
+
         {/* Active Plan Card */}
         <Card className="bg-card border-border shadow-xs">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
@@ -475,9 +215,9 @@ export default function DashboardPage() {
 
         {/* Right Panel: AI Insights & Top 5 Menu (Coming Soon) */}
         <div className="flex flex-col gap-6">
-          <AdminAIInsightsCard hourlyTrends={dashboardHourlyTrends} menuBreakdown={dashboardMenuBreakdown} />
+          <AdminAIInsightsCard hourlyTrends={hourlyTrends} menuBreakdown={menuBreakdown} />
 
-          <AdminTopFiveMenuCard menus={dashboardMenuBreakdown} />
+          <AdminTopFiveMenuCard menus={menuBreakdown} />
         </div>
       </div>
 
@@ -492,8 +232,7 @@ export default function DashboardPage() {
 
       {/* Bottom Grid: Peak Activity, Most Used Inventory, and Plan Report Status */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <AdminPeakActivityCard hourlyTrends={dashboardHourlyTrends} />
-        <ComingSoonCard title="Most Used Inventory" description="Raw ingredient consumption metrics and usage rate tracking." icon={Package} />
+        <AdminPeakActivityCard hourlyTrends={hourlyTrends} />
 
         {/* Live Plan Report Card */}
         <Card className="bg-card border-border shadow-xs flex flex-col justify-between">
