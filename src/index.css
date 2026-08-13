@@ -23,58 +23,58 @@
    ============================================================ */
 @theme inline {
   /* Fonts */
-  --font-heading: 'Epilogue Variable', 'Epilogue', sans-serif;
-  --font-sans:    'Work Sans', sans-serif;
-  --font-mono:    'Geist Mono Variable', 'Geist Mono', monospace;
+  --font-heading: "Epilogue Variable", "Epilogue", sans-serif;
+  --font-sans: "Work Sans", sans-serif;
+  --font-mono: "Geist Mono Variable", "Geist Mono", monospace;
 
   /* shadcn color token remapping ke CSS variables */
-  --color-background:          var(--background);
-  --color-foreground:          var(--foreground);
-  --color-card:                var(--card);
-  --color-card-foreground:     var(--card-foreground);
-  --color-popover:             var(--popover);
-  --color-popover-foreground:  var(--popover-foreground);
-  --color-primary:             var(--primary);
-  --color-primary-foreground:  var(--primary-foreground);
-  --color-secondary:           var(--secondary);
-  --color-secondary-foreground:var(--secondary-foreground);
-  --color-muted:               var(--muted);
-  --color-muted-foreground:    var(--muted-foreground);
-  --color-accent:              var(--accent);
-  --color-accent-foreground:   var(--accent-foreground);
-  --color-destructive:         var(--destructive);
-  --color-border:              var(--border);
-  --color-input:               var(--input);
-  --color-ring:                var(--ring);
-  --color-sidebar:             var(--sidebar);
-  --color-sidebar-foreground:  var(--sidebar-foreground);
-  --color-sidebar-border:      var(--sidebar-border);
-  --color-sidebar-primary:     var(--sidebar-primary);
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-primary: var(--sidebar-primary);
   --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
-  --color-sidebar-accent:      var(--sidebar-accent);
+  --color-sidebar-accent: var(--sidebar-accent);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
-  --color-sidebar-ring:        var(--sidebar-ring);
+  --color-sidebar-ring: var(--sidebar-ring);
 
   /* Status tokens — DESIGN_v1.md Section 2, TERPISAH dari warna brand/accent.
      Sengaja SAMA nilainya di light & dark mode (DESIGN.md: "Tetap sama di
      kedua mode" untuk warning; success & muted-tan juga tidak disebut
      beda per-mode, jadi ikut pola yang sama). */
-  --color-warning:              var(--warning);
-  --color-success:              var(--success);
-  --color-muted-tan:            var(--muted-tan);
+  --color-warning: var(--warning);
+  --color-success: var(--success);
+  --color-muted-tan: var(--muted-tan);
 
   /* Chart tokens (tetap) */
-  --color-chart-1:  var(--chart-1);
-  --color-chart-2:  var(--chart-2);
-  --color-chart-3:  var(--chart-3);
-  --color-chart-4:  var(--chart-4);
-  --color-chart-5:  var(--chart-5);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
 
   /* Radius tokens */
-  --radius-sm:  calc(var(--radius) * 0.6);
-  --radius-md:  calc(var(--radius) * 0.8);
-  --radius-lg:  var(--radius);
-  --radius-xl:  calc(var(--radius) * 1.4);
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
   --radius-2xl: calc(var(--radius) * 1.8);
 }
 
@@ -83,66 +83,70 @@
    ============================================================ */
 :root {
   /* Base */
-  --background:         oklch(0.990 0.007 65);   /* #FDFBF9 warm white */
-  --foreground:         oklch(0.210 0.023 47);   /* #2D241E dark brown */
+  --background: oklch(0.99 0.007 65); /* #FDFBF9 warm white */
+  --foreground: oklch(0.21 0.023 47); /* #2D241E dark brown */
 
   /* Cards — putih bersih di atas background hangat, ada kedalaman */
-  --card:               oklch(1.000 0.000 0);    /* white */
-  --card-foreground:    oklch(0.210 0.023 47);
-  --popover:            oklch(1.000 0.000 0);
-  --popover-foreground: oklch(0.210 0.023 47);
+  --card: oklch(1 0 0); /* white */
+  --card-foreground: oklch(0.21 0.023 47);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.21 0.023 47);
 
   /* Primary = dark brown di light mode */
-  --primary:            oklch(0.210 0.023 47);   /* #2D241E */
-  --primary-foreground: oklch(1.000 0.000 0);    /* white */
+  --primary: oklch(0.21 0.023 47); /* #2D241E */
+  --primary-foreground: oklch(1 0 0); /* white */
 
   /* Secondary = cream hangat */
-  --secondary:          oklch(0.900 0.022 68);   /* cream muda (#EDE5DB) */
-  --secondary-foreground: oklch(0.210 0.023 47);
+  --secondary: oklch(0.9 0.022 68); /* cream muda (#EDE5DB) */
+  --secondary-foreground: oklch(0.21 0.023 47);
 
   /* Muted — warm brownish-gray sesuai gambar label "Work Sans" */
-  --muted:              oklch(0.945 0.012 70);   /* warm cream-gray */
-  --muted-foreground:   oklch(0.490 0.025 55);   /* warm brown-gray untuk label muted */
+  --muted: oklch(0.945 0.012 70); /* warm cream-gray */
+  --muted-foreground: oklch(
+    0.49 0.025 55
+  ); /* warm brown-gray untuk label muted */
 
   /* Accent = oranye brand (tombol CTA, highlight — bukan status) */
-  --accent:             oklch(0.700 0.191 47);   /* #F97316 */
-  --accent-foreground:  oklch(1.000 0.000 0);
+  --accent: oklch(0.7 0.191 47); /* #F97316 */
+  --accent-foreground: oklch(1 0 0);
 
   /* Destructive */
-  --destructive:        oklch(0.500 0.175 35);   /* #C4441F */
+  --destructive: oklch(0.5 0.175 35); /* #C4441F */
 
   /* Status tokens — DESIGN_v1.md Section 2.
      Hex langsung (bukan oklch) supaya persis sama dengan nilai final di
      dokumen, tanpa risiko selisih dari konversi manual ke oklch. */
-  --warning:            #B45309;   /* batchSafetyStatus: unsafe */
-  --success:            #4E6A3E;   /* status: active */
-  --muted-tan:          #8A7256;   /* status: depleted */
+  --warning: #b45309; /* batchSafetyStatus: unsafe */
+  --success: #4e6a3e; /* status: active */
+  --muted-tan: #8a7256; /* status: depleted */
 
   /* Border — warm & visible, tidak pudar di light mode */
-  --border:             oklch(0.860 0.018 65);
-  --input:              oklch(0.860 0.018 65);
-  --ring:               oklch(0.700 0.191 47);   /* oranye focus ring */
+  --border: oklch(0.86 0.018 65);
+  --input: oklch(0.86 0.018 65);
+  --ring: oklch(0.7 0.191 47); /* oranye focus ring */
 
   /* Radius */
-  --radius:             0.5rem;
+  --radius: 0.5rem;
 
   /* Charts */
-  --chart-1: oklch(0.700 0.191 47);
-  --chart-2: oklch(0.430 0.085 140);
-  --chart-3: oklch(0.500 0.120 55);
-  --chart-4: oklch(0.520 0.037 62);
-  --chart-5: oklch(0.500 0.175 35);
+  --chart-1: oklch(0.7 0.191 47);
+  --chart-2: oklch(0.43 0.085 140);
+  --chart-3: oklch(0.5 0.12 55);
+  --chart-4: oklch(0.52 0.037 62);
+  --chart-5: oklch(0.5 0.175 35);
 
   /* Sidebar (light) — warm cream yang berbeda dari main background,
      mirip dengan background panel design system di gambar (#F0EAE2 ish) */
-  --sidebar:                      oklch(0.955 0.018 70);   /* warm cream, lebih gelap dari background */
-  --sidebar-foreground:           oklch(0.210 0.023 47);   /* dark brown */
-  --sidebar-primary:              oklch(0.210 0.023 47);
-  --sidebar-primary-foreground:   oklch(1.000 0.000 0);
-  --sidebar-accent:               oklch(0.920 0.020 70);   /* hover state sedikit lebih gelap */
-  --sidebar-accent-foreground:    oklch(0.210 0.023 47);
-  --sidebar-border:               oklch(0.840 0.022 65);   /* border sidebar lebih jelas */
-  --sidebar-ring:                 oklch(0.700 0.191 47);
+  --sidebar: oklch(
+    0.955 0.018 70
+  ); /* warm cream, lebih gelap dari background */
+  --sidebar-foreground: oklch(0.21 0.023 47); /* dark brown */
+  --sidebar-primary: oklch(0.21 0.023 47);
+  --sidebar-primary-foreground: oklch(1 0 0);
+  --sidebar-accent: oklch(0.92 0.02 70); /* hover state sedikit lebih gelap */
+  --sidebar-accent-foreground: oklch(0.21 0.023 47);
+  --sidebar-border: oklch(0.84 0.022 65); /* border sidebar lebih jelas */
+  --sidebar-ring: oklch(0.7 0.191 47);
 }
 
 /* ============================================================
@@ -151,60 +155,60 @@
    ============================================================ */
 .dark {
   /* Base */
-  --background:         oklch(0.100 0.000 0);    /* #121212 Neutral */
-  --foreground:         oklch(0.860 0.030 64);   /* #E6D5C3 cream */
+  --background: oklch(0.1 0 0); /* #121212 Neutral */
+  --foreground: oklch(0.86 0.03 64); /* #E6D5C3 cream */
 
   /* Cards & Popovers — sedikit lebih terang dari background */
-  --card:               oklch(0.140 0.005 50);
-  --card-foreground:    oklch(0.860 0.030 64);
-  --popover:            oklch(0.160 0.008 50);
-  --popover-foreground: oklch(0.860 0.030 64);
+  --card: oklch(0.14 0.005 50);
+  --card-foreground: oklch(0.86 0.03 64);
+  --popover: oklch(0.16 0.008 50);
+  --popover-foreground: oklch(0.86 0.03 64);
 
   /* Primary = ORANGE di dark mode (brown nyatu, orange ambil alih) */
-  --primary:            oklch(0.700 0.191 47);   /* #F97316 */
-  --primary-foreground: oklch(0.100 0.000 0);    /* near black */
+  --primary: oklch(0.7 0.191 47); /* #F97316 */
+  --primary-foreground: oklch(0.1 0 0); /* near black */
 
   /* Secondary = dark brown */
-  --secondary:          oklch(0.210 0.023 47);   /* #2D241E */
-  --secondary-foreground: oklch(0.860 0.030 64);
+  --secondary: oklch(0.21 0.023 47); /* #2D241E */
+  --secondary-foreground: oklch(0.86 0.03 64);
 
   /* Muted */
-  --muted:              oklch(0.180 0.008 50);
-  --muted-foreground:   oklch(0.560 0.015 60);
+  --muted: oklch(0.18 0.008 50);
+  --muted-foreground: oklch(0.56 0.015 60);
 
   /* Accent = oranye tetap */
-  --accent:             oklch(0.700 0.191 47);   /* #F97316 */
-  --accent-foreground:  oklch(0.100 0.000 0);
+  --accent: oklch(0.7 0.191 47); /* #F97316 */
+  --accent-foreground: oklch(0.1 0 0);
 
   /* Destructive */
-  --destructive:        oklch(0.550 0.200 35);   /* sedikit lebih cerah di dark */
+  --destructive: oklch(0.55 0.2 35); /* sedikit lebih cerah di dark */
 
   /* Status tokens — DESIGN_v1.md: sama nilainya di light & dark. */
-  --warning:            #B45309;
-  --success:            #4E6A3E;
-  --muted-tan:          #8A7256;
+  --warning: #b45309;
+  --success: #4e6a3e;
+  --muted-tan: #8a7256;
 
   /* Border & Input */
-  --border:             oklch(1.000 0.000 0 / 12%);
-  --input:              oklch(1.000 0.000 0 / 15%);
-  --ring:               oklch(0.700 0.191 47);   /* oranye focus ring */
+  --border: oklch(1 0 0 / 12%);
+  --input: oklch(1 0 0 / 15%);
+  --ring: oklch(0.7 0.191 47); /* oranye focus ring */
 
   /* Charts */
-  --chart-1: oklch(0.700 0.191 47);
-  --chart-2: oklch(0.430 0.085 140);
-  --chart-3: oklch(0.500 0.120 55);
-  --chart-4: oklch(0.520 0.037 62);
-  --chart-5: oklch(0.550 0.200 35);
+  --chart-1: oklch(0.7 0.191 47);
+  --chart-2: oklch(0.43 0.085 140);
+  --chart-3: oklch(0.5 0.12 55);
+  --chart-4: oklch(0.52 0.037 62);
+  --chart-5: oklch(0.55 0.2 35);
 
   /* Sidebar (dark) — sedikit berbeda dari background utama */
-  --sidebar:                      oklch(0.120 0.005 50);
-  --sidebar-foreground:           oklch(0.860 0.030 64);
-  --sidebar-primary:              oklch(0.700 0.191 47);
-  --sidebar-primary-foreground:   oklch(0.100 0.000 0);
-  --sidebar-accent:               oklch(0.180 0.008 50);
-  --sidebar-accent-foreground:    oklch(0.860 0.030 64);
-  --sidebar-border:               oklch(1.000 0.000 0 / 10%);
-  --sidebar-ring:                 oklch(0.700 0.191 47);
+  --sidebar: oklch(0.12 0.005 50);
+  --sidebar-foreground: oklch(0.86 0.03 64);
+  --sidebar-primary: oklch(0.7 0.191 47);
+  --sidebar-primary-foreground: oklch(0.1 0 0);
+  --sidebar-accent: oklch(0.18 0.008 50);
+  --sidebar-accent-foreground: oklch(0.86 0.03 64);
+  --sidebar-border: oklch(1 0 0 / 10%);
+  --sidebar-ring: oklch(0.7 0.191 47);
 }
 
 /* ============================================================
@@ -220,8 +224,14 @@
   html {
     @apply font-sans;
     font-size: 16px;
+    font-size: 80%;
   }
-  h1, h2, h3, h4, h5, h6 {
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
     @apply font-heading;
   }
 }

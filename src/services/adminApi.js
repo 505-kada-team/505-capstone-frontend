@@ -5,13 +5,13 @@ import api from "./api";
 // ============================================================
 
 export const getInventoryList = (params) =>
-  api.get('/api/inventory', { params });
+  api.get('/inventory', { params });
 
 export const createInventory = (payload) =>
-  api.post('/api/inventory', payload);
+  api.post('/inventory', payload);
 
 export const getInventoryDetail = (id) =>
-  api.get(`/api/inventory/${id}`);
+  api.get(`/inventory/${id}`);
 
 export const archiveInventory = (id) =>
-  api.delete(`/api/inventory/${id}`);
+  api.delete(`/inventory/${id}`);

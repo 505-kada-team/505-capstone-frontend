@@ -1,22 +1,29 @@
-import { useCallback, useState } from 'react';
-import { Download, FileText } from 'lucide-react';
-import { toast } from 'sonner';
+import { useCallback, useState } from "react";
+import { Download, FileText, Filter, RotateCcw } from "lucide-react";
+import { toast } from "sonner";
 
-import PageHeader from '@/components/shared/PageHeader';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import PageHeader from "@/components/shared/PageHeader";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Separator } from "@/components/ui/separator";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
-import WasteReport from './components/WasteReport';
-import SalesReport from './components/SalesReport';
-import ProductionPlanReport from './components/ProductionPlanReport';
-import InventoryReport from './components/InventoryReport';
+import WasteReport from "./components/WasteReport";
+import SalesReport from "./components/SalesReport";
+import ProductionPlanReport from "./components/ProductionPlanReport";
+import InventoryReport from "./components/InventoryReport";
 
 const INITIAL_FILTER = {
-  reportType: 'waste',
-  startDate: '',
-  endDate: '',
+  reportType: "waste",
+  startDate: "",
+  endDate: "",
 };
 
 export default function ReportPage() {
@@ -26,7 +33,7 @@ export default function ReportPage() {
   const [appliedFilter, setAppliedFilter] = useState(INITIAL_FILTER);
 
   const [exportData, setExportData] = useState({
-    filename: '',
+    filename: "",
     columns: [],
     rows: [],
   });
@@ -37,7 +44,7 @@ export default function ReportPage() {
 
   const handleApplyFilter = () => {
     if (startDate && endDate && startDate > endDate) {
-      toast.error('End date cannot be earlier than start date.');
+      toast.error("End date cannot be earlier than start date.");
       return;
     }
 
@@ -59,27 +66,23 @@ export default function ReportPage() {
     };
 
     switch (appliedFilter.reportType) {
-      case 'sales':
+      case "sales":
         return <SalesReport {...commonProps} />;
-
-      case 'plan':
+      case "plan":
         return <ProductionPlanReport {...commonProps} />;
-
-      case 'waste':
+      case "waste":
         return <WasteReport {...commonProps} />;
-
-      case 'inventory':
+      case "inventory":
         return <InventoryReport {...commonProps} />;
-
       default:
         return null;
     }
   };
 
-    const escapeCsvValue = (value) => {
-    const text = String(value ?? '');
+  const escapeCsvValue = (value) => {
+    const text = String(value ?? "");
 
-    if (text.includes(',') || text.includes('"') || text.includes('\n')) {
+    if (text.includes(",") || text.includes('"') || text.includes("\n")) {
       return `"${text.replaceAll('"', '""')}"`;
     }
 
@@ -88,29 +91,31 @@ export default function ReportPage() {
 
   const handleExport = () => {
     if (!exportData.rows.length) {
-      toast.error('No data available to export.');
+      toast.error("No data available to export.");
       return;
     }
 
-    const header = exportData.columns.map((column) => escapeCsvValue(column.label)).join(',');
+    const header = exportData.columns
+      .map((column) => escapeCsvValue(column.label))
+      .join(",");
 
     const body = exportData.rows.map((row) =>
       exportData.columns
         .map((column) => escapeCsvValue(row[column.key]))
-        .join(','),
+        .join(","),
     );
 
-    const csv = [header, ...body].join('\n');
+    const csv = [header, ...body].join("\n");
 
     const blob = new Blob([`\uFEFF${csv}`], {
-      type: 'text/csv;charset=utf-8;',
+      type: "text/csv;charset=utf-8;",
     });
 
     const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
+    const link = document.createElement("a");
 
     link.href = url;
-    link.download = `${exportData.filename || 'report'}.csv`;
+    link.download = `${exportData.filename || "report"}.csv`;
 
     document.body.appendChild(link);
     link.click();
@@ -120,30 +125,35 @@ export default function ReportPage() {
   };
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex flex-col h-full gap-4">
       <PageHeader title="Report" />
 
-      <section className="rounded-lg border border-border bg-card p-6">
-        <div className="mb-6 flex items-center gap-3">
-          <FileText size={20} strokeWidth={2} className="text-accent" />
+      <section className="rounded-lg border border-border bg-card overflow-hidden">
+        {/* Header */}
+        <div className="flex items-center gap-3 p-6 pb-5">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-accent/10">
+            <FileText size={20} strokeWidth={2} className="text-accent" />
+          </div>
 
           <div>
-            <h2 className="text-lg font-semibold text-foreground">
+            <h2 className="text-lg font-semibold text-foreground leading-none">
               Report Generator
             </h2>
-
-            <p className="text-sm text-muted-foreground">
+            <p className="mt-1.5 text-sm text-muted-foreground">
               Filter operational reports by type and period.
             </p>
           </div>
         </div>
 
-        <div className="grid grid-cols-3 gap-4">
+        <Separator />
+
+        {/* Filter fields */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 p-6">
           <div className="grid gap-2">
             <Label htmlFor="reportType">Report Type</Label>
 
             <Select value={reportType} onValueChange={setReportType}>
-              <SelectTrigger id="reportType">
+              <SelectTrigger id="reportType" className="w-full">
                 <SelectValue placeholder="Select report type" />
               </SelectTrigger>
 
@@ -181,24 +191,27 @@ export default function ReportPage() {
           </div>
         </div>
 
-        <div className="mt-6 flex items-center justify-between">
-          <div className="flex gap-3">
-            <Button onClick={handleApplyFilter}>
+        {/* Action toolbar */}
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 bg-muted/40 px-6 py-4">
+          <div className="grid grid-cols-2 sm:flex sm:w-auto gap-2">
+            <Button onClick={handleApplyFilter} className="gap-2">
+              <Filter size={16} />
               Apply Filter
             </Button>
 
-            <Button variant="outline" onClick={handleReset}>
+            <Button variant="ghost" onClick={handleReset} className="gap-2">
+              <RotateCcw size={16} />
               Reset
             </Button>
           </div>
 
           <Button
             variant="outline"
-            className="gap-2"
+            className="gap-2 w-full sm:w-auto"
             onClick={handleExport}
             disabled={exportData.rows.length === 0}
           >
-            <Download size={20} />
+            <Download size={16} />
             Export CSV
           </Button>
         </div>
