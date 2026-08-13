@@ -115,7 +115,7 @@ export default function PlanReportPage() {
   const columns = [
     {
       key: "incidentAt",
-      header: "Waktu Kejadian",
+      header: "Date & Time",
       render: (row) => (
         <div className="flex flex-col gap-1">
           <span className="font-medium">
@@ -133,7 +133,7 @@ export default function PlanReportPage() {
           </span>
           {row.isLateReport && (
             <span className="inline-flex items-center gap-1 text-[10px] text-amber-600 font-semibold bg-amber-50 px-1 py-0.5 rounded w-max">
-              <Clock size={10} /> Laporan Telat
+              <Clock size={10} /> Late Report
             </span>
           )}
         </div>
@@ -141,7 +141,7 @@ export default function PlanReportPage() {
     },
     {
       key: "item",
-      header: "Tipe & Item",
+      header: "Category & Item",
       render: (row) => (
         <div className="flex flex-col">
           <span className="font-semibold capitalize text-foreground">
@@ -155,7 +155,7 @@ export default function PlanReportPage() {
     },
     {
       key: "quantityLost",
-      header: "Kuantitas Rusak",
+      header: "Quantity Lost",
       render: (row) => (
         <span className="font-semibold text-destructive">
           {row.quantityLost}
@@ -164,7 +164,7 @@ export default function PlanReportPage() {
     },
     {
       key: "reportedBy",
-      header: "Pelapor",
+      header: "Reporter",
       render: (row) => (
         <div className="flex flex-col">
           <span className="text-sm font-medium">{row.reportedBy}</span>
@@ -193,7 +193,7 @@ export default function PlanReportPage() {
     },
     {
       key: "actions",
-      header: "Aksi",
+      header: "Actions",
       headerClass: "text-right",
       cellClass: "text-right",
       render: (row) => {
@@ -230,7 +230,7 @@ export default function PlanReportPage() {
                 className="bg-orange-600 hover:bg-orange-700"
                 onClick={() => setReplaceReport(row)}
               >
-                Tarik Stok
+                Pull Stock
               </Button>
             )}
           </div>
@@ -243,6 +243,7 @@ export default function PlanReportPage() {
     <div className="flex flex-col gap-4 w-full min-w-0">
       <PageHeader
         title="Plan Report"
+        subtitle="Manage reports about ingredient stock incidents"
         action={
           <Button
             onClick={() => setIsAddOpen(true)}
@@ -257,7 +258,7 @@ export default function PlanReportPage() {
       <div className="flex flex-col md:flex-row md:items-center gap-3">
         <SearchInput
           id="report-search"
-          placeholder="Cari nama atau alasan..."
+          placeholder="Search name or reason..."
           value={search}
           onChange={setSearch}
           className="w-full md:flex-[3] md:min-w-0 h-9"
@@ -269,7 +270,7 @@ export default function PlanReportPage() {
               <SelectValue placeholder="Status" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">Semua Status</SelectItem>
+              <SelectItem value="all">All Status</SelectItem>
               <SelectItem value="pending">Pending</SelectItem>
               <SelectItem value="approved">Approved</SelectItem>
               <SelectItem value="rejected">Rejected</SelectItem>
@@ -278,10 +279,10 @@ export default function PlanReportPage() {
 
           <Select value={filterCategory} onValueChange={setFilterCategory}>
             <SelectTrigger className="flex-[4] min-w-0 md:w-[130px] md:flex-none h-9 text-muted-foreground font-normal text-xs">
-              <SelectValue placeholder="Kategori" />
+              <SelectValue placeholder="Category" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">Semua Kategori</SelectItem>
+              <SelectItem value="all">All Category</SelectItem>
               <SelectItem value="menu">Menu</SelectItem>
               <SelectItem value="ingredient">Ingredient</SelectItem>
             </SelectContent>
@@ -292,8 +293,8 @@ export default function PlanReportPage() {
               <SelectValue placeholder="Sort By" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="date_newest">Terbaru</SelectItem>
-              <SelectItem value="date_oldest">Terlama</SelectItem>
+              <SelectItem value="newest">Newest</SelectItem>
+              <SelectItem value="oldest">Oldest</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -305,7 +306,7 @@ export default function PlanReportPage() {
           columns={columns}
           data={paginatedReports}
           loading={isLoading}
-          emptyMessage="Belum ada laporan. Klik 'Add Report' untuk membuat laporan baru."
+          emptyMessage="No reports found. Click 'Add Report' to create a new report."
         />
       </div>
 

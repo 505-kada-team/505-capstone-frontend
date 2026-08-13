@@ -102,7 +102,7 @@ export default function PlanHistoryView({ onNavigateToCreate }) {
     // Desktop: tinggi pasti agar halaman tidak ikut scroll
     <div className="flex flex-col gap-6 lg:h-[calc(100vh-7rem)] lg:overflow-hidden">
       <PageHeader
-        title="Production Planning"
+        title="Draft Plan"
         subtitle="Review and manage past production plans."
         action={
           <div className="flex items-center gap-2 flex-wrap">
@@ -131,7 +131,7 @@ export default function PlanHistoryView({ onNavigateToCreate }) {
       {/* Row flex mengambil sisa tinggi setelah header */}
       <div className="flex gap-6 flex-col lg:flex-row lg:flex-1 lg:min-h-0">
         {/* ── Left Sidebar ─────────────────────────────────────────── */}
-        <aside className="w-full lg:w-72 shrink-0 flex flex-col lg:h-full overflow-hidden">
+        <aside className="w-full lg:w-96 shrink-0 flex flex-col lg:h-full overflow-hidden">
           {/* Header & filter – tetap di atas */}
           <div className="flex flex-col gap-3 shrink-0">
             <div className="flex items-center justify-between">

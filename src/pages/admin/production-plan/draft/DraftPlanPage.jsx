@@ -53,7 +53,6 @@ export default function DraftPlanPage() {
 
   const isHistoryView = searchParams.get("view") === "history";
   const editPlanId = searchParams.get("edit");
-  const isEditMode = !isHistoryView && !!editPlanId;
 
   // ── Navigasi mode: SATU pintu masuk, dipakai di semua tombol ──────
   const goToHistory = () => setSearchParams({ view: "history" });
@@ -328,8 +327,8 @@ export default function DraftPlanPage() {
     return (
       <div className="flex flex-col gap-6">
         <PageHeader
-          title="Production Planning"
-          badges={[{ label: "EDIT DRAFT PLAN", variant: "low stock" }]}
+          title="Draft Plan"
+          subtitle="Plan your selling and estimate the flow"
         />
         <Card className="w-full shadow-sm">
           <CardContent className="flex flex-col items-center justify-center py-24 gap-3 animate-pulse">
@@ -354,14 +353,10 @@ export default function DraftPlanPage() {
         `flex-col sm:flex-row` = stack di layar sempit, sejajar di
         layar lebar (responsive & simetris).
       */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 w-full mb-2">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 w-full">
         <PageHeader
-          title="Production Planning"
-          badges={[
-            {
-              label: isEditMode ? "EDIT" : "..",
-            },
-          ]}
+          title="Draft Plan"
+          subtitle="Plan your selling and estimate the flow"
         />
 
         <Button
@@ -373,17 +368,10 @@ export default function DraftPlanPage() {
         </Button>
       </div>
 
-      <Card className="w-full shadow-sm">
-        <CardHeader className="pb-4">
-          <CardTitle className="text-xl">Draft Plan</CardTitle>
-          <CardDescription>
-            Plan your selling and estimate the flow
-          </CardDescription>
-        </CardHeader>
 
         <CardContent>
           {step === 1 && (
-            <div className="border border-border/80 rounded-xl p-4 sm:p-6 mt-4 flex flex-col gap-6 bg-background">
+            <div className="border border-border/80 rounded-xl p-4 sm:p-6 flex flex-col gap-6 bg-background">
               <div className="space-y-2">
                 <label className="text-sm font-medium text-foreground capitalize">
                   Plan Title
@@ -530,8 +518,7 @@ export default function DraftPlanPage() {
             </div>
           )}
         </CardContent>
-      </Card>
-
+        
       <PlanDetailModal
         isOpen={!!createdPlanId}
         onClose={() => setCreatedPlanId(null)}
