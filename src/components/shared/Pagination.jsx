@@ -12,20 +12,27 @@
  *   onPageChange : (page: number) => void
  */
 
-import { ChevronLeft, ChevronRight } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { cn } from '@/lib/utils';
+import { ChevronLeft, ChevronRight } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
-export default function Pagination({ currentPage, totalPage, totalData, limit, onPageChange }) {
+export default function Pagination({
+  currentPage,
+  totalPage,
+  totalData,
+  limit,
+  onPageChange,
+  showInfo = true, // ⬅️ baru
+}) {
   // Hitung range yang ditampilkan
   const start = totalData === 0 ? 0 : (currentPage - 1) * limit + 1;
-  const end   = Math.min(currentPage * limit, totalData);
+  const end = Math.min(currentPage * limit, totalData);
 
   // Tampilkan max 5 halaman, centered di current page
   const getPageNumbers = () => {
     const maxVisible = 5;
     let startPage = Math.max(1, currentPage - Math.floor(maxVisible / 2));
-    let endPage   = Math.min(totalPage, startPage + maxVisible - 1);
+    let endPage = Math.min(totalPage, startPage + maxVisible - 1);
     if (endPage - startPage < maxVisible - 1) {
       startPage = Math.max(1, endPage - maxVisible + 1);
     }
@@ -37,15 +44,26 @@ export default function Pagination({ currentPage, totalPage, totalData, limit, o
   if (totalPage <= 0) return null;
 
   return (
-    <div className="flex items-center justify-between mt-4 px-1">
-      {/* Info count */}
-      <p className="text-xs text-muted-foreground">
-        Showing{' '}
-        <span className="font-mono font-medium text-foreground">{start}–{end}</span>
-        {' '}of{' '}
-        <span className="font-mono font-medium text-foreground">{totalData.toLocaleString('id-ID')}</span>
-        {' '}items
-      </p>
+    <div
+      className={cn(
+        "flex items-center mt-4 px-1",
+        showInfo ? "justify-center lg:justify-between" : "justify-center",
+      )}
+    >
+      {/* Info count - hanya render kalau showInfo true */}
+      {showInfo && (
+        <p className="hidden lg:block text-xs text-muted-foreground">
+          Showing{" "}
+          <span className="font-mono font-medium text-foreground">
+            {start}–{end}
+          </span>{" "}
+          of{" "}
+          <span className="font-mono font-medium text-foreground">
+            {totalData.toLocaleString("id-ID")}
+          </span>{" "}
+          items
+        </p>
+      )}
 
       {/* Page buttons */}
       <div className="flex items-center gap-1">
@@ -63,15 +81,16 @@ export default function Pagination({ currentPage, totalPage, totalData, limit, o
         {getPageNumbers().map((page) => (
           <Button
             key={page}
-            variant={page === currentPage ? 'default' : 'outline'}
+            variant={page === currentPage ? "default" : "outline"}
             size="icon-sm"
             id={`pagination-page-${page}`}
             onClick={() => onPageChange(page)}
             aria-label={`Halaman ${page}`}
-            aria-current={page === currentPage ? 'page' : undefined}
+            aria-current={page === currentPage ? "page" : undefined}
             className={cn(
-              'min-w-[28px] font-mono text-xs',
-              page === currentPage && 'bg-primary text-primary-foreground font-semibold',
+              "min-w-[28px] font-mono text-xs",
+              page === currentPage &&
+                "bg-primary text-primary-foreground font-semibold",
             )}
           >
             {page}

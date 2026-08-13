@@ -116,7 +116,10 @@ export const createSale = (payload) => api.post("/selling", payload).then(unwrap
 // =============================================================================
 
 export const getSaleHistory = (params) =>
-  api.get("/selling/history", { params }).then(unwrap).then(normalizeSaleHistory);
+  api
+    .get("/selling/history", { params })
+    .then(unwrap)
+    .then(normalizeSaleHistory);
 
 // =============================================================================
 // ENDPOINT 4 — GET /selling/active
