@@ -103,7 +103,7 @@ import {
   mockAddInventoryReplacement,
   // ── Dashboard (Endpoint D1) ─────────────────────────────────────────────
   mockDashboardHourly, // ganti ke mockDashboardDaily atau mockDashboardEmpty untuk testing UI
-} from '../lib/mockData';
+} from "../lib/mockData";
 
 /* ==========================================================================
  * AXIOS INSTANCE
@@ -661,9 +661,7 @@ export const getMenuList = (params) =>
 //          termasuk field inventoryStatus per ingredient
 // =============================================================================
 export const getMenuDetail = (id) =>
-  USE_MOCK
-    ? Promise.resolve({ data: mockMenuDetail })
-    : api.get(`/menu/${id}`);
+  USE_MOCK ? Promise.resolve({ data: mockMenuDetail }) : api.get(`/menu/${id}`);
 
 // =============================================================================
 // ENDPOINT 4 — PUT /api/menu/:id
@@ -898,7 +896,7 @@ export const addInventoryReplacement = (id, payload) =>
 // Ringkasan KPI & Tren Penjualan
 // Params opsional: { date, startDate, endDate }
 // =============================================================================
-export const getDashboardSummary = (params) =>
-  USE_MOCK
-    ? Promise.resolve({ data: mockDashboardHourly })
-    : api.get("/dashboard/summary", { params });
+export const getDashboardSummary = ({ planId, date }) =>
+  api.get(`/dashboard/plan/${planId}/daily`, {
+    params: { date },
+  });
