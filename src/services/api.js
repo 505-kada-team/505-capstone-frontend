@@ -898,7 +898,7 @@ export const addInventoryReplacement = (id, payload) =>
 // Ringkasan KPI & Tren Penjualan
 // Params opsional: { date, startDate, endDate }
 // =============================================================================
-export const getDashboardSummary = (params) =>
-  USE_MOCK
-    ? Promise.resolve({ data: mockDashboardHourly })
-    : api.get("/api/dashboard/summary", { params });
+export const getDashboardSummary = ({ planId, date }) =>
+  api.get(`/dashboard/plan/${planId}/daily`, {
+    params: { date },
+  });
