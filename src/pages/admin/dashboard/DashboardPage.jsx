@@ -9,7 +9,6 @@ import { formatRupiah } from '@/lib/formatCurrency';
 
 import PageHeader from '@/components/shared/PageHeader';
 import StatCard from '@/components/shared/StatCard';
-import ComingSoonCard from '@/components/shared/ComingSoonCard';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
@@ -234,7 +233,6 @@ export default function DashboardPage() {
       {/* Bottom Grid: Peak Activity, Most Used Inventory, and Plan Report Status */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <AdminPeakActivityCard hourlyTrends={hourlyTrends} />
-        <ComingSoonCard title="Most Used Inventory" description="Raw ingredient consumption metrics and usage rate tracking." icon={Package} />
 
         {/* Live Plan Report Card */}
         <Card className="bg-card border-border shadow-xs flex flex-col justify-between">
