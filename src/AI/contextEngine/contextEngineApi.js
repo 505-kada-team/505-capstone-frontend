@@ -1,7 +1,18 @@
+/**
+ * AI/contextEngine/contextEngineApi.js
+ * ------------------------------------
+ * Data sources for the context engine: active plan window, ML sales
+ * predictions, weather, and upcoming holidays.
+ */
+
 import { getPlanList } from "@/services/api";
 
 const MS_PER_DAY = 24 * 60 * 60 * 1000;
 const toISODate = (date) => date.toISOString().slice(0, 10);
+
+// =============================================================================
+// ACTIVE PLAN WINDOW
+// =============================================================================
 
 export const getActivePlanWindow = async () => {
   const res = await getPlanList({ status: "active" });
@@ -23,6 +34,12 @@ export const getActivePlanWindow = async () => {
   };
 };
 
+// =============================================================================
+// ML SALES PREDICTIONS
+// Service ML terpisah (repo Python/FastAPI) -- POST /predict-assortment,
+// body: { duration, startDate, tags, menus }.
+// =============================================================================
+
 export const getSalesPredictions = async (plan) => {
   const baseUrl = import.meta.env.VITE_ML_API_URL;
   if (!baseUrl) {
@@ -36,6 +53,7 @@ export const getSalesPredictions = async (plan) => {
       duration: plan.duration,
       startDate: plan.startDate.toISOString(),
       tags: plan.tags,
+      menus: plan.menus,
     }),
   });
 
@@ -44,7 +62,9 @@ export const getSalesPredictions = async (plan) => {
   }
 
   const raw = await response.json();
-  const predictions = raw.map((item) => ({
+  const items = Array.isArray(raw) ? raw : (raw.data ?? []);
+
+  const predictions = items.map((item) => ({
     menu: item.name,
     quantity: item.recommendedQuantity,
     menuId: item.menuId,
@@ -52,6 +72,12 @@ export const getSalesPredictions = async (plan) => {
 
   return { data: predictions };
 };
+
+// =============================================================================
+// WEATHER FORECAST
+// Open-Meteo -- gratis, tanpa API key. Discope ke rentang tanggal plan.
+// Cuma reliable ~16 hari ke depan dari HARI INI (keterbatasan provider).
+// =============================================================================
 
 const MAX_WEATHER_DAYS_AHEAD = 16;
 
@@ -87,6 +113,11 @@ export const getWeatherForecast = async (latitude = -6.35, longitude = 107.15, {
     },
   };
 };
+
+// =============================================================================
+// UPCOMING HOLIDAYS
+// API hari libur publik Indonesia, tanpa key. Discope ke rentang tanggal plan.
+// =============================================================================
 
 export const getUpcomingHolidays = async ({ startDate, endDate }) => {
   const startYear = startDate.getFullYear();

@@ -22,25 +22,18 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { planApi } from "@/services/plan/plan.api";
-import { getMenuDropdown } from "@/services/api"; // kept temporarily for menu dropdown
+import { getMenuList } from "@/services/api";
 import { getSalesPredictions } from "@/AI/contextEngine/contextEngineApi";
 import PlanDetailModal from "./components/PlanDetailModal";
 import PlanHistoryView from "./components/PlanHistoryView";
 
 /**
  * ─────────────────────────────────────────────────────────────────────
- * SINGLE SOURCE OF TRUTH: URL search params.
- *
- * Query params yang dipakai:
- *   ?view=history        → tampilkan PlanHistoryView
- *   ?edit=<planId>        → mode edit, load data plan tsb
- *   (tanpa param)          → mode create (form kosong)
- *
- * `step` sekarang bisa berupa:
+ * `step` bisa berupa:
  *   1                 → form Plan Title / Start Date / End Date (manual)
  *   "forecast-input"  → form input untuk ML (duration / startDate / tags)
- *   "forecast-results"→ daftar hasil rekomendasi ML (read-only)
- *   2                 → tabel cart (bisa diedit, sebelum Create Plan)
+ *   2                 → tabel cart (bisa diedit, sebelum Create Plan) --
+ *                        diisi manual ATAU otomatis dari hasil ML forecast
  * ─────────────────────────────────────────────────────────────────────
  */
 export default function DraftPlanPage() {
@@ -49,9 +42,8 @@ export default function DraftPlanPage() {
   const isHistoryView = searchParams.get("view") === "history";
   const editPlanId = searchParams.get("edit");
 
-  // ── Navigasi mode: SATU pintu masuk, dipakai di semua tombol ──────
   const goToHistory = () => setSearchParams({ view: "history" });
-  const goToNewPlan = () => setSearchParams({}); // reset total: form create kosong
+  const goToNewPlan = () => setSearchParams({});
 
   const [step, setStep] = useState(editPlanId ? 2 : 1);
 
@@ -71,14 +63,12 @@ export default function DraftPlanPage() {
   const [forecastDuration, setForecastDuration] = useState("7");
   const [forecastStartDate, setForecastStartDate] = useState("");
   const [forecastTags, setForecastTags] = useState("");
-  const [forecastResults, setForecastResults] = useState([]);
 
   // Cart State
   const [cart, setCart] = useState([]);
   const [selectedMenu, setSelectedMenu] = useState("");
   const [quantity, setQuantity] = useState("1");
 
-  // ── Sinkronkan step & form dengan editPlanId setiap kali berubah ──
   useEffect(() => {
     if (editPlanId) {
       setStep(2);
@@ -91,7 +81,6 @@ export default function DraftPlanPage() {
     }
   }, [editPlanId]);
 
-  // Load existing plan data for edit mode
   useEffect(() => {
     if (!editPlanId) {
       setIsLoadingPlan(false);
@@ -134,7 +123,6 @@ export default function DraftPlanPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [editPlanId]);
 
-  // Load menu dropdown untuk step 2 (cart manual)
   useEffect(() => {
     if (step === 2 && availableMenus.length === 0) {
       loadAvailableMenus();
@@ -144,18 +132,29 @@ export default function DraftPlanPage() {
 
   async function loadAvailableMenus() {
     try {
-      const res = await getMenuDropdown();
+      const res = await getMenuList();
       const data = Array.isArray(res?.data?.data)
         ? res.data.data
         : Array.isArray(res?.data)
           ? res.data
           : [];
-      const menus = data.map((m) => ({
-        ...m,
-        _id: m._id || m.id,
-        name: m.name || m.menuName || "Unnamed Menu",
-        sellingPrice: m.sellingPrice || 0,
-      }));
+      const menus = data
+        // Cuma menu yang BENERAN punya resep (>= 1 ingredient) & harga
+        // valid yang dianggap "ada di recipes". getMenuDropdown() yang
+        // dipakai sebelumnya gak nyertain info ini sama sekali, jadi menu
+        // tanpa resep bisa lolos tanpa sengaja.
+        .filter((m) => (m.totalIngredients ?? 0) > 0 && (m.sellingPrice ?? 0) > 0)
+        .map((m) => ({
+          ...m,
+          _id: m._id || m.id,
+          name: m.name || m.menuName || "Unnamed Menu",
+          sellingPrice: m.sellingPrice || 0,
+          // ML cuma butuh JUMLAH ingredient (pakai len()), bukan isinya --
+          // getMenuList() cuma balikin totalIngredients (angka), bukan
+          // array penuh, jadi kita bikin array placeholder sepanjang itu
+          // biar fitur ingredient_count di ML sekarang akurat, gak selalu 0.
+          ingredients: new Array(m.totalIngredients ?? 0).fill({}),
+        }));
       setAvailableMenus(menus);
       return menus;
     } catch {
@@ -176,13 +175,12 @@ export default function DraftPlanPage() {
     setStep(2);
   };
 
-  // ── Step "Create from Forecast": buka form input duration/startDate/tags ──
   const openForecastInput = () => {
     if (startDate) setForecastStartDate(startDate);
     setStep("forecast-input");
   };
 
-  // ── Submit form forecast input -> panggil ML -> tampilkan hasil ──
+  // ── Submit form forecast input -> panggil ML -> LANGSUNG isi cart (step 2) ──
   const handleForecastSubmit = async () => {
     if (!forecastStartDate) {
       toast.error("Please fill in Start Date");
@@ -219,40 +217,47 @@ export default function DraftPlanPage() {
         })),
       });
 
-      setForecastResults(predictions);
-      setStep("forecast-results");
+      // Cuma menu yang beneran ketemu di daftar resep (availableMenus) yang
+      // ikut masuk cart. Kalau ML balikin menuId yang gak match apapun di
+      // sini (misal udah dihapus/diarsipkan sejak terakhir sinkron), item
+      // itu di-skip diam-diam -- bukan dianggap "Unknown Menu".
+      const forecastCart = predictions
+        .map((p) => {
+          const menu = menus.find((m) => m._id === p.menuId);
+          if (!menu) return null;
+          return {
+            _id: menu._id,
+            name: menu.name,
+            price: menu.sellingPrice,
+            qty: p.quantity,
+            subtotal: menu.sellingPrice * p.quantity,
+          };
+        })
+        .filter(Boolean);
+
+      if (forecastCart.length === 0) {
+        toast.error("None of the recommended menus matched your recipes");
+      } else if (forecastCart.length < predictions.length) {
+        toast.success(
+          `${forecastCart.length} of ${predictions.length} recommended menus matched and were added`
+        );
+      } else {
+        toast.success(`${forecastCart.length} menu items loaded from ML forecast`);
+      }
+
+      setCart(forecastCart);
+
+      const sd = new Date(forecastStartDate);
+      const ed = new Date(sd.getTime() + duration * 24 * 60 * 60 * 1000);
+      setStartDate(sd.toISOString().split("T")[0]);
+      setEndDate(ed.toISOString().split("T")[0]);
+
+      setStep(2);
     } catch (err) {
       toast.error(err?.message || "Failed to fetch ML forecast");
     } finally {
       setIsForecasting(false);
     }
-  };
-
-  // ── Dari halaman hasil rekomendasi -> isi cart (step 2, bisa diedit) ──
-  const handleUseForecastResults = () => {
-    const forecastCart = forecastResults.map((p) => {
-      const menu = availableMenus.find((m) => m._id === p.menuId);
-      const price = menu?.sellingPrice ?? 0;
-      return {
-        _id: p.menuId,
-        name: p.menu ?? menu?.name ?? "Unknown Menu",
-        price,
-        qty: p.quantity,
-        subtotal: price * p.quantity,
-      };
-    });
-
-    setCart(forecastCart);
-
-    // Sinkronkan tanggal plan utama dengan yang dipakai buat forecast,
-    // supaya "Create Plan" nanti konsisten dengan data yang dipakai ML.
-    const sd = new Date(forecastStartDate);
-    const ed = new Date(sd.getTime() + Number(forecastDuration) * 24 * 60 * 60 * 1000);
-    setStartDate(sd.toISOString().split("T")[0]);
-    setEndDate(ed.toISOString().split("T")[0]);
-
-    toast.success(`${forecastCart.length} menu items loaded from ML forecast`);
-    setStep(2);
   };
 
   const handleAddToCart = () => {
@@ -275,13 +280,23 @@ export default function DraftPlanPage() {
     setQuantity("1");
   };
 
-  const handleRemoveFromCart = (index) => {
+const handleRemoveFromCart = (index) => {
     const newCart = [...cart];
     newCart.splice(index, 1);
     setCart(newCart);
   };
 
-  // Kolom tabel cart (step 2)
+  const handleUpdateQuantity = (index, newQty) => {
+    const qty = Math.max(0, Number(newQty) || 0);
+    const newCart = [...cart];
+    newCart[index] = {
+      ...newCart[index],
+      qty,
+      subtotal: newCart[index].price * qty,
+    };
+    setCart(newCart);
+  };
+
   const cartColumns = [
     {
       key: "name",
@@ -295,7 +310,15 @@ export default function DraftPlanPage() {
       header: "Quantity",
       headerClass: "text-center",
       cellClass: "text-center font-mono",
-      render: (row) => row.qty,
+      render: (row) => (
+        <Input
+          type="number"
+          min="0"
+          value={row.qty}
+          onChange={(e) => handleUpdateQuantity(cart.indexOf(row), e.target.value)}
+          className="w-24 h-8 text-center font-mono mx-auto"
+        />
+      ),
     },
     {
       key: "subtotal",
@@ -319,34 +342,26 @@ export default function DraftPlanPage() {
     },
   ];
 
-  // Kolom tabel hasil forecast (read-only, sebelum masuk cart)
-  const forecastResultColumns = [
-    {
-      key: "menu",
-      header: "Menu",
-      render: (row) => (
-        <span className="text-foreground capitalize">{row.menu}</span>
-      ),
-    },
-    {
-      key: "quantity",
-      header: "Recommended Quantity",
-      headerClass: "text-center",
-      cellClass: "text-center font-mono",
-      render: (row) => row.quantity,
-    },
-  ];
-
   const totalEstimated = cart.reduce((acc, item) => acc + item.subtotal, 0);
 
   const formatRp = (num) => `Rp ${num.toLocaleString("id-ID")}`;
 
   const handleCreatePlan = async () => {
+    if (!planName.trim()) {
+      toast.error("Plan title is required");
+      return;
+    }
+
     if (cart.length === 0) {
       toast.error("Choose at least one menu");
       return;
     }
 
+    const invalidItem = cart.find((item) => !item.qty || item.qty <= 0);
+    if (invalidItem) {
+      toast.error(`Quantity for "${invalidItem.name}" must be greater than 0`);
+      return;
+    }
     setIsSubmitting(true);
     try {
       const start = new Date(startDate);
@@ -394,7 +409,6 @@ export default function DraftPlanPage() {
     }
   };
 
-  // ── Mode: history ───────────────────────────────────────────────
   if (isHistoryView) {
     return (
       <div className="flex flex-col h-full">
@@ -403,7 +417,6 @@ export default function DraftPlanPage() {
     );
   }
 
-  // ── Mode: loading data plan untuk edit ─────────────────────────
   if (isLoadingPlan) {
     return (
       <div className="flex flex-col gap-6">
@@ -423,7 +436,6 @@ export default function DraftPlanPage() {
     );
   }
 
-  // ── Mode: create / edit form ────────────────────────────────────
   return (
     <div className="flex flex-col gap-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 w-full">
@@ -556,39 +568,20 @@ export default function DraftPlanPage() {
           </div>
         )}
 
-        {step === "forecast-results" && (
-          <div className="border border-border/80 rounded-xl p-4 sm:p-6 flex flex-col gap-6 bg-background">
-            <div className="w-full min-w-0 rounded-lg border border-border bg-card shadow-sm overflow-x-auto">
-              <DataTable
-                columns={forecastResultColumns}
-                data={forecastResults}
-                emptyMessage="No recommendations returned"
-                loading={false}
+        {step === 2 && (
+          <div className="border border-border/80 rounded-xl p-4 sm:p-6 mt-4 flex flex-col gap-6 bg-background">
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-foreground capitalize">
+                Plan Title
+              </label>
+              <Input
+                placeholder="Enter plan title"
+                value={planName}
+                onChange={(e) => setPlanName(e.target.value)}
               />
             </div>
 
-            <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-3 sm:gap-4 mt-2">
-              <Button
-                variant="outline"
-                className="border-border hover:bg-muted"
-                onClick={() => setStep("forecast-input")}
-              >
-                Back
-              </Button>
-              <Button
-                className="bg-[#F97316] hover:bg-[#F97316]/90 text-white font-medium px-6"
-                onClick={handleUseForecastResults}
-                disabled={forecastResults.length === 0}
-              >
-                Next
-              </Button>
-            </div>
-          </div>
-        )}
-
-        {step === 2 && (
-          <div className="border border-border/80 rounded-xl p-4 sm:p-6 mt-4 flex flex-col gap-6 bg-background">
-            <div className="flex flex-col sm:flex-row sm:items-end gap-4">
+            <div className="flex flex-col sm:flex-row sm:items-end gap-4">    
               <Select value={selectedMenu} onValueChange={setSelectedMenu}>
                 <SelectTrigger
                   className="w-full"
