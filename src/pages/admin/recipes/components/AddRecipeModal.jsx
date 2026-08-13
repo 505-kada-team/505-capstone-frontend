@@ -31,46 +31,64 @@ export default function AddRecipeModal({ isOpen, onClose, onSuccess }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen]);
 
-  const onSubmit = async (data) => {
-    // 1. Validasi unit bahan & konversi satuan
-    const { resolved, errors } = resolveIngredientsForSubmit(
-      data.ingredients,
-      inventoryOptions,
-    );
-
-    if (errors.length > 0) {
-      errors.forEach((e) =>
-        formState.form.setError(`ingredients.${e.index}.quantityNeeded`, {
-          message: e.message,
-        }),
+    const onSubmit = async (data) => {
+      const { resolved, errors } = resolveIngredientsForSubmit(
+        data.ingredients,
+        inventoryOptions,
       );
-      toast.error("Ada bahan dengan unit yang tidak dikenali, cek kembali.");
-      return;
-    }
 
-    // 2. Kirim data yang sudah di‑resolve
-    try {
-      const res = await createRecipe({ ...data, ingredients: resolved });
-      if (res.success) {
-        toast.success(res.message);
-        onSuccess();
-        onClose();
+      if (errors.length > 0) {
+        errors.forEach((error) =>
+          formState.form.setError(`ingredients.${error.index}.quantityNeeded`, {
+            message: error.message,
+          }),
+        );
+
+        toast.error("Some ingredients have an unrecognized unit. Please check again.");
+        return;
       }
-    } catch (err) {
-      const apiErrors = err?.response?.data?.errors;
-      if (apiErrors) {
-        // Menampilkan error spesifik ke field yang sesuai
-        apiErrors.forEach((e) => {
-          const field = e.field.startsWith("ingredients")
-            ? e.field // langsung gunakan nama field dari server, misal `ingredients.0.inventoryId`
-            : e.field;
-          formState.form.setError(field, { message: e.message });
+
+      try {
+        const res = await createRecipe({
+          ...data,
+          ingredients: resolved,
         });
-      } else {
-        toast.error("Gagal menyimpan resep");
+
+        if (res.success) {
+          toast.success(res.message);
+          onSuccess();
+          onClose();
+        }
+      } catch (err) {
+        const status = err?.response?.status;
+        const response = err?.response?.data;
+        const apiErrors = response?.errors;
+
+        console.error("[CREATE RECIPE ERROR]", response);
+
+        if (status === 409) {
+          formState.form.setError("name", {
+            type: "server",
+            message: `A recipe with the name "${data.name}" already exists`
+          });
+          return;
+        }
+
+        if (Array.isArray(apiErrors)) {
+          apiErrors.forEach((error) => {
+            if (!error?.field) return;
+
+            formState.form.setError(error.field, {
+              type: "server",
+              message: error.message,
+            });
+          });
+          return;
+        }
+
+        toast.error(response?.message ?? "Failed to save recipe");
       }
-    }
-  };
+    };
 
   if (!isOpen) return null;
 
@@ -108,7 +126,7 @@ export default function AddRecipeModal({ isOpen, onClose, onSuccess }) {
             </Button>
             <Button
               type="submit"
-              className="bg-[#F97316] hover:bg-[#F97316]/90 text-white h-10 text-sm font-semibold px-6 shadow-sm shadow-[#F97316]/20 transition-all active:scale-[0.98]"
+              className="h-10 px-6 text-sm font-semibold bg-accent text-white hover:bg-accent/90"
               disabled={isSubmitting}
             >
               {isSubmitting ? "Saving..." : "Save"}

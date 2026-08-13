@@ -187,6 +187,7 @@ export default function AdminLayout() {
             <Settings size={20} className="shrink-0" />
             <span className={`whitespace-nowrap transition-opacity duration-300 ${isSidebarOpen ? 'opacity-100' : 'opacity-0 hidden'}`}>Settings</span>
           </NavLink>
+          
         </nav>
 
         {/* Footer Navigation */}
