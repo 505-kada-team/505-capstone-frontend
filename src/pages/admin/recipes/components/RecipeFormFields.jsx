@@ -9,7 +9,10 @@ import {
 } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { UploadCloud, Trash2 } from "lucide-react";
-import { getRecipeUnitLabel } from "@/lib/inventoryUnit";
+import {
+  getRecipeUnitLabel,
+  estimateIngredientCost,
+} from "@/lib/inventoryUnit";
 
 export default function RecipeFormFields({
   formState,
@@ -29,6 +32,21 @@ export default function RecipeFormFields({
     clearImage,
   } = formState;
 
+  const watchedIngredients = form.watch("ingredients") || [];
+
+  const { totalCost, isComplete } = watchedIngredients.reduce(
+    (acc, ing) => {
+      const inv = inventoryOptions.find((i) => i.id === ing.inventoryId);
+      const cost = estimateIngredientCost(ing.quantityNeeded, inv);
+
+      if (!ing.inventoryId) return acc; // baris kosong, skip dari perhitungan
+      if (cost == null) return { ...acc, isComplete: false };
+
+      return { totalCost: acc.totalCost + cost, isComplete: acc.isComplete };
+    },
+    { totalCost: 0, isComplete: true },
+  );
+
   return (
     <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-stretch flex-1 min-h-0">
       <div className="lg:col-span-6 space-y-5 lg:overflow-y-auto lg:min-h-0 lg:pr-2 custom-scrollbar">
@@ -46,6 +64,24 @@ export default function RecipeFormFields({
               {form.formState.errors.name.message}
             </p>
           )}
+        </div>
+
+        <div className="space-y-1">
+          <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+            Estimated Ingredient Cost
+          </label>
+          <div className="rounded-lg border bg-muted/10 px-3 py-2 flex items-center justify-between">
+            <span className="font-mono text-sm font-semibold text-foreground">
+              {isComplete
+                ? `Rp${totalCost.toLocaleString("id-ID")}`
+                : "Incomplete"}
+            </span>
+            {!isComplete && (
+              <span className="text-[11px] text-muted-foreground">
+                Some ingredients have no price data yet
+              </span>
+            )}
+          </div>
         </div>
 
         {/* Cost Estimate DIHAPUS — dropdown inventory tidak mengirim lastCostBatch (lihat inventory.service.js dropdownInventory: select-nya hanya _id/name/itemCode/category/unit). */}
@@ -249,6 +285,18 @@ export default function RecipeFormFields({
                     <div className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-semibold text-muted-foreground/80 pointer-events-none">
                       {unitLabel}
                     </div>
+                    {(() => {
+                      const qty = form.watch(
+                        `ingredients.${index}.quantityNeeded`,
+                      );
+                      const cost = estimateIngredientCost(qty, selectedInv);
+                      if (cost == null) return null;
+                      return (
+                        <p className="text-[10px] text-muted-foreground mt-0.5 font-mono text-right">
+                          ≈ Rp{cost.toLocaleString("id-ID")}
+                        </p>
+                      );
+                    })()}
                   </div>
 
                   <Button

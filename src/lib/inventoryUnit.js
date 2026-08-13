@@ -78,3 +78,15 @@ export function resolveIngredientsForSubmit(ingredients, inventoryOptions) {
   });
   return { resolved, errors };
 }
+
+export function estimateIngredientCost(quantityDisplay, inventoryItem) {
+  if (
+    !inventoryItem ||
+    !inventoryItem.hasPricing ||
+    quantityDisplay == null ||
+    Number.isNaN(Number(quantityDisplay))
+  ) {
+    return null;
+  }
+  return Number(quantityDisplay) * inventoryItem.pricePerBaseUnit;
+}
