@@ -19,6 +19,9 @@ import { getDashboardSummary, getPlanList, getPlanReportList } from '@/services/
 import AdminTopFiveMenuCard from '@/components/shared/admin/AdminTopFiveMenuCard';
 import AdminPeakActivityCard from '@/components/shared/admin/AdminPeakActivityCard';
 import AdminAIInsightsCard from '@/components/shared/admin/AdminAIInsightsCard';
+import AdminSalesConcentrationCard from '@/components/shared/admin/AdminSalesConcentrationCard';
+import AdminTopMenuRevenueShareCard from '@/components/shared/admin/AdminTopMenuRevenueShareCard';
+import AdminBestRevenueHourCard from '@/components/shared/admin/AdminBestRevenueHourCard';
 
 export default function DashboardPage() {
   const navigate = useNavigate();
@@ -480,129 +483,11 @@ export default function DashboardPage() {
 
       {/* Derived Sales Analytics */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {/* Sales Concentration */}
-        <Card className="bg-card border-border shadow-xs">
-          <CardHeader className="flex flex-row items-center justify-between pb-3">
-            <CardTitle className="text-xs uppercase tracking-wider font-semibold text-muted-foreground">Sales Concentration</CardTitle>
-            <Activity className="h-4 w-4 text-orange-600" />
-          </CardHeader>
+        <AdminSalesConcentrationCard percentage={salesConcentration.percentage} revenue={salesConcentration.revenue} hours={salesConcentration.hours} />
 
-          <CardContent>
-            {salesConcentration.percentage <= 0 ? (
-              <div className="flex min-h-[120px] flex-col items-center justify-center gap-2 text-center text-muted-foreground">
-                <Activity className="h-5 w-5" />
-                <p className="text-xs">No sales activity recorded for this date.</p>
-              </div>
-            ) : (
-              <>
-                <div className="flex items-end justify-between">
-                  <div>
-                    <p className="font-mono text-3xl font-bold text-foreground">{salesConcentration.percentage.toFixed(1)}%</p>
+        <AdminTopMenuRevenueShareCard menu={topMenuRevenueShare.menu} percentage={topMenuRevenueShare.percentage} />
 
-                    <p className="mt-1 text-xs text-muted-foreground">Revenue from top 3 sales hours</p>
-                  </div>
-                </div>
-
-                <div className="mt-4 h-2 overflow-hidden rounded-full bg-muted">
-                  <div
-                    className="h-full rounded-full bg-orange-600"
-                    style={{
-                      width: `${Math.min(salesConcentration.percentage, 100)}%`,
-                    }}
-                  />
-                </div>
-
-                <div className="mt-4 flex items-center justify-between">
-                  <span className="text-xs text-muted-foreground">Concentrated revenue</span>
-
-                  <span className="font-mono text-xs font-semibold text-foreground">{formatRupiah(salesConcentration.revenue)}</span>
-                </div>
-
-                <div className="mt-3 flex flex-wrap gap-2">
-                  {salesConcentration.hours.map((hour) => (
-                    <span key={hour.hour} className="rounded-md bg-muted px-2 py-1 font-mono text-[11px] text-muted-foreground">
-                      {hour.timeBucket}
-                    </span>
-                  ))}
-                </div>
-              </>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* Top Menu Revenue Share */}
-        <Card className="bg-card border-border shadow-xs">
-          <CardHeader className="flex flex-row items-center justify-between pb-3">
-            <CardTitle className="text-xs uppercase tracking-wider font-semibold text-muted-foreground">Top Menu Revenue Share</CardTitle>
-
-            <Coffee className="h-4 w-4 text-orange-600" />
-          </CardHeader>
-
-          <CardContent>
-            {!topMenuRevenueShare.menu ? (
-              <div className="flex min-h-[120px] flex-col items-center justify-center gap-2 text-center text-muted-foreground">
-                <Coffee className="h-5 w-5" />
-                <p className="text-xs">No menu sales recorded for this date.</p>
-              </div>
-            ) : (
-              <div className="flex gap-3">
-                {topMenuRevenueShare.menu.image ? (
-                  <img src={topMenuRevenueShare.menu.image} alt={topMenuRevenueShare.menu.name || 'Menu'} className="h-12 w-12 shrink-0 rounded-md object-cover" />
-                ) : (
-                  <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-md bg-muted">
-                    <Coffee className="h-5 w-5 text-muted-foreground" />
-                  </div>
-                )}
-
-                <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-semibold text-foreground">{topMenuRevenueShare.menu.name}</p>
-
-                  <p className="mt-1 font-mono text-xl font-bold text-foreground">{topMenuRevenueShare.percentage.toFixed(1)}%</p>
-
-                  <p className="mt-1 text-xs text-muted-foreground">{formatRupiah(topMenuRevenueShare.menu.revenue)} of daily revenue</p>
-                </div>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* Best Revenue Hour */}
-        <Card className="bg-card border-border shadow-xs">
-          <CardHeader className="flex flex-row items-center justify-between pb-3">
-            <CardTitle className="text-xs uppercase tracking-wider font-semibold text-muted-foreground">Best Revenue Hour</CardTitle>
-
-            <Clock className="h-4 w-4 text-orange-600" />
-          </CardHeader>
-
-          <CardContent>
-            {!bestRevenueHour ? (
-              <div className="flex min-h-[120px] flex-col items-center justify-center gap-2 text-center text-muted-foreground">
-                <Clock className="h-5 w-5" />
-                <p className="text-xs">No sales activity recorded for this date.</p>
-              </div>
-            ) : (
-              <>
-                <p className="font-mono text-3xl font-bold text-foreground">{bestRevenueHour.timeBucket}</p>
-
-                <p className="mt-1 text-xs text-muted-foreground">Highest hourly revenue</p>
-
-                <div className="mt-4 grid grid-cols-2 gap-3">
-                  <div className="rounded-lg bg-muted p-3">
-                    <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Revenue</p>
-
-                    <p className="mt-1 font-mono text-sm font-semibold text-foreground">{formatRupiah(bestRevenueHour.revenue)}</p>
-                  </div>
-
-                  <div className="rounded-lg bg-muted p-3">
-                    <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Cups</p>
-
-                    <p className="mt-1 font-mono text-lg font-semibold text-foreground">{bestRevenueHour.unitsSold}</p>
-                  </div>
-                </div>
-              </>
-            )}
-          </CardContent>
-        </Card>
+        <AdminBestRevenueHourCard hour={bestRevenueHour} />
       </div>
 
       {/* Bottom Grid: Peak Activity, Most Used Inventory, and Plan Report Status */}
