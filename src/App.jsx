@@ -14,6 +14,8 @@
 
 import { Navigate, Route, Routes } from "react-router-dom";
 
+import LandingPage from '@/pages/landingPage/LandingPage';
+
 import AdminLayout from "@/layouts/AdminLayout";
 import ForgotPasswordPage from "@/pages/auth/ForgotPasswordPage";
 import LoginPage from "@/pages/auth/LoginPage";
@@ -60,7 +62,9 @@ export default function App() {
     <>
       <Routes>
         {/* Root — redirect berdasarkan status auth, bukan statis ke /login */}
-        <Route path="/" element={<RootRedirect />} />
+        <Route path="/" element={<LandingPage />} />
+
+        {/* <Route path="/landing" element={<LandingPage />} /> */}
 
         {/* Authentication routes */}
         <Route path="/login" element={<LoginPage />} />
