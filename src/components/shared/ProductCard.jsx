@@ -36,6 +36,9 @@ export default function ProductCard({
   const isAddBlocked =
     !produk.isAvailable || (hasStockCount && remainingStock <= 0);
 
+  const hasDiscount =
+    produk.isDiscounted === true && produk.discountPrice != null;
+
   return (
     <Card
       className={`overflow-hidden rounded-lg p-0 ${isSoldOut ? "opacity-50" : ""}`}
@@ -53,9 +56,9 @@ export default function ProductCard({
           </div>
         )}
 
-        {produk.discountPrice != null && (
+        {hasDiscount && (
           <Badge className="absolute right-2 top-2 bg-red-600 text-white hover:bg-red-600">
-            {produk.discountPercent}%
+            {produk.discountPercent}% Off
           </Badge>
         )}
       </div>
@@ -66,15 +69,12 @@ export default function ProductCard({
         </p>
 
         <div className="mt-1 flex items-baseline gap-1.5 font-mono text-xs">
-          <span
-            className={
-              produk.discountPrice != null ? "text-accent" : "text-foreground"
-            }
-          >
-            {formatCurrency(produk.discountPrice ?? produk.price)}
+          <span className={hasDiscount ? "text-accent" : "text-foreground"}>
+            {formatCurrency(hasDiscount ? produk.discountPrice : produk.price)}
           </span>
-          {produk.discountPrice != null && (
-            <span className="text-muted-foreground text-[11px] line-through">
+
+          {hasDiscount && (
+            <span className="text-[11px] text-muted-foreground line-through">
               {formatCurrency(produk.price)}
             </span>
           )}
@@ -100,7 +100,9 @@ export default function ProductCard({
               >
                 <Minus size={14} strokeWidth={2.5} />
               </button>
+
               <span className="font-mono text-xs text-foreground">{qty}</span>
+
               <button
                 type="button"
                 onClick={() => onIncrement(produk.id)}

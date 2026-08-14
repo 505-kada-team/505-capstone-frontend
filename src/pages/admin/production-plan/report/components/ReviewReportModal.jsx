@@ -1,14 +1,33 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
+
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { planApi } from '@/services/plan/plan.api';
 
-export default function ReviewReportModal({ open, report, onClose, onRefresh, readOnly = false }) {
-  const [adminNote, setAdminNote] = useState(report?.adminNote || '');
+export default function ReviewReportModal({
+  open,
+  report,
+  onClose,
+  onRefresh,
+  readOnly = false,
+}) {
+  const [adminNote, setAdminNote] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  useEffect(() => {
+    setAdminNote(report?.adminNote ?? '');
+  }, [report]);
 
   if (!report) return null;
 
@@ -18,7 +37,7 @@ export default function ReviewReportModal({ open, report, onClose, onRefresh, re
     try {
       const payload = {
         decision,
-        adminNote: adminNote.trim() || null,
+        adminNote: adminNote.trim(),
       };
 
       console.log('[REVIEW REPORT]', {
@@ -31,19 +50,28 @@ export default function ReviewReportModal({ open, report, onClose, onRefresh, re
       console.log('[REVIEW RESPONSE]', res);
 
       if (res.success) {
-        toast.success(res.message);
+        toast.success(
+          res.message || 'Report reviewed successfully',
+        );
+
         await onRefresh();
         onClose();
       }
     } catch (error) {
       console.error('[REVIEW ERROR]', error);
-      console.error('[REVIEW RESPONSE ERROR]', error.response?.data);
-      console.error('[REVIEW DETAILS]', error.response?.data?.details);
+      console.error(
+        '[REVIEW RESPONSE ERROR]',
+        error.response?.data,
+      );
+      console.error(
+        '[REVIEW DETAILS]',
+        error.response?.data?.details,
+      );
 
       toast.error(
         error.response?.data?.details?.[0] ??
-        error.response?.data?.message ??
-        'Gagal memproses laporan'
+          error.response?.data?.message ??
+          'Failed to review report',
       );
     } finally {
       setIsSubmitting(false);
@@ -51,95 +79,184 @@ export default function ReviewReportModal({ open, report, onClose, onRefresh, re
   };
 
   const isMenu = report.category === 'menu';
-  const val = report.valuation;
+  const valuation = report.valuation;
 
-  const formatRupiah = (val) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(val || 0);
-  const formatTime = (dateStr) => new Date(dateStr).toLocaleString('id-ID', { dateStyle: 'medium', timeStyle: 'short' });
+  const formatRupiah = (value) =>
+    new Intl.NumberFormat('id-ID', {
+      style: 'currency',
+      currency: 'IDR',
+      minimumFractionDigits: 0,
+    }).format(value || 0);
+
+  const formatTime = (dateStr) =>
+    new Date(dateStr).toLocaleString('en-GB', {
+      timeZone: 'Asia/Jakarta',
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false,
+    });
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
-          <DialogTitle>{readOnly ? 'Detail Laporan Insiden' : 'Review Laporan Insiden'}</DialogTitle>
+          <DialogTitle>
+            {readOnly
+              ? 'Incident Report Details'
+              : 'Review Incident Report'}
+          </DialogTitle>
+
           <DialogDescription>
-            {readOnly ? 'Tinjau detail kejadian laporan insiden ini.' : 'Tinjau detail kejadian dan berikan keputusan.'}
+            {readOnly
+              ? 'Review the details of this incident report.'
+              : 'Review the incident details and provide a decision.'}
           </DialogDescription>
         </DialogHeader>
 
         <div className="grid gap-4 py-4 text-sm">
-          <div className="grid grid-cols-2 gap-2">
+          <div className="grid grid-cols-2 gap-4">
             <div>
-              <span className="font-semibold text-muted-foreground block mb-1">Pelapor</span>
-              {report.reportedBy} ({report.reportedByRole})
+              <span className="mb-1 block font-semibold text-muted-foreground">
+                Reported By
+              </span>
+
+              <p>
+                {report.reportedBy} ({report.reportedByRole})
+              </p>
             </div>
+
             <div>
-              <span className="font-semibold text-muted-foreground block mb-1">Waktu Kejadian</span>
-              {formatTime(report.incidentAt)}
+              <span className="mb-1 block font-semibold text-muted-foreground">
+                Incident Time
+              </span>
+
+              <p>{formatTime(report.incidentAt)}</p>
             </div>
           </div>
 
-          <div className="bg-muted/30 p-3 rounded-md grid grid-cols-2 gap-2">
+          <div className="grid grid-cols-2 gap-4 rounded-md bg-muted/30 p-3">
             <div>
-              <span className="font-semibold text-muted-foreground block mb-1">Kategori / Item</span>
-              <span className="capitalize">{report.category}</span>
+              <span className="mb-1 block font-semibold text-muted-foreground">
+                Category / Item
+              </span>
+
+              <span className="capitalize">
+                {report.category}
+              </span>
             </div>
+
             <div>
-              <span className="font-semibold text-muted-foreground block mb-1">Kuantitas Rusak</span>
-              <span className="text-destructive font-semibold">{report.quantityLost}</span>
+              <span className="mb-1 block font-semibold text-muted-foreground">
+                Quantity Lost
+              </span>
+
+              <span className="font-semibold text-destructive">
+                {report.quantityLost}
+              </span>
             </div>
           </div>
 
           <div>
-            <span className="font-semibold text-muted-foreground block mb-1">Alasan Insiden</span>
-            <p className="text-foreground">{report.reason || '-'}</p>
+            <span className="mb-1 block font-semibold text-muted-foreground">
+              Incident Reason
+            </span>
+
+            <p className="text-foreground">
+              {report.reason || '-'}
+            </p>
           </div>
 
-          {isMenu && val && (
-            <div className="border border-border rounded-md p-3 flex flex-col gap-2">
-              <span className="font-semibold mb-1">Valuasi Kerugian (Estimasi)</span>
-              <div className="flex justify-between items-center">
-                <span className="text-muted-foreground">Cost Bahan (Cost Loss):</span>
-                <span className="font-semibold">{formatRupiah(val.costLoss)}</span>
+          {isMenu && valuation && (
+            <div className="flex flex-col gap-2 rounded-md border border-border p-3">
+              <span className="mb-1 font-semibold">
+                Estimated Loss Valuation
+              </span>
+
+              <div className="flex items-center justify-between">
+                <span className="text-muted-foreground">
+                  Ingredient Cost Loss
+                </span>
+
+                <span className="font-semibold">
+                  {formatRupiah(valuation.costLoss)}
+                </span>
               </div>
-              <div className="flex justify-between items-center">
-                <span className="text-muted-foreground">Potensi Pendapatan:</span>
-                <span className="font-semibold text-orange-600">{formatRupiah(val.lostRevenueEstimate)}</span>
+
+              <div className="flex items-center justify-between">
+                <span className="text-muted-foreground">
+                  Potential Revenue Loss
+                </span>
+
+                <span className="font-semibold text-accent">
+                  {formatRupiah(
+                    valuation.lostRevenueEstimate,
+                  )}
+                </span>
               </div>
             </div>
           )}
 
-          <div className="grid gap-2 mt-2">
-            <Label htmlFor="adminNote">Catatan Admin {readOnly ? '' : '(Opsional)'}</Label>
+          <div className="mt-2 grid gap-2">
+            <Label htmlFor="adminNote">
+              Admin Note {readOnly ? '' : '(Optional)'}
+            </Label>
+
             {readOnly ? (
-              <p className="text-foreground bg-muted/20 p-2 rounded-md border border-border min-h-10">
+              <p className="min-h-10 rounded-md border border-border bg-muted/20 p-2 text-foreground">
                 {report.adminNote || '-'}
               </p>
             ) : (
               <Textarea
                 id="adminNote"
-                placeholder="Tambahkan catatan untuk pelapor..."
+                placeholder="Add a note for the reporter..."
                 value={adminNote}
-                onChange={(e) => setAdminNote(e.target.value)}
+                onChange={(event) =>
+                  setAdminNote(event.target.value)
+                }
               />
             )}
           </div>
         </div>
 
-        <DialogFooter className="gap-2 sm:gap-0">
+        <DialogFooter className="gap-2 sm:gap-2">
           {readOnly ? (
-            <Button variant="outline" onClick={onClose} className="w-full sm:w-auto">
-              Tutup
+            <Button
+              variant="outline"
+              onClick={onClose}
+              className="w-full sm:w-auto"
+            >
+              Close
             </Button>
           ) : (
             <>
-              <Button variant="outline" onClick={onClose} disabled={isSubmitting}>
-                Batal
+              <Button
+                variant="outline"
+                onClick={onClose}
+                disabled={isSubmitting}
+              >
+                Cancel
               </Button>
-              <Button variant="destructive" onClick={() => handleReview('rejected')} disabled={isSubmitting}>
-                Reject
+
+              <Button
+                variant="destructive"
+                onClick={() =>
+                  handleReview('rejected')
+                }
+                disabled={isSubmitting}
+              >
+                {isSubmitting ? 'Processing...' : 'Reject'}
               </Button>
-              <Button variant="default" className="bg-green-600 hover:bg-green-700" onClick={() => handleReview('approved')} disabled={isSubmitting}>
-                Approve
+
+              <Button
+                onClick={() =>
+                  handleReview('approved')
+                }
+                disabled={isSubmitting}
+              >
+                {isSubmitting ? 'Processing...' : 'Approve'}
               </Button>
             </>
           )}

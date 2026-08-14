@@ -80,18 +80,29 @@ export default function ReportPage() {
   };
 
   const escapeCsvValue = (value) => {
-    const text = String(value ?? "");
+    if (value == null) return "";
 
-    if (text.includes(",") || text.includes('"') || text.includes("\n")) {
-      return `"${text.replaceAll('"', '""')}"`;
+    const stringValue = String(value);
+
+    if (
+      stringValue.includes(",") ||
+      stringValue.includes('"') ||
+      stringValue.includes("\n")
+    ) {
+      return `"${stringValue.replace(/"/g, '""')}"`;
     }
 
-    return text;
+    return stringValue;
   };
 
-  const handleExport = () => {
+  const handleExportCsv = () => {
     if (!exportData.rows.length) {
       toast.error("No data available to export.");
+      return;
+    }
+
+    if (!exportData.columns.length) {
+      toast.error("Export columns are not available.");
       return;
     }
 
@@ -105,7 +116,7 @@ export default function ReportPage() {
         .join(","),
     );
 
-    const csv = [header, ...body].join("\n");
+    const csv = [header, ...body].join("\r\n");
 
     const blob = new Blob([`\uFEFF${csv}`], {
       type: "text/csv;charset=utf-8;",
@@ -114,8 +125,12 @@ export default function ReportPage() {
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
 
+    const filename = exportData.filename?.endsWith(".csv")
+      ? exportData.filename
+      : `${exportData.filename || "report"}.csv`;
+
     link.href = url;
-    link.download = `${exportData.filename || "report"}.csv`;
+    link.download = filename;
 
     document.body.appendChild(link);
     link.click();
@@ -125,10 +140,10 @@ export default function ReportPage() {
   };
 
   return (
-    <div className="flex flex-col h-full gap-4">
+    <div className="flex h-full flex-col gap-4">
       <PageHeader title="Report" />
 
-      <section className="rounded-lg border border-border bg-card overflow-hidden">
+      <section className="overflow-hidden rounded-lg border border-border bg-card">
         {/* Header */}
         <div className="flex items-center gap-3 p-6 pb-5">
           <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-accent/10">
@@ -136,9 +151,10 @@ export default function ReportPage() {
           </div>
 
           <div>
-            <h2 className="text-lg font-semibold text-foreground leading-none">
+            <h2 className="text-lg font-semibold leading-none text-foreground">
               Report Generator
             </h2>
+
             <p className="mt-1.5 text-sm text-muted-foreground">
               Filter operational reports by type and period.
             </p>
@@ -148,7 +164,7 @@ export default function ReportPage() {
         <Separator />
 
         {/* Filter fields */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 p-6">
+        <div className="grid grid-cols-1 gap-4 p-6 sm:grid-cols-2 lg:grid-cols-3">
           <div className="grid gap-2">
             <Label htmlFor="reportType">Report Type</Label>
 
@@ -192,8 +208,8 @@ export default function ReportPage() {
         </div>
 
         {/* Action toolbar */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 bg-muted/40 px-6 py-4">
-          <div className="grid grid-cols-2 sm:flex sm:w-auto gap-2">
+        <div className="flex flex-col gap-3 bg-muted/40 px-6 py-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="grid grid-cols-2 gap-2 sm:flex sm:w-auto">
             <Button onClick={handleApplyFilter} className="gap-2">
               <Filter size={16} />
               Apply Filter
@@ -207,9 +223,9 @@ export default function ReportPage() {
 
           <Button
             variant="outline"
-            className="gap-2 w-full sm:w-auto"
-            onClick={handleExport}
+            onClick={handleExportCsv}
             disabled={exportData.rows.length === 0}
+            className="gap-2"
           >
             <Download size={16} />
             Export CSV
