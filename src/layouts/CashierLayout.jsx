@@ -51,10 +51,9 @@ export default function CashierLayout() {
           <button
             type="button"
             onClick={logout}
-            className="text-muted-foreground hover:text-destructive flex items-center gap-1 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-orange-500/40"
+            className="flex items-center gap-1 text-sm font-semibold text-destructive hover:text-destructive/80 focus:outline-none focus-visible:ring-2 focus-visible:ring-destructive/40"
           >
-            <LogOut size={16} strokeWidth={2} />
-            Logout
+            <LogOut size={16} strokeWidth={2.2} />
           </button>
         </div>
       </header>

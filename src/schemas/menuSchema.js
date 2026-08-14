@@ -67,7 +67,10 @@ const ingredientItemSchema = z.object({
 export const createMenuSchema = z
   .object({
     name: z.string().min(1, "Nama menu wajib diisi"),
-    description: z.string().optional(),
+    description: z
+      .string()
+      .max(200, "Description must not exceed 200 characters")
+      .optional(),
     image: z.string().optional(),
     sellingPrice: z.coerce
       .number({ error: "Harga jual harus berupa angka" })

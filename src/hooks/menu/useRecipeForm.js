@@ -20,6 +20,7 @@ export function useRecipeForm(initialValues) {
 
   const form = useForm({
     resolver: zodResolver(createMenuSchema),
+    mode: "onChange",
     defaultValues: { ...EMPTY_VALUES, ...initialValues },
   });
 
