@@ -148,25 +148,25 @@ export default function DetailInventoryPage() {
   const columns = [
     {
       key: "inDate",
-      header: "Diterima",
+      header: "Accept at",
       cellClass: "font-mono text-xs",
       render: (row) => formatDate(row.inDate),
     },
     {
       key: "costPrices",
-      header: "Harga per Unit",
+      header: "Total Cost",
       cellClass: "font-mono text-sm",
       render: (row) => formatCurrency(row.costPrices),
     },
     {
       key: "quantity",
-      header: "Jumlah",
+      header: "Quantity",
       cellClass: "font-mono text-sm",
       render: (row) => formatQuantity(row.quantity, data?.unit),
     },
     {
       key: "expired",
-      header: "Kadaluarsa",
+      header: "Expired",
       cellClass: "font-mono text-xs",
       render: (row) =>
         data?.category === "packaging" ? "—" : formatDate(row.expired),
@@ -178,7 +178,7 @@ export default function DetailInventoryPage() {
     },
     {
       key: "aksi",
-      header: "Aksi",
+      header: "Action",
       headerClass: "text-right",
       cellClass: "text-right",
       render: (row) => (
@@ -188,7 +188,7 @@ export default function DetailInventoryPage() {
           className="text-destructive hover:bg-destructive/10 hover:text-destructive h-7 px-2 font-medium"
           onClick={() => setDeleteBatchTarget(row)}
         >
-          Hapus
+          Delete
         </Button>
       ),
     },
@@ -222,7 +222,7 @@ export default function DetailInventoryPage() {
 
       {loading && !data ? (
         <div className="p-12 text-center text-muted-foreground bg-card rounded-lg border border-border">
-          Memuat data...
+          Loading...
         </div>
       ) : data ? (
         <div className="bg-card rounded-lg border border-border p-6 shadow-sm">
@@ -295,7 +295,7 @@ export default function DetailInventoryPage() {
                 className="text-destructive hover:bg-destructive/10 hover:text-destructive h-9"
                 onClick={() => setArchiveItemTarget(true)}
               >
-                Archive Item
+                Delete Inventory
               </Button>
               <div className="flex gap-3">
                 <Button
@@ -348,7 +348,7 @@ export default function DetailInventoryPage() {
         }}
         onConfirm={handleDeleteBatch}
         title="Delete Batch?"
-        description="This batch will be archived. Are you sure?"
+        description="This batch will be deleted. Are you sure?"
         confirmLabel="Delete"
         loading={deletingBatch}
       />
@@ -360,9 +360,9 @@ export default function DetailInventoryPage() {
           resetArchiveError();
         }}
         onConfirm={handleArchiveItem}
-        title="Archive Item?"
-        description={`Item "${data?.name}" will be archived permanently. Ensure stock is 0.`}
-        confirmLabel="Archive"
+        title="Delete Inventory?"
+        description={`Item "${data?.name}" will be deleted permanently. Ensure stock is 0.`}
+        confirmLabel="Delete"
         loading={archivingItem}
       />
     </div>
