@@ -79,7 +79,7 @@ export default function App() {
         {/* Admin routes */}
         <Route element={<ProtectedRoute allowedRoles={["admin"]} />}>
           <Route path="/admin" element={<AdminLayout />}>
-            <Route index element={<Navigate to="inventory" replace />} />
+            <Route index element={<Navigate to="dashboard" replace />} />
             <Route path="inventory" element={<InventoryPage />} />
             <Route path="inventory/:id" element={<DetailInventoryPage />} />
             <Route path="dashboard" element={<DashboardPage />} />

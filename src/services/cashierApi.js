@@ -35,12 +35,18 @@ const normalizeSellingMenu = (menu, plan) => {
     name: menu.name ?? "Menu tidak tersedia",
     image: menu.image ?? null,
     price: menu.sellingPrice,
+
+    isDiscounted: menu.isDiscounted === true,
     discountPrice: menu.isDiscounted ? menu.currentPrice : null,
     discountPercent: menu.discountPercentage,
+
     stock: menu.remainingQuantity,
     stockRemaining: menu.remainingQuantity,
     remainingQuantity: menu.remainingQuantity,
-    isAvailable: plan.sellable === true && Number(menu.remainingQuantity ?? 0) > 0,
+    isAvailable:
+      plan.sellable === true &&
+      Number(menu.remainingQuantity ?? 0) > 0,
+
     discountEndsAt: menu.discountEndsAt,
     ingredientsDetail: menu.ingredientsDetail ?? [],
     planName: plan.name,
@@ -95,7 +101,25 @@ const normalizeSaleHistory = (result) => {
 // =============================================================================
 
 export const getActiveSellingPlans = () =>
-  api.get("/selling/active").then(unwrap).then(normalizeActiveSellingPlans);
+  api
+    .get("/selling/active")
+    .then((response) => {
+      const menus = response.data?.data?.[0]?.menus ?? [];
+
+      menus.forEach((menu) => {
+        console.log("[SELLING MENU]", {
+          name: menu.name,
+          sellingPrice: menu.sellingPrice,
+          currentPrice: menu.currentPrice,
+          isDiscounted: menu.isDiscounted,
+          discountPercentage: menu.discountPercentage,
+          discountEndsAt: menu.discountEndsAt,
+        });
+      });
+
+      return unwrap(response);
+    })
+    .then(normalizeActiveSellingPlans);
 
 // =============================================================================
 // ENDPOINT 2 — POST /selling

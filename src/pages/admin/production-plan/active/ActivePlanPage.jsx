@@ -7,6 +7,7 @@ import StatusBadge from "@/components/shared/StatusBadge";
 import ConfirmDialog from "@/components/shared/ConfirmDialog";
 import PlanReportBanner from "@/components/shared/admin/PlanReportBanner";
 import { Card, CardContent } from "@/components/ui/card";
+import { formatDate, formatDateTime } from '@/lib/formatDate';
 import {
   Popover,
   PopoverTrigger,
@@ -28,26 +29,26 @@ import { usePagination } from "@/hooks/usePagination";
 import ActiveMenuDetailModal from "./components/ActiveMenuDetailModal";
 import PlanHistoryDetailModal from "../components/PlanHistoryDetailModal";
 
-export function formatDate(dateStr) {
-  if (!dateStr) return "-";
-  const date = new Date(dateStr);
-  return `${String(date.getDate()).padStart(2, "0")} ${
-    [
-      "Jan",
-      "Feb",
-      "Mar",
-      "Apr",
-      "May",
-      "Jun",
-      "Jul",
-      "Aug",
-      "Sep",
-      "Oct",
-      "Nov",
-      "Dec",
-    ][date.getMonth()]
-  } ${date.getFullYear()}`;
-}
+// export function formatDate(dateStr) {
+//   if (!dateStr) return "-";
+//   const date = new Date(dateStr);
+//   return `${String(date.getDate()).padStart(2, "0")} ${
+//     [
+//       "Jan",
+//       "Feb",
+//       "Mar",
+//       "Apr",
+//       "May",
+//       "Jun",
+//       "Jul",
+//       "Aug",
+//       "Sep",
+//       "Oct",
+//       "Nov",
+//       "Dec",
+//     ][date.getMonth()]
+//   } ${date.getFullYear()}`;
+// }
 
 const formatRp = (num) =>
   num != null ? `Rp ${num.toLocaleString("id-ID")}` : "-";
@@ -182,25 +183,30 @@ export default function ActivePlanPage() {
   const hasActive = !!activePlanDetail;
 
   const promoGroup = (() => {
-    if (!activePlanDetail?.menus) return null;
-    const discountedMenus = activePlanDetail.menus.filter(
-      (m) => m.discount?.discountPercentage > 0,
-    );
-    if (discountedMenus.length === 0) return null;
+  if (!activePlanDetail?.menus) return null;
 
-    const firstDiscount = discountedMenus[0].discount;
-    const firstPercent = firstDiscount.discountPercentage;
-    const isFlat = discountedMenus.every(
-      (m) => m.discount.discountPercentage === firstPercent,
-    );
+  const discountedMenus = activePlanDetail.menus.filter(
+    (m) => m.discount?.discountPercentage > 0,
+  );
 
-    return {
-      reason: firstDiscount.reason || "Active Promo",
-      scheme: isFlat ? "flat" : "vary",
-      percent: firstPercent,
-      menus: discountedMenus,
-    };
-  })();
+  if (discountedMenus.length === 0) return null;
+
+  const firstDiscount = discountedMenus[0].discount;
+  const firstPercent = firstDiscount.discountPercentage;
+
+  const isFlat = discountedMenus.every(
+    (m) => m.discount.discountPercentage === firstPercent,
+  );
+
+  return {
+    reason: firstDiscount.reason || "Active Promo",
+    scheme: isFlat ? "flat" : "vary",
+    percent: firstPercent,
+    startDate: firstDiscount.startDate,
+    endDate: firstDiscount.endDate,
+    menus: discountedMenus,
+  };
+})();
 
   return (
     <div className="flex flex-col gap-6">
@@ -295,20 +301,29 @@ export default function ActivePlanPage() {
                 : "-"}
             </span>
           </span>
-          {hasActive && promoGroup && (
-            <span>
-              Active Promo:{" "}
-              <span className="font-semibold text-[#F97316] font-body">
-                {promoGroup.reason}{" "}
-                <span className="text-xs text-muted-foreground font-normal">
-                  (
-                  {promoGroup.scheme === "flat"
-                    ? `Flat Rate ${promoGroup.percent}%`
-                    : "Vary per Menu"}
-                  )
-                </span>
-              </span>
-            </span>
+              {hasActive && promoGroup && (
+                <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                  <span>
+                    Promo:{" "}
+                    <span className="font-semibold text-accent">
+                      {promoGroup.reason}
+                    </span>
+                  </span>
+
+                  <span className="text-xs text-muted-foreground">
+                    {promoGroup.scheme === "flat"
+                      ? `Flat Rate ${promoGroup.percent}%`
+                      : "Vary per Menu"}
+                  </span>
+
+                  <span className="text-xs text-muted-foreground">
+                    • Starts {formatDateTime(promoGroup.startDate)}
+                  </span>
+
+                  <span className="text-xs text-muted-foreground">
+                    • Ends {formatDateTime(promoGroup.endDate)}
+                  </span>
+                </div>
           )}
         </div>
       </div>

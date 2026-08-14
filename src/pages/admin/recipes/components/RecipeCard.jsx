@@ -11,6 +11,7 @@ export default function RecipeCard({ recipe, onDetail }) {
         <div className="absolute top-2 left-2 z-10">
           <StatusBadge variant={recipe.status} />
         </div>
+
         {recipe.image ? (
           <img
             src={recipe.image}
@@ -28,6 +29,7 @@ export default function RecipeCard({ recipe, onDetail }) {
         <h3 className="font-heading font-semibold text-sm text-foreground line-clamp-1 mb-0.5">
           {recipe.name}
         </h3>
+
         <p className="text-[11px] text-muted-foreground mb-2 flex-1 line-clamp-1">
           {recipe.totalIngredients} bahan
           {recipe.costComplete && typeof recipe.marginPercentage === "number"
@@ -38,17 +40,20 @@ export default function RecipeCard({ recipe, onDetail }) {
         <div className="flex items-end justify-between mt-auto gap-1">
           <div className="min-w-0">
             <p className="text-[10px] text-muted-foreground mb-0.5">Price</p>
+
             <p className="font-mono text-xs text-foreground truncate">
-              {recipe.costComplete
+              {recipe.sellingPrice != null
                 ? formatCurrency(recipe.sellingPrice)
                 : "Rp -"}
             </p>
           </div>
+
           <button
             onClick={onDetail}
             className="shrink-0 text-xs font-medium text-accent hover:text-accent/80 transition-colors flex items-center gap-0.5"
           >
             Detail
+
             <ArrowRight
               size={12}
               className="transition-transform duration-200 group-hover:translate-x-0.5"
