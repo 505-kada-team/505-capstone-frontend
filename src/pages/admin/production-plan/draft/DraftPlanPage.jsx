@@ -58,6 +58,7 @@ export default function DraftPlanPage() {
   const [planName, setPlanName] = useState("");
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
+  const [tags, setTags] = useState("");
 
   // Forecast input State (form kedua, sebelum manggil ML)
   const [forecastDuration, setForecastDuration] = useState("7");
@@ -143,7 +144,9 @@ export default function DraftPlanPage() {
         // valid yang dianggap "ada di recipes". getMenuDropdown() yang
         // dipakai sebelumnya gak nyertain info ini sama sekali, jadi menu
         // tanpa resep bisa lolos tanpa sengaja.
-        .filter((m) => (m.totalIngredients ?? 0) > 0 && (m.sellingPrice ?? 0) > 0)
+        .filter(
+          (m) => (m.totalIngredients ?? 0) > 0 && (m.sellingPrice ?? 0) > 0,
+        )
         .map((m) => ({
           ...m,
           _id: m._id || m.id,
@@ -168,10 +171,22 @@ export default function DraftPlanPage() {
       toast.error("Please complete plan name and period");
       return;
     }
-    if (new Date(endDate) < new Date(startDate)) {
+
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+
+    if (end < start) {
       toast.error("End date cannot be before start date");
       return;
     }
+
+    const duration = Math.ceil((end - start) / (1000 * 60 * 60 * 24));
+
+    if (duration < 7 || duration > 30) {
+      toast.error("Plan duration must be between 7-30 days");
+      return;
+    }
+
     setStep(2);
   };
 
@@ -239,10 +254,12 @@ export default function DraftPlanPage() {
         toast.error("None of the recommended menus matched your recipes");
       } else if (forecastCart.length < predictions.length) {
         toast.success(
-          `${forecastCart.length} of ${predictions.length} recommended menus matched and were added`
+          `${forecastCart.length} of ${predictions.length} recommended menus matched and were added`,
         );
       } else {
-        toast.success(`${forecastCart.length} menu items loaded from ML forecast`);
+        toast.success(
+          `${forecastCart.length} menu items loaded from ML forecast`,
+        );
       }
 
       setCart(forecastCart);
@@ -280,7 +297,7 @@ export default function DraftPlanPage() {
     setQuantity("1");
   };
 
-const handleRemoveFromCart = (index) => {
+  const handleRemoveFromCart = (index) => {
     const newCart = [...cart];
     newCart.splice(index, 1);
     setCart(newCart);
@@ -315,7 +332,9 @@ const handleRemoveFromCart = (index) => {
           type="number"
           min="0"
           value={row.qty}
-          onChange={(e) => handleUpdateQuantity(cart.indexOf(row), e.target.value)}
+          onChange={(e) =>
+            handleUpdateQuantity(cart.indexOf(row), e.target.value)
+          }
           className="w-24 h-8 text-center font-mono mx-auto"
         />
       ),
@@ -373,7 +392,10 @@ const handleRemoveFromCart = (index) => {
 
       const payload = {
         name: planName,
-        tags: [],
+        tags: tags
+          .split(",")
+          .map((t) => t.trim())
+          .filter(Boolean),
         startDate: new Date(startDate).toISOString(),
         duration,
         menus: cart.map((item) => ({
@@ -467,6 +489,17 @@ const handleRemoveFromCart = (index) => {
               />
             </div>
 
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-foreground capitalize">
+                Tags (optional, comma separated)
+              </label>
+              <Input
+                placeholder="promo, discount"
+                value={tags}
+                onChange={(e) => setTags(e.target.value)}
+              />
+            </div>
+
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
               <div className="space-y-2">
                 <label className="text-sm font-medium text-foreground capitalize">
@@ -488,6 +521,16 @@ const handleRemoveFromCart = (index) => {
                   value={endDate}
                   onChange={(e) => setEndDate(e.target.value)}
                   min={startDate || new Date().toISOString().split("T")[0]}
+                  max={
+                    startDate
+                      ? new Date(
+                          new Date(startDate).getTime() +
+                            30 * 24 * 60 * 60 * 1000,
+                        )
+                          .toISOString()
+                          .split("T")[0]
+                      : undefined
+                  }
                 />
               </div>
             </div>
@@ -581,18 +624,13 @@ const handleRemoveFromCart = (index) => {
               />
             </div>
 
-            <div className="flex flex-col sm:flex-row sm:items-end gap-4">    
+            <div className="flex flex-col sm:flex-row sm:items-end gap-4">
               <Select value={selectedMenu} onValueChange={setSelectedMenu}>
-                <SelectTrigger
-                  className="w-full"
-                  style={{ height: "2.75rem" }}
-                >
+                <SelectTrigger className="w-full" style={{ height: "2.75rem" }}>
                   <SelectValue placeholder="Select menu item...">
                     {(value) => {
                       if (!value) return "Select menu item...";
-                      const found = availableMenus.find(
-                        (m) => m._id === value,
-                      );
+                      const found = availableMenus.find((m) => m._id === value);
                       return found ? found.name : value;
                     }}
                   </SelectValue>
