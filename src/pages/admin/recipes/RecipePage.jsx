@@ -101,7 +101,7 @@ export default function RecipePage() {
 
           <div className="grid grid-cols-2 sm:flex sm:items-center gap-2 sm:ml-auto">
             <Select
-              value={filters.includeDeleted ? "archived" : "active"}
+              value={filters.includeDeleted ? "deleted" : "active"}
               onValueChange={(val) => setIncludeDeleted(val === "archived")}
             >
               <SelectTrigger className="w-full sm:w-[130px] h-9 bg-background text-muted-foreground font-normal text-xs">
@@ -109,7 +109,7 @@ export default function RecipePage() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="active">Active</SelectItem>
-                <SelectItem value="archived">Archived</SelectItem>
+                <SelectItem value="archived">Deleted</SelectItem>
               </SelectContent>
             </Select>
 
@@ -148,13 +148,13 @@ export default function RecipePage() {
 
             <h3 className="text-lg font-semibold text-foreground">
               {filters.includeDeleted
-                ? "No archived recipes yet"
+                ? "No deleted recipes yet"
                 : "No recipes found"}
             </h3>
 
             <p className="text-sm text-muted-foreground">
               {filters.includeDeleted
-                ? "Archived recipes will appear here."
+                ? "Deleted recipes will appear here."
                 : "Please add a new recipe or try a different search."}
             </p>
           </div>
@@ -234,9 +234,9 @@ export default function RecipePage() {
 
       <ConfirmDialog
         open={!!archiveTarget}
-        title="Archive Recipe?"
-        description="Archived recipes will not appear in the main list, but can still be viewed in plan history."
-        confirmLabel="Archive"
+        title="Delete Recipe?"
+        description="Deleted recipes will not appear in the main list, but can still be viewed in plan history."
+        confirmLabel="Delete"
         cancelLabel="Cancel"
         onConfirm={handleArchive}
         onClose={() => setArchiveTarget(null)}

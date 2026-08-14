@@ -11,10 +11,11 @@ import ReportIssueForm from '@/components/shared/ReportIssueForm';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/context/AuthContext';
 import { usePagination } from '@/hooks/usePagination';
-import { createPlanReport, getPlanReports } from '@/services/cashierApi';
-
-
-
+import {
+  createPlanReport,
+  getPlanReports,
+  getActivePlans,
+} from '@/services/cashierApi';
 
 const SORT_OPTIONS = [
   { value: 'newest', label: 'Terbaru' },
@@ -43,6 +44,7 @@ export default function ReportIssuePage() {
   const { user } = useAuth();
 
   const [issues, setIssues] = useState([]);
+  const [activePlanIds, setActivePlanIds] = useState([]);
   const [search, setSearch] = useState('');
   const [sortBy, setSortBy] = useState('newest');
   const [isLoading, setIsLoading] = useState(true);
@@ -56,8 +58,18 @@ export default function ReportIssuePage() {
       setIsLoading(true);
       setError(null);
 
-      const result = await getPlanReports();
-      setIssues(Array.isArray(result) ? result : []);
+      const [reportResult, activePlanResult] = await Promise.all([
+        getPlanReports(),
+        getActivePlans(),
+      ]);
+
+      setIssues(Array.isArray(reportResult) ? reportResult : []);
+
+      setActivePlanIds(
+        Array.isArray(activePlanResult)
+          ? activePlanResult.map((plan) => plan.planId)
+          : [],
+      );
     } catch (error) {
       console.error('[PLAN REPORT ERROR]', error);
       setError(error);
@@ -73,13 +85,17 @@ export default function ReportIssuePage() {
   const filteredIssues = useMemo(() => {
     const keyword = search.toLowerCase();
 
-    return issues.filter(
-      (issue) =>
+    return issues.filter((issue) => {
+      const isActivePlan = activePlanIds.includes(issue.planId);
+
+      const matchesSearch =
         issue.nameRef?.toLowerCase().includes(keyword) ||
         issue.category?.toLowerCase().includes(keyword) ||
-        issue.status?.toLowerCase().includes(keyword)
-    );
-  }, [issues, search]);
+        issue.status?.toLowerCase().includes(keyword);
+
+      return isActivePlan && matchesSearch;
+    });
+  }, [issues, activePlanIds, search]);
 
   const sortedIssues = useMemo(() => {
     const sorted = [...filteredIssues];
@@ -102,8 +118,8 @@ export default function ReportIssuePage() {
     return sorted;
   }, [filteredIssues, sortBy]);
 
-  const { currentPage, totalPages, paginatedItems, setPage, resetPage } = usePagination(sortedIssues, PAGE_SIZE);
-
+  const { currentPage, totalPages, paginatedItems, setPage, resetPage } =
+    usePagination(sortedIssues, PAGE_SIZE);
 
   const handleAddIssue = () => {
     setFormMode('add');
@@ -131,40 +147,54 @@ export default function ReportIssuePage() {
   };
 
   const columns = [
-      { key: 'nameRef', header: 'Item' },
-      {
-        key: 'category',
-        header: 'Kategori',
-        render: (row) => <span className="capitalize">{row.category}</span>,
-      },
-      { key: 'quantityLost', header: 'Jumlah Hilang', cellClass: 'font-mono' },
-      { key: 'incidentAt', header: 'Tanggal', render: (row) => formatDate(row.incidentAt) },
-      {
-        key: 'status',
-        header: 'Status',
-        render: (row) => <span className="capitalize">{row.status}</span>,
-      },
-      {
-        key: 'actions',
-        header: 'Aksi',
-        headerClass: 'text-center',
-        cellClass: 'text-center',
-        render: (row) => (
-          <button
-            type="button"
-            onClick={() => handleViewDetail(row._id)}
-            className="font-medium text-accent hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-orange-500/40"
-          >
-            Detail
-          </button>
-        ),
-      },
-    ];
+    { key: 'nameRef', header: 'Item' },
+    {
+      key: 'category',
+      header: 'Kategori',
+      render: (row) => <span className="capitalize">{row.category}</span>,
+    },
+    { key: 'quantityLost', header: 'Jumlah Hilang', cellClass: 'font-mono' },
+    {
+      key: 'incidentAt',
+      header: 'Tanggal',
+      render: (row) => formatDate(row.incidentAt),
+    },
+    {
+      key: 'status',
+      header: 'Status',
+      render: (row) => <span className="capitalize">{row.status}</span>,
+    },
+    {
+      key: 'actions',
+      header: 'Aksi',
+      headerClass: 'text-center',
+      cellClass: 'text-center',
+      render: (row) => (
+        <button
+          type="button"
+          onClick={() => handleViewDetail(row._id)}
+          className="font-medium text-accent hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-orange-500/40"
+        >
+          Detail
+        </button>
+      ),
+    },
+  ];
 
-  if (isLoading) return <div className="flex h-full items-center justify-center">Memuat laporan...</div>;
+  if (isLoading) {
+    return (
+      <div className="flex h-full items-center justify-center">
+        Memuat laporan...
+      </div>
+    );
+  }
 
   if (error && issues.length === 0) {
-    return <div className="flex h-full items-center justify-center">Gagal memuat laporan.</div>;
+    return (
+      <div className="flex h-full items-center justify-center">
+        Gagal memuat laporan.
+      </div>
+    );
   }
 
   return (
@@ -208,7 +238,11 @@ export default function ReportIssuePage() {
 
       <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-lg border border-neutral-200">
         <div className="min-h-0 flex-1 overflow-y-auto">
-          <DataTable columns={columns} data={paginatedItems} emptyMessage="Belum ada issue yang dilaporkan." />
+          <DataTable
+            columns={columns}
+            data={paginatedItems}
+            emptyMessage="Belum ada issue yang dilaporkan."
+          />
         </div>
 
         <div className="shrink-0 border-t border-neutral-200 bg-muted/30 px-4 py-3">

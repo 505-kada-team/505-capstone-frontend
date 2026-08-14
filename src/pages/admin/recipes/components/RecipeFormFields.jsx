@@ -33,6 +33,7 @@ export default function RecipeFormFields({
   } = formState;
 
   const watchedIngredients = form.watch("ingredients") || [];
+  const description = form.watch("description") || "";
 
   const { totalCost, isComplete } = watchedIngredients.reduce(
     (acc, ing) => {
@@ -177,16 +178,27 @@ export default function RecipeFormFields({
             <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
               Description
             </label>
+
             <Textarea
+              maxLength={200}
               placeholder="Add descriptions, notes, or serving suggestions..."
               className="resize-none bg-muted/10 h-28 text-xs placeholder:text-[12px] placeholder:text-muted-foreground"
               {...form.register("description")}
             />
-            {form.formState.errors.description && (
-              <p className="text-destructive text-xs font-medium">
-                {form.formState.errors.description.message}
+
+            <div className="flex justify-between gap-2">
+              {form.formState.errors.description ? (
+                <p className="text-destructive text-xs font-medium">
+                  {form.formState.errors.description.message}
+                </p>
+              ) : (
+                <span />
+              )}
+
+              <p className="text-xs text-muted-foreground">
+                {description.length}/200
               </p>
-            )}
+            </div>
           </div>
         </div>
       </div>
