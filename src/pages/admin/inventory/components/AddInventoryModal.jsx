@@ -94,7 +94,7 @@ export default function AddInventoryModal({ open, onClose, onSuccess }) {
           {/* Item Name */}
           <div className="space-y-1.5">
             <Label htmlFor="inv-name" className="text-sm font-medium">
-              Nama Item <span className="text-destructive">*</span>
+              Item Name <span className="text-destructive">*</span>
             </Label>
             <Input
               id="inv-name"
@@ -112,7 +112,7 @@ export default function AddInventoryModal({ open, onClose, onSuccess }) {
           {/* Item Code */}
           <div className="space-y-1.5">
             <Label htmlFor="inv-code" className="text-sm font-medium">
-              Kode Item <span className="text-destructive">*</span>
+              Item Code <span className="text-destructive">*</span>
             </Label>
             <Input
               id="inv-code"
@@ -133,13 +133,21 @@ export default function AddInventoryModal({ open, onClose, onSuccess }) {
               <Label className="text-sm font-medium">
                 Kategori <span className="text-destructive">*</span>
               </Label>
+
               <Select
                 value={selectedCategory}
-                onValueChange={(val) => setValue("category", val)}
+                onValueChange={(val) => {
+                  setValue("category", val, { shouldValidate: true });
+
+                  if (val === "packaging") {
+                    setValue("unit", "pcs", { shouldValidate: true });
+                  }
+                }}
               >
                 <SelectTrigger aria-invalid={!!errors.category}>
                   <SelectValue />
                 </SelectTrigger>
+
                 <SelectContent>
                   {CATEGORY_OPTIONS.map((opt) => (
                     <SelectItem key={opt.value} value={opt.value}>
@@ -148,6 +156,7 @@ export default function AddInventoryModal({ open, onClose, onSuccess }) {
                   ))}
                 </SelectContent>
               </Select>
+
               {errors.category && (
                 <p className="text-xs text-destructive">
                   {errors.category.message}
@@ -160,13 +169,18 @@ export default function AddInventoryModal({ open, onClose, onSuccess }) {
               <Label className="text-sm font-medium">
                 Satuan <span className="text-destructive">*</span>
               </Label>
+
               <Select
                 value={watch("unit")}
-                onValueChange={(val) => setValue("unit", val)}
+                onValueChange={(val) =>
+                  setValue("unit", val, { shouldValidate: true })
+                }
+                disabled={selectedCategory === "packaging"}
               >
                 <SelectTrigger aria-invalid={!!errors.unit}>
                   <SelectValue />
                 </SelectTrigger>
+
                 <SelectContent>
                   {UNIT_OPTIONS.map((opt) => (
                     <SelectItem key={opt.value} value={opt.value}>
@@ -175,6 +189,7 @@ export default function AddInventoryModal({ open, onClose, onSuccess }) {
                   ))}
                 </SelectContent>
               </Select>
+
               {errors.unit && (
                 <p className="text-xs text-destructive">
                   {errors.unit.message}
@@ -186,11 +201,11 @@ export default function AddInventoryModal({ open, onClose, onSuccess }) {
           {/* Description */}
           <div className="space-y-1.5">
             <Label htmlFor="inv-desc" className="text-sm font-medium">
-              Deskripsi
+              Description
             </Label>
             <Textarea
               id="inv-desc"
-              placeholder="Deskripsi singkat tentang item ini..."
+              placeholder="Short description about this item..."
               rows={3}
               {...register("description")}
               className="resize-none"
@@ -214,7 +229,7 @@ export default function AddInventoryModal({ open, onClose, onSuccess }) {
               disabled={isCreating}
               className="px-6"
             >
-              Batal
+              Cancel
             </Button>
             <Button
               id="add-inventory-submit"
@@ -222,7 +237,7 @@ export default function AddInventoryModal({ open, onClose, onSuccess }) {
               disabled={isCreating}
               className="px-6 bg-[#F97316] text-white hover:bg-[#F97316]/90"
             >
-              {isCreating ? "Menyimpan..." : "Simpan"}
+              {isCreating ? "Saving..." : "Save"}
             </Button>
           </div>
         </form>

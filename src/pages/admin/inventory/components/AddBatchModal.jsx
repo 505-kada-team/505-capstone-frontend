@@ -94,7 +94,7 @@ export default function AddBatchModal({
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6 pt-2">
           {/* Readonly Item Name */}
           <div className="space-y-1.5">
-            <Label className="text-sm font-medium">Nama Item</Label>
+            <Label className="text-sm font-medium">Item Name</Label>
             <Input
               value={parentInventory.name}
               disabled
@@ -104,7 +104,7 @@ export default function AddBatchModal({
               <span className="inline-block w-3 h-3 rounded-full border border-current opacity-50 flex items-center justify-center text-[8px]">
                 i
               </span>
-              Kategori:{" "}
+              Category:{" "}
               {parentInventory.category === "packaging"
                 ? "Packaging"
                 : "Ingredient"}
@@ -115,7 +115,7 @@ export default function AddBatchModal({
             {/* Quantity */}
             <div className="space-y-1.5 relative">
               <Label htmlFor="batch-qty" className="text-sm font-medium">
-                Jumlah <span className="text-destructive">*</span>
+                Total <span className="text-destructive">*</span>
               </Label>
               <div className="relative">
                 <Input
@@ -143,7 +143,7 @@ export default function AddBatchModal({
             {/* Cost Price */}
             <div className="space-y-1.5 relative">
               <Label htmlFor="batch-cost" className="text-sm font-medium">
-                Harga per Unit <span className="text-destructive">*</span>
+                Total Cost <span className="text-destructive">*</span>
               </Label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
@@ -172,7 +172,7 @@ export default function AddBatchModal({
           {/* Expired Date */}
           <div className="space-y-1.5">
             <Label htmlFor="batch-expired" className="text-sm font-medium">
-              Kadaluarsa{" "}
+              Expired{" "}
               {parentInventory.category === "ingredients" && (
                 <span className="text-destructive">*</span>
               )}
@@ -193,7 +193,7 @@ export default function AddBatchModal({
             />
             {isPackaging && (
               <p className="text-xs text-muted-foreground italic">
-                Item packaging tidak memerlukan tanggal kadaluarsa.
+                The item packaging does not require an expiration date.
               </p>
             )}
             {errors.expired && !isPackaging && (
@@ -220,7 +220,7 @@ export default function AddBatchModal({
               disabled={isAddingBatch}
               className="px-6"
             >
-              Batal
+              Cancel
             </Button>
             <Button
               id="add-batch-submit"
@@ -228,7 +228,7 @@ export default function AddBatchModal({
               disabled={isAddingBatch}
               className="px-6 bg-[#F97316] text-white hover:bg-[#F97316]/90"
             >
-              {isAddingBatch ? "Menyimpan..." : "Simpan"}
+              {isAddingBatch ? "Saving..." : "Save"}
             </Button>
           </div>
         </form>
