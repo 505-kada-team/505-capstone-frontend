@@ -110,7 +110,7 @@ export const getUpcomingHolidays = async ({ startDate, endDate }) => {
   const years = [];
   for (let year = startYear; year <= endYear; year++) years.push(year);
 
-  const baseUrl = import.meta.env.VITE_HOLIDAY_API_URL;
+  const baseUrl = "https://indonesia-holiday-api-ten.vercel.app";
   if (!baseUrl) {
     throw new Error("VITE_HOLIDAY_API_URL belum diisi di .env — dibutuhkan untuk ambil data hari libur.");
   }
