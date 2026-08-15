@@ -49,8 +49,6 @@ export default function PlanDetailModal({ isOpen, onClose, planId }) {
     }
   }, [plan]);
 
-  const mappedIngredients = mapIngredientsFromPlan(plan);
-
   const displayMenus = menus || [];
 
   const handleEditDiscount = (promo) => {
@@ -136,6 +134,17 @@ export default function PlanDetailModal({ isOpen, onClose, planId }) {
               <div className="space-y-4 mb-6">
                 {displayMenus?.map((menu, index) => {
                   const disc = menu.discount || {};
+                  const menuIngredients = (menu.ingredientsDetail ?? []).map(
+                    (ing) => ({
+                      name: ing.nameInventory,
+                      needed: `${ing.quantityNeeded ?? 0} ${ing.unit || ""}`.trim(),
+                      available: `${ing.availableQuantity ?? 0} ${ing.unit || ""}`.trim(),
+                      status: ing.hasUnsafeBatch ? "unsafe" : "safe",
+                      expired: ing.nearestExpiry
+                        ? formatDate(ing.nearestExpiry)
+                        : "-/-/-",
+                    }),
+                  );
                   return (
                     <PlanMenuAccordion
                       key={menu.menuId}
@@ -146,7 +155,7 @@ export default function PlanDetailModal({ isOpen, onClose, planId }) {
                         quantity: menu.quantityPlanned,
                         originalPrice: menu.currentPrice,
                         estimatedProfit:
-                          menu.currentPrice * menu.quantityPlanned, // Simplified estimation
+                          menu.currentPrice * menu.quantityPlanned,
                         ...(disc.discountPercentage > 0
                           ? {
                               discountPercent: disc.discountPercentage,
@@ -156,7 +165,7 @@ export default function PlanDetailModal({ isOpen, onClose, planId }) {
                             }
                           : {}),
                       }}
-                      ingredients={index === 0 ? mappedIngredients : []} // Attach checkResult to the first menu
+                      ingredients={menuIngredients}
                     />
                   );
                 })}
@@ -224,30 +233,4 @@ function formatDate(dateStr) {
     "December",
   ];
   return `${String(d.getDate()).padStart(2, "0")} ${months[d.getMonth()]} ${d.getFullYear()}`;
-}
-
-function mapIngredientsFromPlan(plan) {
-  if (!plan) return [];
-  const checkResult = plan.checkResult;
-  if (!checkResult) return [];
-  return checkResult.map((cr) => {
-    const worstBatch =
-      cr.eligibleBatches?.find((b) => b.batchSafetyStatus === "unsafe") ||
-      cr.eligibleBatches?.[0] ||
-      {};
-    let status = "safe";
-    if (!cr.sufficient)
-      status = "insufficient"; // dulu: 'less' — bukan key valid, selalu fallback "Archived"
-    else if (cr.hasUnsafeBatch) status = "unsafe";
-    return {
-      name: cr.nameInventory,
-      needed: `${cr.quantityNeeded} ${cr.unit || "unit"}`,
-      available: `${cr.availableQuantity} ${cr.unit || "unit"}`,
-      shortage: cr.sufficient
-        ? ""
-        : `${cr.quantityNeeded - cr.availableQuantity} ${cr.unit || "unit"}`,
-      expired: worstBatch.expired ? formatDate(worstBatch.expired) : "-/-/-",
-      status,
-    };
-  });
 }
