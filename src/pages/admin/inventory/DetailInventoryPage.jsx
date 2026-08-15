@@ -20,6 +20,7 @@ import DataTable from "@/components/shared/DataTable";
 import StatusBadge from "@/components/shared/StatusBadge";
 import ConfirmDialog from "@/components/shared/ConfirmDialog";
 import SearchInput from "@/components/shared/SearchInput";
+import Pagination from "@/components/shared/Pagination";
 import AddBatchModal from "./components/AddBatchModal";
 
 import { useInventoryDetail } from "@/hooks/inventory/useInventoryDetail";
@@ -102,6 +103,8 @@ export default function DetailInventoryPage() {
   const [batchSearch, setBatchSearch] = useState("");
   const [batchStatus, setBatchStatus] = useState("all");
   const [batchSort, setBatchSort] = useState("newest");
+  const [batchPage, setBatchPage] = useState(1);
+  const batchLimit = 10;
 
   const processedBatches = useMemo(() => {
     if (!data?.batches) return [];
@@ -153,6 +156,11 @@ export default function DetailInventoryPage() {
 
     return result;
   }, [data, batchSearch, batchStatus, batchSort]);
+
+  const paginatedBatches = useMemo(() => {
+    const start = (batchPage - 1) * batchLimit;
+    return processedBatches.slice(start, start + batchLimit);
+  }, [processedBatches, batchPage]);
 
   const {
     register,
@@ -408,12 +416,21 @@ export default function DetailInventoryPage() {
                 id="batch-search"
                 placeholder="Search by batch code..."
                 value={batchSearch}
-                onChange={setBatchSearch}
+                onChange={(val) => {
+                  setBatchSearch(val);
+                  setBatchPage(1);
+                }}
                 className="w-full md:flex-[3] md:min-w-0 h-9"
               />
 
               <div className="flex flex-nowrap items-center gap-2 w-full md:w-auto md:flex-[4] md:min-w-0">
-                <Select value={batchStatus} onValueChange={setBatchStatus}>
+                <Select 
+                  value={batchStatus} 
+                  onValueChange={(val) => {
+                    setBatchStatus(val);
+                    setBatchPage(1);
+                  }}
+                >
                   <SelectTrigger
                     id="batch-status-filter"
                     className="flex-[3] min-w-0 md:w-[130px] md:flex-none h-9 text-muted-foreground font-normal text-xs"
@@ -428,7 +445,13 @@ export default function DetailInventoryPage() {
                   </SelectContent>
                 </Select>
 
-                <Select value={batchSort} onValueChange={setBatchSort}>
+                <Select 
+                  value={batchSort} 
+                  onValueChange={(val) => {
+                    setBatchSort(val);
+                    setBatchPage(1);
+                  }}
+                >
                   <SelectTrigger className="flex-[4] min-w-0 md:w-[130px] md:flex-none h-9 text-muted-foreground font-normal text-xs">
                     <SelectValue placeholder="Sort By" />
                   </SelectTrigger>
@@ -447,11 +470,21 @@ export default function DetailInventoryPage() {
             <div className="rounded-lg border border-border shadow-sm overflow-hidden bg-background">
               <DataTable
                 columns={columns}
-                data={processedBatches}
+                data={paginatedBatches}
                 loading={false}
                 emptyMessage="No inventory batches found matching the filters."
               />
             </div>
+            
+            {processedBatches.length > 0 && (
+              <Pagination
+                currentPage={batchPage}
+                totalPage={Math.ceil(processedBatches.length / batchLimit)}
+                totalData={processedBatches.length}
+                limit={batchLimit}
+                onPageChange={setBatchPage}
+              />
+            )}
           </div>
         </div>
       ) : null}
