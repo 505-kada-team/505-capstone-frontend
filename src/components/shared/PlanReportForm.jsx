@@ -531,20 +531,15 @@ export default function PlanReportForm({ onSubmit }) {
         </div>
       )}
 
-      <Button
-        type="submit"
-        disabled={
-          isSubmitting ||
-          isPlanLoading ||
-          !plan ||
-          !!incidentError
-        }
-        className="mt-2"
-      >
-        {isSubmitting
-          ? 'Submitting...'
-          : 'Submit Report'}
-      </Button>
+      <div className="flex justify-end pt-2">
+        <Button
+          type="submit"
+          disabled={isSubmitting}
+          className="bg-accent px-6 text-accent-foreground hover:bg-accent/90"
+        >
+          {isSubmitting ? "Submitting..." : "Submit Report"}
+        </Button>
+      </div>
     </form>
   );
 }
