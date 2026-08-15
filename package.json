@@ -1,8 +1,23 @@
 {
   "name": "capstone",
-  "private": true,
   "version": "0.0.0",
+  "private": true,
+  "description": "This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.",
+  "homepage": "https://github.com/505-kada-team/505-capstone-frontend#readme",
+  "bugs": {
+    "url": "https://github.com/505-kada-team/505-capstone-frontend/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/505-kada-team/505-capstone-frontend.git"
+  },
+  "license": "ISC",
+  "author": "",
   "type": "module",
+  "main": "eslint.config.js",
+  "directories": {
+    "doc": "docs"
+  },
   "scripts": {
     "dev": "vite",
     "build": "vite build",
