@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -8,10 +8,19 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 import DataTable from "@/components/shared/DataTable";
 import StatusBadge from "@/components/shared/StatusBadge";
 import ConfirmDialog from "@/components/shared/ConfirmDialog";
+import SearchInput from "@/components/shared/SearchInput";
+import Pagination from "@/components/shared/Pagination";
 import AddBatchModal from "./components/AddBatchModal";
 
 import { useInventoryDetail } from "@/hooks/inventory/useInventoryDetail";
@@ -90,6 +99,69 @@ export default function DetailInventoryPage() {
   const [deleteBatchTarget, setDeleteBatchTarget] = useState(null);
   const [archiveItemTarget, setArchiveItemTarget] = useState(false);
 
+  // --- Batches filtering & sorting ---
+  const [batchSearch, setBatchSearch] = useState("");
+  const [batchStatus, setBatchStatus] = useState("all");
+  const [batchSort, setBatchSort] = useState("newest");
+  const [batchPage, setBatchPage] = useState(1);
+  const batchLimit = 10;
+
+  const processedBatches = useMemo(() => {
+    if (!data?.batches) return [];
+    let result = [...data.batches];
+
+    // 1. Search filter by batchCode
+    if (batchSearch.trim()) {
+      const query = batchSearch.toLowerCase();
+      result = result.filter(
+        (b) => b.batchCode && b.batchCode.toLowerCase().includes(query)
+      );
+    }
+
+    // 2. Status filter
+    if (batchStatus !== "all") {
+      result = result.filter((b) => b.status === batchStatus);
+    }
+
+    // 3. Sorting logic
+    switch (batchSort) {
+      case "Oldest":
+        result.sort((a, b) => new Date(a.inDate) - new Date(b.inDate));
+        break;
+      case "Expiry Soon":
+        result.sort((a, b) => {
+          if (!a.expired) return 1;
+          if (!b.expired) return -1;
+          return new Date(a.expired) - new Date(b.expired);
+        });
+        break;
+      case "Expiry Late":
+        result.sort((a, b) => {
+          if (!a.expired) return 1;
+          if (!b.expired) return -1;
+          return new Date(b.expired) - new Date(a.expired);
+        });
+        break;
+      case "Quantity High":
+        result.sort((a, b) => b.quantity - a.quantity);
+        break;
+      case "Quantity Low":
+        result.sort((a, b) => a.quantity - b.quantity);
+        break;
+      case "Newest":
+      default:
+        result.sort((a, b) => new Date(b.inDate) - new Date(a.inDate));
+        break;
+    }
+
+    return result;
+  }, [data, batchSearch, batchStatus, batchSort]);
+
+  const paginatedBatches = useMemo(() => {
+    const start = (batchPage - 1) * batchLimit;
+    return processedBatches.slice(start, start + batchLimit);
+  }, [processedBatches, batchPage]);
+
   const {
     register,
     handleSubmit,
@@ -147,7 +219,7 @@ export default function DetailInventoryPage() {
   const columns = [
     {
       key: "inDate",
-      header: "Accept at",
+      header: "Received",
       cellClass: "font-mono text-xs",
       render: (row) => formatDate(row.inDate),
     },
@@ -337,14 +409,82 @@ export default function DetailInventoryPage() {
             <h3 className="font-heading text-lg font-bold">
               Inventory Batches
             </h3>
+
+            {/* Batches Filter Bar */}
+            <div className="flex flex-col md:flex-row md:items-center gap-3">
+              <SearchInput
+                id="batch-search"
+                placeholder="Search by batch code..."
+                value={batchSearch}
+                onChange={(val) => {
+                  setBatchSearch(val);
+                  setBatchPage(1);
+                }}
+                className="w-full md:flex-[3] md:min-w-0 h-9"
+              />
+
+              <div className="flex flex-nowrap items-center gap-2 w-full md:w-auto md:flex-[4] md:min-w-0">
+                <Select 
+                  value={batchStatus} 
+                  onValueChange={(val) => {
+                    setBatchStatus(val);
+                    setBatchPage(1);
+                  }}
+                >
+                  <SelectTrigger
+                    id="batch-status-filter"
+                    className="flex-[3] min-w-0 md:w-[130px] md:flex-none h-9 text-muted-foreground font-normal text-xs"
+                  >
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Statuses</SelectItem>
+                    <SelectItem value="active">Active</SelectItem>
+                    <SelectItem value="depleted">Depleted</SelectItem>
+                    <SelectItem value="expired">Expired</SelectItem>
+                  </SelectContent>
+                </Select>
+
+                <Select 
+                  value={batchSort} 
+                  onValueChange={(val) => {
+                    setBatchSort(val);
+                    setBatchPage(1);
+                  }}
+                >
+                  <SelectTrigger className="flex-[4] min-w-0 md:w-[130px] md:flex-none h-9 text-muted-foreground font-normal text-xs">
+                    <SelectValue placeholder="Sort By" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Newest">Newest Received</SelectItem>
+                    <SelectItem value="Oldest">Oldest Received</SelectItem>
+                    <SelectItem value="Expiry Soon">Expiry Soonest</SelectItem>
+                    <SelectItem value="Expiry Late">Expiry Latest</SelectItem>
+                    <SelectItem value="Quantity High">Highest Quantity</SelectItem>
+                    <SelectItem value="Quantity Low">Lowest Quantity</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
             <div className="rounded-lg border border-border shadow-sm overflow-hidden bg-background">
               <DataTable
                 columns={columns}
-                data={data.batches || []}
+                data={paginatedBatches}
                 loading={false}
-                emptyMessage="No inventory batches found for this item."
+                emptyMessage="No inventory batches found matching the filters."
               />
             </div>
+            
+            {processedBatches.length > 0 && (
+              <Pagination
+                currentPage={batchPage}
+                totalPage={Math.ceil(processedBatches.length / batchLimit)}
+                totalData={processedBatches.length}
+                limit={batchLimit}
+                onPageChange={setBatchPage}
+              />
+            )}
           </div>
         </div>
       ) : null}

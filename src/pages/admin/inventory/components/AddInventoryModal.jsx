@@ -71,8 +71,17 @@ export default function AddInventoryModal({ open, onClose, onSuccess }) {
     }
 
     const prefix = selectedCategory === "ingredients" ? "ING" : "PKG";
-    const cleanName = itemName.replace(/[^a-zA-Z0-9]/g, "").toUpperCase();
-    const middle = cleanName.substring(0, 3).padEnd(3, "X");
+    const words = itemName.trim().replace(/[^a-zA-Z0-9\s]/g, "").toUpperCase().split(/\s+/).filter(Boolean);
+    let middle;
+    if (words.length >= 3) {
+      middle = (words[0][0] || "") + (words[1][0] || "") + (words[2][0] || "");
+    } else if (words.length === 2) {
+      middle = words[0].substring(0, 2) + (words[1][0] || "");
+    } else if (words.length === 1) {
+      middle = words[0].substring(0, 3).padEnd(3, "X");
+    } else {
+      middle = "XXX";
+    }
 
     const matchPattern = new RegExp(`^${prefix}-${middle}-(\\d{3})$`);
     let maxNum = 0;
