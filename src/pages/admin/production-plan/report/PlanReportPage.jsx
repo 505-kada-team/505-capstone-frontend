@@ -26,7 +26,7 @@ import AddReportModal from "./components/AddReportModal";
 const LIMIT = 8;
 
 export default function PlanReportPage() {
-  const { sortBy, setSortBy } = useSortable("date_newest");
+  const { sortBy, setSortBy } = useSortable("newest");
 
   // Filters state
   const [filterStatus, setFilterStatus] = useState("all");
@@ -75,18 +75,17 @@ export default function PlanReportPage() {
       .filter((report) => {
         if (!keyword) return true;
 
-        return [report.nameRef, report.reason, report.reportedBy].some(
-          (value) =>
-            String(value ?? "")
-              .toLowerCase()
-              .includes(keyword),
+        return [report.nameRef, report.reason, report.reportedBy].some((value) =>
+          String(value ?? "")
+            .toLowerCase()
+            .includes(keyword),
         );
       })
       .sort((a, b) => {
         const aDate = new Date(a.incidentAt).getTime();
         const bDate = new Date(b.incidentAt).getTime();
 
-        return sortBy === "date_oldest" ? aDate - bDate : bDate - aDate;
+        return sortBy === "oldest" ? aDate - bDate : bDate - aDate;
       });
   }, [reports, search, sortBy]);
 

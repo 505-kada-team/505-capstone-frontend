@@ -22,6 +22,7 @@ import {
 } from "@/components/ui/select";
 
 import { useInventoryMutations } from "@/hooks/inventory/useInventoryMutations";
+import { useInventoryOptions } from "@/hooks/inventory/useInventoryOptions";
 import { createInventorySchema } from "@/schemas/inventorySchema";
 
 const CATEGORY_OPTIONS = [
@@ -39,11 +40,14 @@ export default function AddInventoryModal({ open, onClose, onSuccess }) {
   const { createInventory, isCreating, createError, resetCreateError } =
     useInventoryMutations();
 
+  const { inventoryOptions, fetchInventoryOptions } = useInventoryOptions();
+
   const {
     register,
     handleSubmit,
     reset,
     setValue,
+    setError,
     watch,
     formState: { errors },
   } = useForm({
@@ -58,15 +62,64 @@ export default function AddInventoryModal({ open, onClose, onSuccess }) {
   });
 
   const selectedCategory = watch("category");
+  const itemName = watch("name");
+
+  useEffect(() => {
+    if (!itemName) {
+      setValue("itemCode", "");
+      return;
+    }
+
+    const prefix = selectedCategory === "ingredients" ? "ING" : "PKG";
+    const words = itemName.trim().replace(/[^a-zA-Z0-9\s]/g, "").toUpperCase().split(/\s+/).filter(Boolean);
+    let middle;
+    if (words.length >= 3) {
+      middle = (words[0][0] || "") + (words[1][0] || "") + (words[2][0] || "");
+    } else if (words.length === 2) {
+      middle = words[0].substring(0, 2) + (words[1][0] || "");
+    } else if (words.length === 1) {
+      middle = words[0].substring(0, 3).padEnd(3, "X");
+    } else {
+      middle = "XXX";
+    }
+
+    const matchPattern = new RegExp(`^${prefix}-${middle}-(\\d{3})$`);
+    let maxNum = 0;
+
+    inventoryOptions.forEach((item) => {
+      if (item.itemCode) {
+        const match = item.itemCode.match(matchPattern);
+        if (match) {
+          const num = parseInt(match[1], 10);
+          if (num > maxNum) maxNum = num;
+        }
+      }
+    });
+
+    const nextNum = maxNum + 1;
+    const suffix = String(nextNum).padStart(3, "0");
+    const generatedCode = `${prefix}-${middle}-${suffix}`;
+
+    setValue("itemCode", generatedCode, { shouldValidate: true });
+  }, [itemName, selectedCategory, inventoryOptions, setValue]);
 
   useEffect(() => {
     if (open) {
       reset();
       resetCreateError();
+      fetchInventoryOptions();
     }
-  }, [open, reset, resetCreateError]);
+  }, [open, reset, resetCreateError, fetchInventoryOptions]);
 
   const onSubmit = async (data) => {
+    const isDuplicate = inventoryOptions.some(
+      (item) => item.name.toLowerCase() === data.name.trim().toLowerCase()
+    );
+    if (isDuplicate) {
+      setError("name", { message: "Item name already exists" });
+      return;
+    }
+
     try {
       await createInventory(data);
       onSuccess?.();
@@ -109,29 +162,11 @@ export default function AddInventoryModal({ open, onClose, onSuccess }) {
             )}
           </div>
 
-          {/* Item Code */}
-          <div className="space-y-1.5">
-            <Label htmlFor="inv-code" className="text-sm font-medium">
-              Item Code <span className="text-destructive">*</span>
-            </Label>
-            <Input
-              id="inv-code"
-              placeholder="Contoh: ING-KOP-001"
-              aria-invalid={!!errors.itemCode}
-              {...register("itemCode")}
-            />
-            {errors.itemCode && (
-              <p className="text-xs text-destructive">
-                {errors.itemCode.message}
-              </p>
-            )}
-          </div>
-
           <div className="grid grid-cols-2 gap-4">
             {/* Category */}
             <div className="space-y-1.5">
               <Label className="text-sm font-medium">
-                Kategori <span className="text-destructive">*</span>
+                Category <span className="text-destructive">*</span>
               </Label>
 
               <Select
@@ -167,7 +202,7 @@ export default function AddInventoryModal({ open, onClose, onSuccess }) {
             {/* Unit */}
             <div className="space-y-1.5">
               <Label className="text-sm font-medium">
-                Satuan <span className="text-destructive">*</span>
+                Unit <span className="text-destructive">*</span>
               </Label>
 
               <Select
@@ -196,6 +231,26 @@ export default function AddInventoryModal({ open, onClose, onSuccess }) {
                 </p>
               )}
             </div>
+          </div>
+
+          {/* Item Code */}
+          <div className="space-y-1.5">
+            <Label htmlFor="inv-code" className="text-sm font-medium">
+              Item Code <span className="text-destructive">*</span>
+            </Label>
+            <Input
+              id="inv-code"
+              placeholder="Will be auto-generated..."
+              disabled
+              className="bg-muted text-muted-foreground border-border font-mono"
+              aria-invalid={!!errors.itemCode}
+              {...register("itemCode")}
+            />
+            {errors.itemCode && (
+              <p className="text-xs text-destructive">
+                {errors.itemCode.message}
+              </p>
+            )}
           </div>
 
           {/* Description */}

@@ -77,14 +77,14 @@ const CATEGORY_FILTER_OPTIONS = [
 // ============================================================
 
 /** Format angka ke Rupiah: 12700 → "Rp 12.700" */
-const formatCurrency = (amount) => {
-  if (amount === null || amount === undefined) return "—";
-  return new Intl.NumberFormat("id-ID", {
-    style: "currency",
-    currency: "IDR",
-    minimumFractionDigits: 0,
-  }).format(amount);
-};
+// const formatCurrency = (amount) => {
+//   if (amount === null || amount === undefined) return "—";
+//   return new Intl.NumberFormat("id-ID", {
+//     style: "currency",
+//     currency: "IDR",
+//     minimumFractionDigits: 0,
+//   }).format(amount);
+// };
 
 /**
  * Format quantity + konversi unit otomatis:
@@ -117,6 +117,14 @@ const formatQuantity = (quantity, unit) => {
 const sortItems = (items, sortBy) => {
   const sorted = [...items];
   switch (sortBy) {
+    case "newest":
+      return sorted.sort(
+        (a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0),
+      );
+    case "oldest":
+      return sorted.sort(
+        (a, b) => new Date(a.createdAt || 0) - new Date(b.createdAt || 0),
+      );
     case "name_asc":
       return sorted.sort((a, b) => a.name.localeCompare(b.name));
     case "name_desc":
@@ -140,9 +148,7 @@ const sortItems = (items, sortBy) => {
         (a, b) => (a.lastCostBatch ?? Infinity) - (b.lastCostBatch ?? Infinity),
       );
     default:
-      return sorted.sort(
-        (a, b) => new Date(b.createdAt) - new Date(a.createdAt),
-      );
+      return sorted;
   }
 };
 
@@ -169,7 +175,7 @@ export default function InventoryPage() {
   // ── Filter state ──────────────────────────────────────────
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState("all");
-  const { sortBy, setSortBy } = useSortable("");
+  const { sortBy, setSortBy } = useSortable("newest");
   const [page, setPage] = useState(1);
 
   // ── Dialog state ──────────────────────────────────────────
@@ -214,15 +220,33 @@ export default function InventoryPage() {
     {
       key: "name",
       header: "Item Name",
-      headerClass: "w-[40%]",
+      headerClass: "w-[25%]",
       render: (row) => (
         <span className="font-medium text-foreground text-sm">{row.name}</span>
       ),
     },
     {
+      key: "itemCode",
+      header: "Item Code",
+      headerClass: "w-[15%]",
+      cellClass: "font-mono text-xs text-muted-foreground",
+      render: (row) => row.itemCode || "—",
+    },
+    {
+      key: "totalSubInventory",
+      header: "Active Batches",
+      headerClass: "w-[15%]",
+      cellClass: "font-mono text-xs text-foreground",
+      render: (row) => {
+        const count = row.totalSubInventory;
+        if (!count) return "—";
+        return count === 1 ? "1 Batch" : `${count} Batches`;
+      },
+    },
+    {
       key: "quantityTotal",
       header: "Quantity",
-      headerClass: "w-[15%]",
+      headerClass: "w-[18%]",
       cellClass: "font-mono text-sm",
       render: (row) => (
         <span
@@ -233,28 +257,15 @@ export default function InventoryPage() {
       ),
     },
     {
-      key: "lastCostBatch",
-      header: "Total Cost",
-      headerClass: "w-[20%]",
-      cellClass: "font-mono text-sm",
-      render: (row) => (
-        <span
-          className={row.lastCostBatch === null ? "text-muted-foreground" : ""}
-        >
-          {formatCurrency(row.lastCostBatch)}
-        </span>
-      ),
-    },
-    {
       key: "category",
       header: "Category",
-      headerClass: "w-[15%]",
+      headerClass: "w-[12%]",
       render: (row) => <CategoryBadge category={row.category} />,
     },
     {
       key: "aksi",
       header: "Action",
-      headerClass: "w-[10%] text-right",
+      headerClass: "w-[20%] text-right",
       cellClass: "text-right",
       render: (row) => (
         <div className="flex items-center justify-end gap-1.5">
@@ -323,12 +334,14 @@ export default function InventoryPage() {
               <SelectValue placeholder="Sort By" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="name_asc">Nama (A-Z)</SelectItem>
-              <SelectItem value="name_desc">Nama (Z-A)</SelectItem>
-              <SelectItem value="stock_high">Stok Tertinggi</SelectItem>
-              <SelectItem value="stock_low">Stok Terendah</SelectItem>
-              <SelectItem value="cost_high">Nilai Tertinggi</SelectItem>
-              <SelectItem value="cost_low">Nilai Terendah</SelectItem>
+              <SelectItem value="newest">Newest Added</SelectItem>
+              <SelectItem value="oldest">Oldest Added</SelectItem>
+              <SelectItem value="name_asc">Name (A-Z)</SelectItem>
+              <SelectItem value="name_desc">Name (Z-A)</SelectItem>
+              <SelectItem value="stock_high">Highest Stock</SelectItem>
+              <SelectItem value="stock_low">Lowest Stock</SelectItem>
+              <SelectItem value="cost_high">Highest Cost</SelectItem>
+              <SelectItem value="cost_low">Lowest Cost</SelectItem>
             </SelectContent>
           </Select>
         </div>
