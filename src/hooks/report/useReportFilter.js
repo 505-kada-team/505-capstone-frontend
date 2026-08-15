@@ -3,12 +3,14 @@ import { toast } from "sonner";
 
 const INITIAL_FILTER = {
   reportType: "waste",
+  planId: "",
   startDate: "",
   endDate: "",
 };
 
 export function useReportFilter() {
   const [reportType, setReportType] = useState(INITIAL_FILTER.reportType);
+  const [planId, setPlanId] = useState(INITIAL_FILTER.planId);
   const [startDate, setStartDate] = useState(INITIAL_FILTER.startDate);
   const [endDate, setEndDate] = useState(INITIAL_FILTER.endDate);
   const [appliedFilter, setAppliedFilter] = useState(INITIAL_FILTER);
@@ -30,7 +32,7 @@ export function useReportFilter() {
     }
 
     setAppliedFilter({ reportType, startDate, endDate });
-  }, [reportType, startDate, endDate]);
+  }, [reportType, planId, startDate, endDate]);
 
   const handleReset = useCallback(() => {
     setReportType(INITIAL_FILTER.reportType);
@@ -102,6 +104,7 @@ export function useReportFilter() {
   return {
     reportType,
     setReportType,
+    planId,
     startDate,
     setStartDate,
     endDate,
