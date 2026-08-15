@@ -49,10 +49,10 @@ export default function AddRecipeModal({ isOpen, onClose, onSuccess }) {
       }
 
       try {
-        const res = await createRecipe({
-          ...data,
-          ingredients: resolved,
-        });
+        const res = await createRecipe(
+          { ...data, ingredients: resolved },
+          formState.imageFile,
+        );
 
         if (res.success) {
           toast.success(res.message);
