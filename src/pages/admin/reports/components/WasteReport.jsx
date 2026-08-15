@@ -1,12 +1,11 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo } from "react";
 import { toast } from "sonner";
 
 import DataTable from "@/components/shared/DataTable";
 import Pagination from "@/components/shared/Pagination";
 import StatusBadge from "@/components/shared/StatusBadge";
 import { usePagination } from "@/hooks/usePagination";
-import { planApi } from "@/services/plan/plan.api";
-import { mapPlanReportList } from "@/services/plan/plan.mapper";
+import { usePlanReportList } from "@/hooks/report/usePlanReportList";
 import { formatCurrency } from "@/lib/formatCurrency";
 
 const LIMIT = 8; // jumlah baris per halaman
@@ -16,75 +15,45 @@ export default function WasteReport({
   endDate,
   onExportDataChange,
 }) {
-  const [reports, setReports] = useState([]);
-  const [isLoading, setIsLoading] = useState(false);
+  // ── Fetch data via hook ─────────────────────────────────────
+  const { reports: allReports, isLoading, error } = usePlanReportList();
 
-  // ── Fetch & filter data ──────────────────────────────────────
-  useEffect(() => {
-    const fetchReports = async () => {
-      setIsLoading(true);
+  // ── Filter client-side berdasarkan tanggal ──────────────────
+  const filteredReports = useMemo(() => {
+    return allReports.filter((report) => {
+      if (!report.incidentAt) return false;
 
-      try {
-        const res = await planApi.listReports();
+      const incidentDate = new Date(report.incidentAt);
 
-        if (!res.success) {
-          setReports([]);
-          return;
-        }
-
-        const mappedReports = mapPlanReportList(res.data);
-
-        const filteredReports = mappedReports.filter((report) => {
-          if (!report.incidentAt) return false;
-
-          const incidentDate = new Date(report.incidentAt);
-
-          if (
-            startDate &&
-            incidentDate < new Date(`${startDate}T00:00:00`)
-          ) {
-            return false;
-          }
-
-          if (
-            endDate &&
-            incidentDate > new Date(`${endDate}T23:59:59`)
-          ) {
-            return false;
-          }
-
-          return true;
-        });
-
-        setReports(filteredReports);
-      } catch (error) {
-        console.error("[WASTE REPORT ERROR]", error);
-
-        toast.error(
-          error.response?.data?.message ??
-            "Failed to load waste report",
-        );
-      } finally {
-        setIsLoading(false);
+      if (startDate && incidentDate < new Date(`${startDate}T00:00:00`)) {
+        return false;
       }
-    };
 
-    fetchReports();
-  }, [startDate, endDate]);
+      if (endDate && incidentDate > new Date(`${endDate}T23:59:59`)) {
+        return false;
+      }
+
+      return true;
+    });
+  }, [allReports, startDate, endDate]);
 
   // ── Pagination ──────────────────────────────────────────────
-  const {
-    currentPage,
-    totalPages,
-    paginatedItems,
-    setPage,
-    resetPage,
-  } = usePagination(reports, LIMIT);
+  const { currentPage, totalPages, paginatedItems, setPage, resetPage } =
+    usePagination(filteredReports, LIMIT);
 
   // Reset ke halaman pertama setiap kali filter berubah
   useEffect(() => {
     resetPage();
   }, [startDate, endDate, resetPage]);
+
+  // ── Error handling ─────────────────────────────────────────
+  useEffect(() => {
+    if (error) {
+      toast.error(
+        error.response?.data?.message ?? "Failed to load waste report",
+      );
+    }
+  }, [error]);
 
   // ── Definisi kolom ─────────────────────────────────────────
   const columns = useMemo(
@@ -156,9 +125,7 @@ export default function WasteReport({
         key: "isLateReport",
         header: "Late Report",
         render: (row) => (
-          <span className="text-sm">
-            {row.isLateReport ? "Yes" : "No"}
-          </span>
+          <span className="text-sm">{row.isLateReport ? "Yes" : "No"}</span>
         ),
       },
       {
@@ -186,7 +153,7 @@ export default function WasteReport({
         { key: "lateReport", label: "Late Report" },
         { key: "status", label: "Status" },
       ],
-      rows: reports.map((report) => ({
+      rows: filteredReports.map((report) => ({
         incidentDate: report.incidentAt
           ? new Date(report.incidentAt).toISOString().slice(0, 10)
           : "",
@@ -200,7 +167,7 @@ export default function WasteReport({
         status: report.status ?? "",
       })),
     });
-  }, [reports, onExportDataChange]);
+  }, [filteredReports, onExportDataChange]);
 
   // ── Render ──────────────────────────────────────────────────
   return (
@@ -227,12 +194,12 @@ export default function WasteReport({
             />
           </div>
 
-          {reports.length > 0 && (
+          {filteredReports.length > 0 && (
             <div className="border-t p-4">
               <Pagination
                 currentPage={currentPage}
                 totalPage={totalPages}
-                totalData={reports.length}
+                totalData={filteredReports.length}
                 limit={LIMIT}
                 onPageChange={setPage}
               />

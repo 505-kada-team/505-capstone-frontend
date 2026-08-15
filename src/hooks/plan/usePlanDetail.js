@@ -1,70 +1,71 @@
 import { useState, useEffect, useCallback } from "react";
-import { toast } from "sonner";
-import { planApi } from "@/services/plan/plan.api";
-import { mapPlanDetail } from "@/services/plan/plan.mapper";
-import { getApiErrorMessage } from "@/lib/apiError";
+import {
+  getPlanDetail,
+  approvePlan,
+  cancelPlan,
+  stopPlan as apiStopPlan,
+  checkAvailabilityPlan,
+  setMenuDiscount,
+  deleteMenuDiscount,
+} from "@/services/plan/plan.api";
+import { mapPlanDetail, mapDiscountResult } from "@/services/plan/plan.mapper";
 
 /**
- * Data + lifecycle untuk 1 Plan: detail (A3) dan aksi-aksi yang mengubah
- * status/bagiannya (A5 refreshAvailability, A6 approve, A7 stop, A8 cancel,
- * A9 setDiscount, A10 removeDiscount).
+ * Hook untuk mengambil detail plan + menyediakan aksi:
+ * - approve (A6)
+ * - reject / cancel (A8)
+ * - stop (A7)
+ * - refreshAvailability (A5)
+ * - setDiscount / removeDiscount (A9/A10)
  *
- * Digabung dalam 1 hook karena semuanya berbagi 1 alasan untuk berubah:
- * "state plan ini berubah di backend -> refetch detail supaya UI selalu
- * sinkron dengan backend". Kita TIDAK meng-update state secara optimis di
- * client (mis. langsung set status: 'active' setelah approve), karena
- * banyak field turunan (frozenSellingPrice, committedIngredients, dst) baru
- * benar-benar valid setelah dihitung ulang di backend.
- *
- * @param {string|null|undefined} planId - null/undefined -> hook idle, plan = null.
- * @param {{ onMutationSuccess?: () => void }} [options] onMutationSuccess
- * dipanggil setelah aksi berhasil (mis. untuk refresh list plan di komponen induk).
+ * @param {string} planId
+ * @param {Object} [options]
+ * @param {Function} [options.onMutationSuccess] - dipanggil setelah operasi sukses.
  */
 export function usePlanDetail(planId, { onMutationSuccess } = {}) {
   const [plan, setPlan] = useState(null);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
   const [isMutating, setIsMutating] = useState(false);
+  const [error, setError] = useState(null);
 
   const fetchDetail = useCallback(async () => {
-    if (!planId) {
-      setPlan(null);
-      return;
-    }
+    if (!planId) return;
     setIsLoading(true);
     setError(null);
     try {
-      const envelope = await planApi.detail(planId);
-      setPlan(mapPlanDetail(envelope.data));
+      const response = await getPlanDetail(planId);
+      const mapped = mapPlanDetail(response.data?.data);
+      setPlan(mapped);
+      return mapped;
     } catch (err) {
       setError(err);
-      toast.error(getApiErrorMessage(err, "Gagal memuat detail plan"));
+      throw err;
     } finally {
       setIsLoading(false);
     }
   }, [planId]);
 
   useEffect(() => {
-    fetchDetail();
-  }, [fetchDetail]);
+    if (planId) {
+      fetchDetail();
+    } else {
+      setPlan(null);
+      setIsLoading(false);
+    }
+  }, [planId, fetchDetail]);
 
-  /**
-   * Bungkus 1 pemanggilan aksi plan.api: tampilkan toast sukses/gagal,
-   * refetch detail (default: true) supaya semua field turunan ikut fresh,
-   * lalu beri tahu pemanggil lewat onMutationSuccess.
-   */
   const runMutation = useCallback(
-    async (fn, { successMessage, refetchAfter = true } = {}) => {
+    async (mutationFn) => {
       setIsMutating(true);
+      setError(null);
       try {
-        const envelope = await fn();
-        toast.success(envelope?.message || successMessage);
-        if (refetchAfter) await fetchDetail();
+        const result = await mutationFn();
+        await fetchDetail();
         onMutationSuccess?.();
-        return { ok: true, data: envelope?.data };
+        return result;
       } catch (err) {
-        toast.error(getApiErrorMessage(err));
-        return { ok: false, error: err };
+        setError(err);
+        throw err;
       } finally {
         setIsMutating(false);
       }
@@ -73,59 +74,98 @@ export function usePlanDetail(planId, { onMutationSuccess } = {}) {
   );
 
   const approve = useCallback(
-    () =>
-      runMutation(() => planApi.approve(planId), {
-        successMessage: "Plan disetujui",
-      }),
-    [planId, runMutation],
+    () => runMutation(() => approvePlan(planId)),
+    [runMutation, planId],
   );
 
-  /** A8 - cancel draft. Dinamai `reject` di sini karena itu istilah yang dipakai UI (tombol Reject). */
   const reject = useCallback(
-    () =>
-      runMutation(() => planApi.cancel(planId), {
-        successMessage: "Draft plan dibatalkan",
-      }),
-    [planId, runMutation],
+    () => runMutation(() => cancelPlan(planId)),
+    [runMutation, planId],
   );
 
   const stop = useCallback(
-    (payload) =>
-      runMutation(() => planApi.stop(planId, payload), {
-        successMessage: "Plan dihentikan",
-      }),
-    [planId, runMutation],
+    async (payload) => {
+      if (!planId) return;
+      setIsMutating(true);
+      setError(null);
+      try {
+        const response = await apiStopPlan(planId, payload);
+        await fetchDetail();
+        onMutationSuccess?.();
+        return { ok: true, data: response.data?.data };
+      } catch (err) {
+        setError(err);
+        throw err;
+      } finally {
+        setIsMutating(false);
+      }
+    },
+    [planId, fetchDetail, onMutationSuccess],
   );
 
-  const refreshAvailability = useCallback(
-    () =>
-      runMutation(() => planApi.refreshAvailability(planId), {
-        successMessage: "Simulasi ketersediaan di-refresh",
-      }),
-    [planId, runMutation],
-  );
+  const refreshAvailability = useCallback(async () => {
+    if (!planId) return;
+    setIsMutating(true);
+    setError(null);
+    try {
+      const response = await checkAvailabilityPlan(planId);
+      await fetchDetail();
+      onMutationSuccess?.();
+      return response.data?.data;
+    } catch (err) {
+      console.log("refreshAvailability planId:", planId);
+      setError(err);
+      throw err;
+    } finally {
+      setIsMutating(false);
+    }
+  }, [planId, fetchDetail, onMutationSuccess]);
 
   const setDiscount = useCallback(
-    (menuId, payload) =>
-      runMutation(() => planApi.setDiscount(planId, menuId, payload), {
-        successMessage: "Diskon disimpan",
-      }),
-    [planId, runMutation],
+    async (menuId, payload) => {
+      if (!planId) return;
+      setIsMutating(true);
+      setError(null);
+      try {
+        const response = await setMenuDiscount(planId, menuId, payload);
+        await fetchDetail();
+        onMutationSuccess?.();
+        return mapDiscountResult(response.data?.data);
+      } catch (err) {
+        setError(err);
+        throw err;
+      } finally {
+        setIsMutating(false);
+      }
+    },
+    [planId, fetchDetail, onMutationSuccess],
   );
 
   const removeDiscount = useCallback(
-    (menuId) =>
-      runMutation(() => planApi.removeDiscount(planId, menuId), {
-        successMessage: "Diskon dihapus",
-      }),
-    [planId, runMutation],
+    async (menuId) => {
+      if (!planId) return;
+      setIsMutating(true);
+      setError(null);
+      try {
+        const response = await deleteMenuDiscount(planId, menuId);
+        await fetchDetail();
+        onMutationSuccess?.();
+        return mapDiscountResult(response.data?.data);
+      } catch (err) {
+        setError(err);
+        throw err;
+      } finally {
+        setIsMutating(false);
+      }
+    },
+    [planId, fetchDetail, onMutationSuccess],
   );
 
   return {
     plan,
     isLoading,
-    error,
     isMutating,
+    error,
     refetch: fetchDetail,
     approve,
     reject,

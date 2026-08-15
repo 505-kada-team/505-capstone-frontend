@@ -7,61 +7,40 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { planApi } from "@/services/plan/plan.api";
-import { mapPlanDetail, mapPlanReportList } from "@/services/plan/plan.mapper";
+import { mapPlanDetail } from "@/services/plan/plan.mapper"; // tidak perlu lagi
 import { getSellingHistory } from "@/services/api";
 import { formatCurrency } from "@/lib/formatCurrency";
 import StatusBadge from "@/components/shared/StatusBadge";
-import {
-  ClipboardList,
-  TriangleAlert,
-  CheckCircle2,
-  ShieldAlert,
-} from "lucide-react";
+import { ClipboardList, CheckCircle2, ShieldAlert } from "lucide-react";
 import { toast } from "sonner";
+import { usePlanDetail } from "@/hooks/plan/usePlanDetail";
 
 export default function PlanHistoryDetailModal({ isOpen, onClose, planId }) {
-  const [plan, setPlan] = useState(null);
-  const [reports, setReports] = useState([]);
+  // ── Gunakan hook usePlanDetail ────────────────────────────────
+  const {
+    plan,
+    isLoading,
+    error: planError,
+    refetch: refetchPlan,
+  } = usePlanDetail(isOpen ? planId : null);
+
+  // State untuk sales history
   const [salesHistory, setSalesHistory] = useState([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [isLoadingReports, setIsLoadingReports] = useState(false);
   const [isLoadingSales, setIsLoadingSales] = useState(false);
 
-  const fetchPlanData = useCallback(async () => {
-    if (!planId) return;
-    setIsLoading(true);
-    try {
-      const envelope = await planApi.detail(planId);
-      setPlan(mapPlanDetail(envelope.data));
-    } catch (err) {
-      console.error("Failed to load plan details:", err);
+  // Tutup modal + tampilkan toast jika terjadi error saat fetch plan
+  useEffect(() => {
+    if (planError && isOpen) {
       toast.error(
-        err?.response?.data?.message ||
-          err?.message ||
+        planError?.response?.data?.message ||
+          planError?.message ||
           "Failed to load plan details",
       );
       onClose();
-    } finally {
-      setIsLoading(false);
     }
-  }, [planId, onClose]);
+  }, [planError, isOpen, onClose]);
 
-  const fetchReports = useCallback(async () => {
-    if (!planId) return;
-    setIsLoadingReports(true);
-    try {
-      const envelope = await planApi.listReports({ planId });
-      const raw = envelope.data;
-      const list = Array.isArray(raw) ? raw : Array.isArray(raw?.data) ? raw.data : [];
-      setReports(mapPlanReportList(list));
-    } catch (err) {
-      console.error("Failed to load plan reports:", err);
-    } finally {
-      setIsLoadingReports(false);
-    }
-  }, [planId]);
-
+  // Fetch sales history
   const fetchSalesHistory = useCallback(async () => {
     if (!planId) return;
     setIsLoadingSales(true);
@@ -83,15 +62,13 @@ export default function PlanHistoryDetailModal({ isOpen, onClose, planId }) {
 
   useEffect(() => {
     if (isOpen && planId) {
-      fetchPlanData();
-      fetchReports();
       fetchSalesHistory();
     }
-  }, [isOpen, planId, fetchPlanData, fetchReports, fetchSalesHistory]);
+  }, [isOpen, planId, fetchSalesHistory]);
 
   if (!isOpen || !planId) return null;
 
-  // Format Date Range Helper
+  // ── Helper format tanggal ─────────────────────────────────────
   const formatPeriod = (start, end) => {
     if (!start || !end) return "—";
     const opt = { day: "2-digit", month: "short", year: "numeric" };
@@ -100,6 +77,7 @@ export default function PlanHistoryDetailModal({ isOpen, onClose, planId }) {
     ).toLocaleDateString("en-US", opt)}`;
   };
 
+  // ── Analisis penjualan per menu ───────────────────────────────
   const getMenuSalesAnalysis = (menu) => {
     const normalPrice =
       menu.frozenSellingPrice || menu.effectiveSellingPrice || 25000;
@@ -142,43 +120,34 @@ export default function PlanHistoryDetailModal({ isOpen, onClose, planId }) {
     };
   };
 
-  // Calculate top sales metrics
+  // ── Data utama plan ──────────────────────────────────────────
   const menus = plan?.menus || [];
-  const menusWithAnalysis = menus.map((m) => {
-    const analysis = getMenuSalesAnalysis(m);
-    return {
-      ...m,
-      analysis,
-    };
-  });
+  const menusWithAnalysis = menus.map((m) => ({
+    ...m,
+    analysis: getMenuSalesAnalysis(m),
+  }));
 
   const totalEstimatedRevenue = menusWithAnalysis.reduce((sum, m) => {
-    const price = m.analysis.normalPrice;
-    return sum + (m.quantityPlanned || 0) * price;
+    return sum + (m.quantityPlanned || 0) * m.analysis.normalPrice;
   }, 0);
 
-  const totalActualRevenue = menusWithAnalysis.reduce((sum, m) => {
-    return sum + m.analysis.totalActualRevenue;
-  }, 0);
+  const totalActualRevenue = menusWithAnalysis.reduce(
+    (sum, m) => sum + m.analysis.totalActualRevenue,
+    0,
+  );
 
   const totalRevenueVariance = totalActualRevenue - totalEstimatedRevenue;
 
-  // Helper to format remaining quantities
-  const getRemainingStatusList = () => {
-    return menus.map((m) => {
-      const remaining =
-        (m.quantityPlanned || 0) -
-        (m.soldQuantity || 0) -
-        (m.lossQuantity || 0);
-      return {
-        name: m.name,
-        remaining,
-        isSoldOut: remaining <= 0,
-      };
-    });
-  };
-
-  const remainingStatusList = getRemainingStatusList();
+  // ── Status sisa stok menu ─────────────────────────────────────
+  const remainingStatusList = menus.map((m) => {
+    const remaining =
+      (m.quantityPlanned || 0) - (m.soldQuantity || 0) - (m.lossQuantity || 0);
+    return {
+      name: m.name,
+      remaining,
+      isSoldOut: remaining <= 0,
+    };
+  });
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -211,6 +180,8 @@ export default function PlanHistoryDetailModal({ isOpen, onClose, planId }) {
                   {formatPeriod(plan.startDate, plan.endDate)}
                 </span>
               </div>
+
+              {/* ── Sales Details ─────────────────────────────── */}
               <div>
                 <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2">
                   Sales Details
@@ -284,7 +255,8 @@ export default function PlanHistoryDetailModal({ isOpen, onClose, planId }) {
                                 <div>{m.soldQuantity}</div>
                                 {m.analysis.discountedPrice && (
                                   <div className="text-[10px] text-muted-foreground mt-0.5">
-                                    ({m.analysis.normalQty}N/{m.analysis.promoQty}P)
+                                    ({m.analysis.normalQty}N/
+                                    {m.analysis.promoQty}P)
                                   </div>
                                 )}
                               </td>
@@ -315,219 +287,97 @@ export default function PlanHistoryDetailModal({ isOpen, onClose, planId }) {
                 </div>
               </div>
 
-              {/* Incidents & Reports Section */}
-              <div>
-                <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2">
-                  Incidents & Plan Reports
-                </h3>
-                {isLoadingReports ? (
-                  <div className="py-6 flex justify-center text-xs text-muted-foreground animate-pulse">
-                    Loading reports...
-                  </div>
-                ) : reports.length === 0 ? (
-                  <p className="text-xs text-muted-foreground italic pl-1">
-                    No incidents or loss reports submitted for this plan.
-                  </p>
-                ) : (
-                  <div className="border rounded-lg overflow-hidden">
-                    <div className="overflow-x-auto">
-                      <table className="w-full text-sm text-left min-w-[520px]">
-                        <thead className="bg-muted text-muted-foreground text-xs uppercase">
-                          <tr>
-                            <th className="px-4 py-2 font-medium">
-                              Time
-                            </th>
-                            <th className="px-4 py-2 font-medium">Type & Item</th>
-                            <th className="px-4 py-2 font-medium text-right">
-                              Qty
-                            </th>
-                            <th className="px-4 py-2 font-medium text-center">
-                              Status
-                            </th>
-                            <th className="px-4 py-2 font-medium">
-                              Resolution
-                            </th>
-                          </tr>
-                        </thead>
-                        <tbody className="divide-y font-normal">
-                          {reports.map((rep) => {
-                            const dateObj = new Date(rep.incidentAt);
-                            const dateStr = dateObj.toLocaleDateString("en-US", {
-                              day: "2-digit",
-                              month: "short",
-                            });
-                            const timeStr = dateObj.toLocaleTimeString("en-US", {
-                              hour: "2-digit",
-                              minute: "2-digit",
-                            });
-
-                            return (
-                              <tr
-                                key={rep._id}
-                                className="bg-background hover:bg-muted/10 text-xs"
-                              >
-                              <td className="px-4 py-3">
-                                <div className="flex flex-col">
-                                  <span className="font-mono">{dateStr}</span>
-                                  <span className="text-[10px] text-muted-foreground font-mono">
-                                    {timeStr}
-                                  </span>
-                                  {rep.isLateReport && (
-                                    <span className="inline-flex text-[9px] font-semibold text-amber-600 bg-amber-50 dark:bg-amber-950/20 px-1 py-0.2 rounded w-max mt-0.5">
-                                      Late
-                                    </span>
-                                  )}
-                                </div>
-                              </td>
-                              <td className="px-4 py-3">
-                                <div className="flex flex-col">
-                                  <span className="font-semibold capitalize text-foreground">
-                                    {rep.category}
-                                  </span>
-                                  <span className="text-[10px] text-muted-foreground truncate max-w-[140px]">
-                                    {rep.nameRef || rep.refId}
-                                  </span>
-                                </div>
-                              </td>
-                              <td className="px-4 py-3 text-right font-mono font-semibold">
-                                {rep.quantityLost}
-                              </td>
-                              <td className="px-4 py-3 text-center">
-                                <span className="capitalize">
-                                  <StatusBadge variant={rep.status} />
-                                </span>
-                              </td>
-                              <td className="px-4 py-3">
-                                <div className="text-[11px]">
-                                  {rep.status === "pending" && (
-                                    <span className="text-muted-foreground italic flex items-center gap-1">
-                                      <TriangleAlert className="w-3.5 h-3.5 text-amber-500" />
-                                      Awaiting admin review
-                                    </span>
-                                  )}
-                                  {rep.status === "rejected" && (
-                                    <div className="flex flex-col text-[#C4441F]">
-                                      <span className="font-semibold flex items-center gap-1">
-                                        <ShieldAlert className="w-3.5 h-3.5" />
-                                        Rejected
-                                      </span>
-                                      {rep.adminNote && (
-                                        <span className="text-[10px] text-muted-foreground italic">
-                                          Note: {rep.adminNote}
-                                        </span>
-                                      )}
-                                    </div>
-                                  )}
-                                  {rep.status === "approved" && (
-                                    <div className="flex flex-col text-green-700">
-                                      <span className="font-semibold flex items-center gap-1">
-                                        <CheckCircle2 className="w-3.5 h-3.5 text-green-600" />
-                                        Approved
-                                      </span>
-                                      {rep.category === "ingredient" ? (
-                                        rep.replacementDeducted ? (
-                                          <span className="text-[10px] text-muted-foreground font-mono">
-                                            Replaced: {rep.replacementQuantity}{" "}
-                                            units (Cost:{" "}
-                                            {formatCurrency(
-                                              rep.replacementCost,
-                                            )}
-                                            )
+              {/* ── Committed Ingredients Detail (non‑draft) ──── */}
+              {plan.status !== "draft" &&
+                menusWithAnalysis.some(
+                  (m) => m.committedIngredientsDetail?.length > 0,
+                ) && (
+                  <div>
+                    <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2">
+                      Committed Ingredients Detail
+                    </h3>
+                    <div className="space-y-4">
+                      {menusWithAnalysis.map((m) => {
+                        const details = m.committedIngredientsDetail;
+                        if (!details || details.length === 0) return null;
+                        return (
+                          <div
+                            key={m.menuId}
+                            className="border rounded-lg overflow-hidden"
+                          >
+                            <div className="px-4 py-2 bg-muted/40 border-b">
+                              <span className="text-xs font-semibold text-foreground">
+                                {m.name}
+                              </span>
+                            </div>
+                            <div className="overflow-x-auto">
+                              <table className="w-full text-sm text-left min-w-[500px]">
+                                <thead className="bg-muted text-muted-foreground text-xs uppercase">
+                                  <tr>
+                                    <th className="px-4 py-2 font-medium">
+                                      Item Name
+                                    </th>
+                                    <th className="px-4 py-2 font-medium text-right">
+                                      Qty Needed
+                                    </th>
+                                    <th className="px-4 py-2 font-medium text-right">
+                                      Available
+                                    </th>
+                                    <th className="px-4 py-2 font-medium text-right">
+                                      Pool Shared
+                                    </th>
+                                    <th className="px-4 py-2 font-medium text-center">
+                                      Unsafe
+                                    </th>
+                                  </tr>
+                                </thead>
+                                <tbody className="divide-y font-normal">
+                                  {details.map((d, idx) => (
+                                    <tr
+                                      key={idx}
+                                      className="bg-background hover:bg-muted/10"
+                                    >
+                                      <td className="px-4 py-2 font-medium text-foreground">
+                                        {d.nameInventory}
+                                      </td>
+                                      <td className="px-4 py-2 text-right font-mono text-xs">
+                                        {d.quantityNeeded} {d.unit}
+                                      </td>
+                                      <td className="px-4 py-2 text-right font-mono text-xs">
+                                        {d.quantityAvailable ??
+                                          d.availableQuantity ??
+                                          0}{" "}
+                                        {d.unit}
+                                      </td>
+                                      <td className="px-4 py-2 text-right font-mono text-xs">
+                                        {d.poolShared ? "Yes" : "No"}
+                                      </td>
+                                      <td className="px-4 py-2 text-center">
+                                        {d.hasUnsafeBatch ? (
+                                          <span className="text-[10px] font-semibold text-[#C4441F] bg-[#C4441F]/10 px-1.5 py-0.5 rounded">
+                                            Yes
                                           </span>
                                         ) : (
-                                          <span className="text-[10px] text-[#B45309] font-semibold">
-                                            Pending replacement stock
+                                          <span className="text-[10px] text-muted-foreground">
+                                            No
                                           </span>
-                                        )
-                                      ) : (
-                                        <span className="text-[10px] text-muted-foreground">
-                                          Est. Cost Loss:{" "}
-                                          {formatCurrency(
-                                            rep.valuation?.costLoss,
-                                          )}
-                                        </span>
-                                      )}
-                                    </div>
-                                  )}
-                                </div>
-                              </td>
-                            </tr>
-                          );
-                        })}
-                      </tbody>
-                    </table>
+                                        )}
+                                      </td>
+                                    </tr>
+                                  ))}
+                                </tbody>
+                              </table>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
                   </div>
-                </div>
                 )}
-              </div>
 
-              {/* Ingredients Detail Section (for non-draft plans) */}
-              {!plan.isDraft && menusWithAnalysis.some(
-                (m) => m.committedIngredientsDetail?.length > 0
-              ) && (
-                <div>
-                  <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2">
-                    Committed Ingredients Detail
-                  </h3>
-                  <div className="space-y-4">
-                    {menusWithAnalysis.map((m) => {
-                      const details = m.committedIngredientsDetail;
-                      if (!details || details.length === 0) return null;
-                      return (
-                        <div key={m.menuId} className="border rounded-lg overflow-hidden">
-                          <div className="px-4 py-2 bg-muted/40 border-b">
-                            <span className="text-xs font-semibold text-foreground">{m.name}</span>
-                          </div>
-                          <div className="overflow-x-auto">
-                            <table className="w-full text-sm text-left min-w-[500px]">
-                              <thead className="bg-muted text-muted-foreground text-xs uppercase">
-                                <tr>
-                                  <th className="px-4 py-2 font-medium">Item Name</th>
-                                  <th className="px-4 py-2 font-medium text-right">Qty Needed</th>
-                                  <th className="px-4 py-2 font-medium text-right">Available</th>
-                                  <th className="px-4 py-2 font-medium text-right">Pool Shared</th>
-                                  <th className="px-4 py-2 font-medium text-center">Unsafe</th>
-                                </tr>
-                              </thead>
-                              <tbody className="divide-y font-normal">
-                                {details.map((d, idx) => (
-                                  <tr key={idx} className="bg-background hover:bg-muted/10">
-                                    <td className="px-4 py-2 font-medium text-foreground">
-                                      {d.nameInventory}
-                                    </td>
-                                    <td className="px-4 py-2 text-right font-mono text-xs">
-                                      {d.quantityNeeded} {d.unit}
-                                    </td>
-                                    <td className="px-4 py-2 text-right font-mono text-xs">
-                                      {d.quantityAvailable ?? d.availableQuantity ?? 0} {d.unit}
-                                    </td>
-                                    <td className="px-4 py-2 text-right font-mono text-xs">
-                                      {d.poolShared ? "Yes" : "No"}
-                                    </td>
-                                    <td className="px-4 py-2 text-center">
-                                      {d.hasUnsafeBatch ? (
-                                        <span className="text-[10px] font-semibold text-[#C4441F] bg-[#C4441F]/10 px-1.5 py-0.5 rounded">
-                                          Yes
-                                        </span>
-                                      ) : (
-                                        <span className="text-[10px] text-muted-foreground">No</span>
-                                      )}
-                                    </td>
-                                  </tr>
-                                ))}
-                              </tbody>
-                            </table>
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-              )}
-
-              {/* Lower Section (Status Summaries & Financial Summaries) */}
+              {/* ── Lower Section (Status & Financial) ─────────── */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-2 border-t border-border">
-                {/* Left: Status Summaries */}
+                {/* Sales Status */}
                 <div className="space-y-4">
                   <div>
                     <h4 className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2">
@@ -557,33 +407,9 @@ export default function PlanHistoryDetailModal({ isOpen, onClose, planId }) {
                       ))}
                     </div>
                   </div>
-
-                  <div>
-                    <h4 className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2">
-                      Inventory Status
-                    </h4>
-                    <div className="pl-1">
-                      <div className="flex items-center justify-between text-xs">
-                        <span className="font-medium text-foreground font-body">
-                          Incident Replacements
-                        </span>
-                        <span
-                          className={`font-semibold text-xs px-2.5 py-0.5 rounded-full ${
-                            plan.hasPendingLossReplacement
-                              ? "bg-red-50 text-[#C4441F] dark:bg-red-950/20"
-                              : "bg-green-50 text-[#4E6A3E] dark:bg-green-950/20"
-                          }`}
-                        >
-                          {plan.hasPendingLossReplacement
-                            ? "Pending Replacement"
-                            : "Sufficient / Replaced"}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
                 </div>
 
-                {/* Right: Sales Revenue Summary */}
+                {/* Sales Revenue Summary */}
                 <div className="border border-border bg-secondary/10 dark:bg-muted/30 rounded-lg p-4 space-y-3">
                   <h4 className="text-xs font-bold text-foreground uppercase tracking-wider border-b border-border pb-1.5">
                     Sales Summary

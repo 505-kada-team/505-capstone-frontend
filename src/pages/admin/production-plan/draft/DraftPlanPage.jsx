@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
 import { toast } from "sonner";
-import { History, ArrowLeft } from "lucide-react";
+import { History } from "lucide-react";
 
 import PageHeader from "@/components/shared/PageHeader";
 import DataTable from "@/components/shared/DataTable";
@@ -21,21 +21,26 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { planApi } from "@/services/plan/plan.api";
 import { getMenuList } from "@/services/api";
+import { getPlanDetail } from "@/services/plan/plan.api";
 import { getSalesPredictions } from "@/AI/contextEngine/contextEngineApi";
-import PlanDetailModal from "./components/PlanDetailModal";
+// import PlanDetailModal from "./components/PlanDetailModal";
 import PlanHistoryView from "./components/PlanHistoryView";
 
-/**
- * ─────────────────────────────────────────────────────────────────────
- * `step` bisa berupa:
- *   1                 → form Plan Title / Start Date / End Date (manual)
- *   "forecast-input"  → form input untuk ML (duration / startDate / tags)
- *   2                 → tabel cart (bisa diedit, sebelum Create Plan) --
- *                        diisi manual ATAU otomatis dari hasil ML forecast
- * ─────────────────────────────────────────────────────────────────────
- */
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+
+// ── HOOKS BARU ──────────────────────────────────────────────────────
+import { useCreatePlan } from "@/hooks/plan/useCreatePlan";
+import { useUpdatePlan } from "@/hooks/plan/useUpdatePlan";
+// ─────────────────────────────────────────────────────────────────────
+
 export default function DraftPlanPage() {
   const [searchParams, setSearchParams] = useSearchParams();
 
@@ -50,9 +55,13 @@ export default function DraftPlanPage() {
   // API State
   const [availableMenus, setAvailableMenus] = useState([]);
   const [createdPlanId, setCreatedPlanId] = useState(null);
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const [isForecasting, setIsForecasting] = useState(false);
   const [isLoadingPlan, setIsLoadingPlan] = useState(!!editPlanId);
+
+  // HOOKS
+  const { create, isCreating } = useCreatePlan();
+  const { update, isUpdating } = useUpdatePlan(editPlanId);
+  const isSubmitting = isCreating || isUpdating;
 
   // Form State
   const [planName, setPlanName] = useState("");
@@ -69,6 +78,9 @@ export default function DraftPlanPage() {
   const [cart, setCart] = useState([]);
   const [selectedMenu, setSelectedMenu] = useState("");
   const [quantity, setQuantity] = useState("1");
+
+  // Dialog State
+  const [successModalOpen, setSuccessModalOpen] = useState(false);
 
   useEffect(() => {
     if (editPlanId) {
@@ -88,10 +100,9 @@ export default function DraftPlanPage() {
       return;
     }
     setIsLoadingPlan(true);
-    planApi
-      .detail(editPlanId)
+    getPlanDetail(editPlanId)
       .then((res) => {
-        const plan = res?.data;
+        const plan = res?.data?.data || res?.data;
         if (!plan) {
           toast.error("Plan not found");
           goToHistory();
@@ -140,10 +151,6 @@ export default function DraftPlanPage() {
           ? res.data
           : [];
       const menus = data
-        // Cuma menu yang BENERAN punya resep (>= 1 ingredient) & harga
-        // valid yang dianggap "ada di recipes". getMenuDropdown() yang
-        // dipakai sebelumnya gak nyertain info ini sama sekali, jadi menu
-        // tanpa resep bisa lolos tanpa sengaja.
         .filter(
           (m) => (m.totalIngredients ?? 0) > 0 && (m.sellingPrice ?? 0) > 0,
         )
@@ -152,10 +159,6 @@ export default function DraftPlanPage() {
           _id: m._id || m.id,
           name: m.name || m.menuName || "Unnamed Menu",
           sellingPrice: m.sellingPrice || 0,
-          // ML cuma butuh JUMLAH ingredient (pakai len()), bukan isinya --
-          // getMenuList() cuma balikin totalIngredients (angka), bukan
-          // array penuh, jadi kita bikin array placeholder sepanjang itu
-          // biar fitur ingredient_count di ML sekarang akurat, gak selalu 0.
           ingredients: new Array(m.totalIngredients ?? 0).fill({}),
         }));
       setAvailableMenus(menus);
@@ -232,10 +235,6 @@ export default function DraftPlanPage() {
         })),
       });
 
-      // Cuma menu yang beneran ketemu di daftar resep (availableMenus) yang
-      // ikut masuk cart. Kalau ML balikin menuId yang gak match apapun di
-      // sini (misal udah dihapus/diarsipkan sejak terakhir sinkron), item
-      // itu di-skip diam-diam -- bukan dianggap "Unknown Menu".
       const forecastCart = predictions
         .map((p) => {
           const menu = menus.find((m) => m._id === p.menuId);
@@ -381,7 +380,7 @@ export default function DraftPlanPage() {
       toast.error(`Quantity for "${invalidItem.name}" must be greater than 0`);
       return;
     }
-    setIsSubmitting(true);
+
     try {
       const start = new Date(startDate);
       const end = new Date(endDate);
@@ -405,29 +404,27 @@ export default function DraftPlanPage() {
       };
 
       if (editPlanId) {
-        const res = await planApi.update(editPlanId, payload);
-        if (res?.data?._id) {
-          toast.success(res.message || "Plan updated");
+        const result = await update(payload);
+        if (result?.id) {
+          toast.success("Plan updated");
           goToHistory();
         } else {
-          toast.error(res?.message || "Failed to update plan");
+          toast.error("Failed to update plan");
         }
       } else {
-        const res = await planApi.create(payload);
-        const planData = res?.data;
-        if (planData?._id) {
-          toast.success(res.message || "Plan created");
-          setCreatedPlanId(planData._id);
+        const result = await create(payload);
+        if (result?.id) {
+          toast.success("Plan created");
+          setCreatedPlanId(result.id);
+          setSuccessModalOpen(true); // ✅ buka modal sukses
         } else {
-          toast.error(res?.message || "Failed to create draft plan");
+          toast.error("Failed to create draft plan");
         }
       }
     } catch (err) {
       const msg =
         err?.response?.data?.message || err?.message || "System error";
       toast.error(msg);
-    } finally {
-      setIsSubmitting(false);
     }
   };
 
@@ -458,6 +455,15 @@ export default function DraftPlanPage() {
     );
   }
 
+  const goToHistoryWithDetail = () => {
+    setSuccessModalOpen(false);
+    if (createdPlanId) {
+      setSearchParams({ view: "history", detail: createdPlanId });
+    } else {
+      goToHistory();
+    }
+  };
+
   return (
     <div className="flex flex-col gap-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 w-full">
@@ -477,7 +483,7 @@ export default function DraftPlanPage() {
 
       <CardContent>
         {step === 1 && (
-          <div className="border border-border/80 rounded-xl p-4 sm:p-6 flex flex-col gap-6 bg-background">
+          <div className="border border-border/80 rounded-xl p-4 sm:p-6 flex flex-col gap-6 bg-white">
             <div className="space-y-2">
               <label className="text-sm font-medium text-foreground capitalize">
                 Plan Title
@@ -708,11 +714,36 @@ export default function DraftPlanPage() {
         )}
       </CardContent>
 
-      <PlanDetailModal
+      {/* <PlanDetailModal
         isOpen={!!createdPlanId}
         onClose={() => setCreatedPlanId(null)}
         planId={createdPlanId}
-      />
+      /> */}
+
+      <Dialog open={successModalOpen} onOpenChange={setSuccessModalOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Congrats! 🎉</DialogTitle>
+            <DialogDescription>
+              Your draft plan has been successfully created.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setSuccessModalOpen(false)}
+            >
+              Close
+            </Button>
+            <Button
+              className="bg-[#F97316] hover:bg-[#F97316]/90 text-white"
+              onClick={goToHistoryWithDetail}
+            >
+              Go to Plan History
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

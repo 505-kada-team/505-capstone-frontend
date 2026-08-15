@@ -1,13 +1,19 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
-import { Calendar, Plus, TriangleAlert, StopCircle } from "lucide-react";
+import {
+  Calendar,
+  Plus,
+  TriangleAlert,
+  StopCircle,
+  Percent,
+} from "lucide-react";
 
 import StatusBadge from "@/components/shared/StatusBadge";
 import ConfirmDialog from "@/components/shared/ConfirmDialog";
 import PlanReportBanner from "@/components/shared/admin/PlanReportBanner";
 import { Card, CardContent } from "@/components/ui/card";
-import { formatDate, formatDateTime } from '@/lib/formatDate';
+import { formatDate, formatDateTime } from "@/lib/formatDate";
 import {
   Popover,
   PopoverTrigger,
@@ -22,38 +28,24 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { getPlanList, getPlanDetail, stopPlan } from "@/services/api";
 import { useSortable } from "@/hooks/useSortable";
 import Pagination from "@/components/shared/Pagination";
 import { usePagination } from "@/hooks/usePagination";
 import ActiveMenuDetailModal from "./components/ActiveMenuDetailModal";
 import PlanHistoryDetailModal from "../components/PlanHistoryDetailModal";
+import DiscountModal from "../draft/components/DiscountModal";
+import DiscountDetailModal from "../draft/components/DiscountDetailModal";
 
-// export function formatDate(dateStr) {
-//   if (!dateStr) return "-";
-//   const date = new Date(dateStr);
-//   return `${String(date.getDate()).padStart(2, "0")} ${
-//     [
-//       "Jan",
-//       "Feb",
-//       "Mar",
-//       "Apr",
-//       "May",
-//       "Jun",
-//       "Jul",
-//       "Aug",
-//       "Sep",
-//       "Oct",
-//       "Nov",
-//       "Dec",
-//     ][date.getMonth()]
-//   } ${date.getFullYear()}`;
-// }
+// Hooks yang sudah dibuat
+import { usePlanList } from "@/hooks/plan/usePlanList";
+import { usePlanDetail } from "@/hooks/plan/usePlanDetail";
+import { useStopPlan } from "@/hooks/plan/useStopPlan";
+import { usePlanPromoGroup } from "@/hooks/plan/usePlanPromoGroup";
+import { useDeletePlanPromo } from "@/hooks/plan/usePlanDiscount";
 
 const formatRp = (num) =>
   num != null ? `Rp ${num.toLocaleString("id-ID")}` : "-";
 
-// Komponen Progress Bar kustom
 function ProgressBar({ current, max, colorClass = "bg-[#4E6A3E]" }) {
   const percentage =
     max > 0 ? Math.min(100, Math.max(0, (current / max) * 100)) : 0;
@@ -77,21 +69,62 @@ const HISTORY_LIMIT = 5;
 
 export default function ActivePlanPage() {
   const navigate = useNavigate();
-  const [plans, setPlans] = useState([]);
+
+  // ── Hooks ─────────────────────────────────────────────────────
+  const {
+    plans,
+    isLoading: isLoadingList,
+    refetch: refetchPlans,
+  } = usePlanList();
+
+  const [activePlanId, setActivePlanId] = useState(null);
+
+  // Cari plan aktif dari daftar
+  useEffect(() => {
+    const active = plans.find((p) => p.status === "active");
+    setActivePlanId(active?._id || null);
+  }, [plans]);
+
+  const {
+    plan: activePlanDetail,
+    isLoading: isLoadingDetail,
+    refetch: refetchPlanDetail,
+  } = usePlanDetail(activePlanId);
+
+  const refreshActiveData = async () => {
+    await Promise.all([refetchPlans(), refetchPlanDetail()]);
+  };
+
+  const { stop, isStopping } = useStopPlan(activePlanId);
+
+  const promoGroup = usePlanPromoGroup(activePlanDetail?.menus);
+  const hasActiveDiscount = !!promoGroup;
+
+  const { deletePromo, isDeleting: isDeletingPromo } = useDeletePlanPromo(
+    activePlanId,
+    {
+      onDeleted: refreshActiveData, // sudah refetch detail + list
+    },
+  );
+
+  // State UI lainnya
   const [searchHistory, setSearchHistory] = useState("");
   const [filterStatus, setFilterStatus] = useState("all");
   const { sortBy, setSortBy, sortData } = useSortable("date_newest");
-  const [activePlanDetail, setActivePlanDetail] = useState(null);
-  const [isLoading, setIsLoading] = useState(true);
-
   const [isStopDialogOpen, setIsStopDialogOpen] = useState(false);
-  const [isStopping, setIsStopping] = useState(false);
   const [selectedActiveMenuId, setSelectedActiveMenuId] = useState(null);
   const [selectedHistoryPlanId, setSelectedHistoryPlanId] = useState(null);
+  const [isDiscountModalOpen, setIsDiscountModalOpen] = useState(false);
+  const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
+  const [editPromo, setEditPromo] = useState(null);
 
-  // --- Plan History (bottom table) ---
-  // Filter out draft plans so they don't inflate pagination count
-  const nonDraftPlans = plans.filter((plan) => plan.status !== "draft");
+  // Gabungan loading untuk seluruh halaman
+  const isPageLoading = isLoadingList || (activePlanId && isLoadingDetail);
+
+  // ── Plan History (bottom table) ──────────────────────────────
+  const nonDraftPlans = plans.filter(
+    (plan) => plan.status !== "draft" && plan.status !== "active",
+  );
 
   const filteredPlans = sortData(
     nonDraftPlans.filter((plan) => {
@@ -116,7 +149,7 @@ export default function ActivePlanPage() {
     resetHistoryPage();
   }, [searchHistory, filterStatus, sortBy, resetHistoryPage]);
 
-  // --- Active Menu Tracking (top table) ---
+  // ── Active Menu Tracking ─────────────────────────────────────
   const activeMenus = activePlanDetail?.menus || [];
   const {
     currentPage: activeMenuPage,
@@ -128,85 +161,59 @@ export default function ActivePlanPage() {
 
   useEffect(() => {
     resetActiveMenuPage();
-  }, [activePlanDetail?._id, resetActiveMenuPage]);
-
-  const fetchData = async () => {
-    setIsLoading(true);
-    try {
-      // Fetch all plans for history
-      const listRes = await getPlanList();
-      if (listRes.data?.success) {
-        const fetchedPlans = listRes.data.data || [];
-        setPlans(fetchedPlans);
-
-        // Check if there is an active plan
-        const active = fetchedPlans.find((p) => p.status === "active");
-        if (active) {
-          // Fetch detailed active plan to get menus tracking
-          const detailRes = await getPlanDetail(active._id);
-          if (detailRes.data?.success) {
-            setActivePlanDetail(detailRes.data.data);
-          }
-        }
-      }
-    } catch {
-      toast.error("Failed to fetch plan data");
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    fetchData();
-  }, []);
+  }, [activePlanId, resetActiveMenuPage]);
 
   const handleStopPlan = async () => {
-    setIsStopping(true);
     try {
-      const res = await stopPlan(activePlanDetail._id, {
+      await stop({
         reason: "Dihentikan manual",
+        stoppedBy: "Admin", // bisa diganti dengan user auth
       });
-      if (res.data?.success) {
-        toast.success("Plan berhasil dihentikan");
-        setIsStopDialogOpen(false);
-        setActivePlanDetail(null);
-        fetchData();
-      }
+      toast.success("Plan berhasil dihentikan");
+      setIsStopDialogOpen(false);
+      setActivePlanId(null); // trigger planDetail menghilang
+      refetchPlans();
     } catch {
       toast.error("Gagal menghentikan plan");
-    } finally {
-      setIsStopping(false);
     }
   };
 
   const hasActive = !!activePlanDetail;
 
-  const promoGroup = (() => {
-  if (!activePlanDetail?.menus) return null;
-
-  const discountedMenus = activePlanDetail.menus.filter(
-    (m) => m.discount?.discountPercentage > 0,
-  );
-
-  if (discountedMenus.length === 0) return null;
-
-  const firstDiscount = discountedMenus[0].discount;
-  const firstPercent = firstDiscount.discountPercentage;
-
-  const isFlat = discountedMenus.every(
-    (m) => m.discount.discountPercentage === firstPercent,
-  );
-
-  return {
-    reason: firstDiscount.reason || "Active Promo",
-    scheme: isFlat ? "flat" : "vary",
-    percent: firstPercent,
-    startDate: firstDiscount.startDate,
-    endDate: firstDiscount.endDate,
-    menus: discountedMenus,
+  const handleEditDiscount = (promo) => {
+    setEditPromo(promo);
+    setIsDetailModalOpen(false);
+    setIsDiscountModalOpen(true);
   };
-})();
+
+  const handleDeleteMenuPromo = async (menuId) => {
+    try {
+      await deletePromo(menuId);
+      toast.success("Diskon menu berhasil dihapus");
+      setIsDetailModalOpen(false);
+    } catch {
+      toast.error("Gagal menghapus diskon menu");
+    }
+  };
+
+  const handleDeleteAllPromo = async () => {
+    const discountedMenuIds = activeMenus
+      .filter((menu) => menu.discount?.discountPercentage > 0)
+      .map((menu) => menu.menuId);
+
+    if (discountedMenuIds.length === 0) {
+      toast.info("Tidak ada diskon untuk dihapus");
+      return;
+    }
+
+    try {
+      await deletePromo(discountedMenuIds);
+      toast.success("Semua diskon berhasil dihapus");
+      setIsDetailModalOpen(false);
+    } catch {
+      toast.error("Gagal menghapus semua diskon");
+    }
+  };
 
   return (
     <div className="flex flex-col gap-6">
@@ -221,7 +228,13 @@ export default function ActivePlanPage() {
                   <Button
                     variant="outline"
                     size="icon"
-                    className={`w-8 h-8 rounded-md ${hasActive && (activePlanDetail.hasPendingLossReplacement || activePlanDetail.checkResultStale) ? "border-[#C4441F] text-[#C4441F] bg-[#C4441F]/10 hover:bg-[#C4441F]/20" : "text-muted-foreground bg-white"}`}
+                    className={`w-8 h-8 rounded-md ${
+                      hasActive &&
+                      (activePlanDetail.hasPendingLossReplacement ||
+                        activePlanDetail.checkResultStale)
+                        ? "border-[#C4441F] text-[#C4441F] bg-[#C4441F]/10 hover:bg-[#C4441F]/20"
+                        : "text-muted-foreground bg-white"
+                    }`}
                     disabled={
                       !hasActive ||
                       !(
@@ -239,7 +252,7 @@ export default function ActivePlanPage() {
                       pendingCount={
                         activePlanDetail.pendingLossReplacementCount || 1
                       }
-                      planId={activePlanDetail._id}
+                      planId={activePlanDetail.id}
                     />
                   </PopoverContent>
                 )}
@@ -252,30 +265,52 @@ export default function ActivePlanPage() {
             </div>
 
             {hasActive ? (
-              <Popover>
-                <PopoverTrigger asChild>
+              <>
+                {!hasActiveDiscount && (
                   <Button
                     variant="outline"
-                    className="flex items-center gap-2 px-3 py-1.5 rounded-md border bg-white border-green-400 text-green-700 hover:bg-green-50 transition-colors cursor-pointer outline-none"
+                    size="sm"
+                    className="text-[#F97316] border-[#F97316]/40 hover:bg-[#F97316]/10 gap-1.5 h-8"
+                    onClick={() => setIsDiscountModalOpen(true)}
                   >
-                    <div className="relative flex h-2 w-2">
-                      <span className="animate-ping absolute inline-flex h-full w-full rounded-md bg-green-400 opacity-75"></span>
-                      <span className="relative inline-flex rounded-md h-2 w-2 bg-green-500"></span>
-                    </div>
-                    <span className="text-xs font-medium">Active</span>
+                    <Percent className="w-3.5 h-3.5" /> Diskon
                   </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-2" align="end">
+                )}
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className="flex items-center gap-2 px-3 py-1.5 rounded-md border bg-white border-green-400 text-green-700 hover:bg-green-50 transition-colors cursor-pointer outline-none"
+                    >
+                      <div className="relative flex h-2 w-2">
+                        <span className="animate-ping absolute inline-flex h-full w-full rounded-md bg-green-400 opacity-75"></span>
+                        <span className="relative inline-flex rounded-md h-2 w-2 bg-green-500"></span>
+                      </div>
+                      <span className="text-xs font-medium">Active</span>
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-2" align="end">
+                    <Button
+                      variant="outline"
+                      className="text-destructive border-destructive hover:bg-destructive/10 w-full justify-start"
+                      onClick={() => setIsStopDialogOpen(true)}
+                    >
+                      <StopCircle className="w-4 h-4" />
+                      <span className="text-xs font-medium">Stop Plan</span>
+                    </Button>
+                  </PopoverContent>
+                </Popover>
+                {hasActiveDiscount && (
                   <Button
                     variant="outline"
-                    className="text-destructive border-destructive hover:bg-destructive/10 w-full justify-start"
-                    onClick={() => setIsStopDialogOpen(true)}
+                    size="sm"
+                    className="text-[#F97316] border-[#F97316]/40 hover:bg-[#F97316]/10 gap-1.5 h-8"
+                    onClick={() => setIsDetailModalOpen(true)}
                   >
-                    <StopCircle className="w-4 h-4" />
-                    <span className="text-xs font-medium">Stop Plan</span>
+                    <Percent className="w-3.5 h-3.5" /> Lihat Diskon
                   </Button>
-                </PopoverContent>
-              </Popover>
+                )}
+              </>
             ) : (
               <div className="flex items-center gap-2 px-3 py-1.5 rounded-full border bg-white border-border text-muted-foreground">
                 <div className="relative flex h-2 w-2">
@@ -286,6 +321,7 @@ export default function ActivePlanPage() {
             )}
           </div>
         </div>
+
         <div className="flex flex-col sm:flex-row sm:items-center gap-1.5 sm:gap-6 text-sm font-medium">
           <span>
             Plan Name:{" "}
@@ -301,29 +337,26 @@ export default function ActivePlanPage() {
                 : "-"}
             </span>
           </span>
-              {hasActive && promoGroup && (
-                <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-                  <span>
-                    Promo:{" "}
-                    <span className="font-semibold text-accent">
-                      {promoGroup.reason}
-                    </span>
-                  </span>
-
-                  <span className="text-xs text-muted-foreground">
-                    {promoGroup.scheme === "flat"
-                      ? `Flat Rate ${promoGroup.percent}%`
-                      : "Vary per Menu"}
-                  </span>
-
-                  <span className="text-xs text-muted-foreground">
-                    • Starts {formatDateTime(promoGroup.startDate)}
-                  </span>
-
-                  <span className="text-xs text-muted-foreground">
-                    • Ends {formatDateTime(promoGroup.endDate)}
-                  </span>
-                </div>
+          {hasActive && promoGroup && (
+            <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+              <span>
+                Promo:{" "}
+                <span className="font-semibold text-accent">
+                  {promoGroup.reason}
+                </span>
+              </span>
+              <span className="text-xs text-muted-foreground">
+                {promoGroup.scheme === "flat"
+                  ? `Flat Rate ${promoGroup.percent}%`
+                  : "Vary per Menu"}
+              </span>
+              <span className="text-xs text-muted-foreground">
+                • Starts {formatDateTime(promoGroup.startDate)}
+              </span>
+              <span className="text-xs text-muted-foreground">
+                • Ends {formatDateTime(promoGroup.endDate)}
+              </span>
+            </div>
           )}
         </div>
       </div>
@@ -331,7 +364,7 @@ export default function ActivePlanPage() {
       {/* TOP SECTION: ACTIVE PLAN TRACKING */}
       <Card className="w-full shadow-sm py-0">
         <CardContent className={hasActive ? "p-0" : "p-3"}>
-          {isLoading ? (
+          {isPageLoading ? (
             <div className="flex justify-center py-20 text-muted-foreground">
               Loading data...
             </div>
@@ -381,9 +414,13 @@ export default function ActivePlanPage() {
                       const effectivePrice =
                         menu.discount?.discountPercentage > 0
                           ? menu.discount.discountedPrice
-                          : menu.currentPrice || 25000;
+                          : menu.effectiveSellingPrice ||
+                            menu.frozenSellingPrice ||
+                            0;
 
-                      const profit = sold * effectivePrice;
+                      const costPerPortion = menu.costPerPortion || 0;
+                      const profit =
+                        sold * effectivePrice - sold * costPerPortion;
 
                       const ratio = planned > 0 ? sold / planned : 0;
                       let colorClass = "bg-[#4E6A3E]";
@@ -490,7 +527,7 @@ export default function ActivePlanPage() {
               <table className="w-full text-sm text-left min-w-[420px]">
                 <thead className="text-xs text-muted-foreground sticky top-0 bg-background z-10">
                   <tr>
-                    <th className="py-3 px-4 sm:px-5 font-medium sticky left-0  z-10 shadow-[2px_0_4px_-2px_rgba(0,0,0,0.1)]">
+                    <th className="py-3 px-4 sm:px-5 font-medium sticky left-0 z-10 shadow-[2px_0_4px_-2px_rgba(0,0,0,0.1)]">
                       Plan Name
                     </th>
                     <th className="py-3 px-4 sm:px-5 font-medium hidden sm:table-cell">
@@ -505,7 +542,7 @@ export default function ActivePlanPage() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-border/50">
-                  {isLoading ? (
+                  {isLoadingList ? (
                     <tr>
                       <td
                         colSpan="4"
@@ -532,7 +569,7 @@ export default function ActivePlanPage() {
 
                       return (
                         <tr key={p._id} className="hover:bg-muted/30">
-                          <td className="py-3.5 px-4 sm:px-5 font-medium sticky left-0  z-10 shadow-[2px_0_4px_-2px_rgba(0,0,0,0.1)]">
+                          <td className="py-3.5 px-4 sm:px-5 font-medium sticky left-0 z-10 shadow-[2px_0_4px_-2px_rgba(0,0,0,0.1)]">
                             {p.name}
                             <div className="sm:hidden text-xs text-muted-foreground font-mono mt-1">
                               {formatDate(p.startDate)} -{" "}
@@ -592,7 +629,6 @@ export default function ActivePlanPage() {
         />
       )}
 
-      {/* Active Menu Detail Modal */}
       <ActiveMenuDetailModal
         isOpen={!!selectedActiveMenuId}
         onClose={() => setSelectedActiveMenuId(null)}
@@ -600,11 +636,36 @@ export default function ActivePlanPage() {
         plan={activePlanDetail}
       />
 
-      {/* Plan History Detail Modal */}
       <PlanHistoryDetailModal
         isOpen={!!selectedHistoryPlanId}
         onClose={() => setSelectedHistoryPlanId(null)}
         planId={selectedHistoryPlanId}
+      />
+
+      <DiscountModal
+        isOpen={isDiscountModalOpen}
+        onClose={() => {
+          setIsDiscountModalOpen(false);
+          setEditPromo(null);
+        }}
+        plan={activePlanDetail}
+        planId={activePlanId}
+        editPromo={editPromo}
+        onApply={() => {
+          refetchPlans();
+          refreshActiveData();
+        }}
+      />
+
+      <DiscountDetailModal
+        isOpen={isDetailModalOpen}
+        onClose={() => setIsDetailModalOpen(false)}
+        planId={activePlanId}
+        promo={promoGroup}
+        onEdit={handleEditDiscount}
+        onDelete={() => {
+          refreshActiveData();
+        }}
       />
     </div>
   );

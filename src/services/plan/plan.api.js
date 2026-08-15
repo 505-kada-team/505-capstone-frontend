@@ -1,123 +1,71 @@
-/**
- * services/plan/plan.api.js
- *
- * Data source layer - Plan (Production Plan).
- * Tanggung jawab TUNGGAL: memanggil endpoint backend lewat instance Axios
- * yang sudah ada (`services/api.js`). Auth/bearer token sudah ditangani
- * interceptor di sana, jadi TIDAK diimplementasikan ulang di sini.
- *
- * Sama seperti menu.api.js, file ini sengaja TIDAK melakukan normalisasi/
- * transformasi response -- itu tugas `plan.mapper.js`. Satu alasan untuk
- * berubah per file:
- *   - endpoint backend berubah        -> ubah file ini / plan.endpoints.js
- *   - bentuk response FE berubah      -> ubah plan.mapper.js
- *   - cara data dipakai di UI berubah -> ubah hooks/plan/*
- *
- * Setiap fungsi mengembalikan `response.data` mentah, yaitu envelope
- * ApiResponse dari backend (utils/ApiResponse.js):
- *   { data: <payload>, message?, pagination? }
- *
- * Bentuk `<payload>` per endpoint mengacu ke controllers/plan.controller.js
- * dan services/plan.service.js (toSummaryResponse / toDetailedResponse).
- */
+import api from "@/services/api";
+import { PLAN_ENDPOINTS } from "./plan.endpoints";
 
-import api from "../api";
-import { planEndpoints } from "./plan.endpoints";
+// =============================================================================
+// ENDPOINT A1 — POST /api/plan
+// Buat plan baru (draft)
+// =============================================================================
+export const createPlan = (payload) => api.post(PLAN_ENDPOINTS.create, payload);
 
-export const planApi = {
-  /**
-   * A1 - POST /plan
-   * Body: { name, tags?, startDate, duration, menus: [{ menuId, quantityPlanned }] }
-   * -> plan baru berstatus draft, sudah termasuk checkResult hasil simulasi
-   * ketersediaan bahan awal (toSummaryResponse).
-   */
-  create: (payload) =>
-    api.post(planEndpoints.create(), payload).then((res) => res.data),
+// =============================================================================
+// ENDPOINT A2 — GET /api/plan
+// List semua plan (filter status)
+// =============================================================================
+export const getPlanList = (params) => api.get(PLAN_ENDPOINTS.list, { params });
 
-  /**
-   * A2 - GET /plan
-   * Query: { status?, search?, tags?, page?, limit? }
-   * -> { data: [...ringkasan list], pagination }
-   */
-  list: (params) =>
-    api.get(planEndpoints.list(), { params }).then((res) => res.data),
+// =============================================================================
+// ENDPOINT A3 — GET /api/plan/:id
+// Detail plan + checkResult/committed + diskon
+// =============================================================================
+export const getPlanDetail = (id) => api.get(PLAN_ENDPOINTS.detail(id));
 
-  /**
-   * A3 - GET /plan/:id
-   * -> detail plan + breakdown per-menu. Selagi draft: ingredientsDetail,
-   * inventorySafetyStatus, suggestion. Setelah approve: committedIngredients
-   * + committedIngredientsDetail per menu (toDetailedResponse).
-   */
-  detail: (id) => api.get(planEndpoints.detail(id)).then((res) => res.data),
+// =============================================================================
+// ENDPOINT A4 — PUT /api/plan/:id
+// Edit plan (hanya saat draft)
+// =============================================================================
+export const updatePlan = (id, payload) =>
+  api.put(PLAN_ENDPOINTS.update(id), payload);
 
-  /**
-   * A4 - PUT /plan/:id
-   * Hanya bisa selagi status draft. Body: subset dari
-   * { name, tags, startDate, duration, menus }.
-   * Server otomatis refresh check-availability setelah edit.
-   */
-  update: (id, payload) =>
-    api.put(planEndpoints.update(id), payload).then((res) => res.data),
-
-  /**
-   * A5 - POST /plan/:id/check-availability
-   * Refresh simulasi ketersediaan bahan (hanya selagi status draft), tanpa body.
-   */
-  refreshAvailability: (id) =>
-    api.post(planEndpoints.refreshAvailability(id)).then((res) => res.data),
-
-  /**
-   * A6 - POST /plan/:id/approve
-   * Alokasikan stok, bekukan harga jual/resep, plan -> active.
-   * Tanpa body -- aktor diambil server dari req.user.
-   */
-  approve: (id) => api.post(planEndpoints.approve(id)).then((res) => res.data),
-
-  /**
-   * A7 - POST /plan/:id/stop
-   * Body: { reason, stoppedBy? } -- hanya selagi status active.
-   */
-  stop: (id, payload) =>
-    api.post(planEndpoints.stop(id), payload).then((res) => res.data),
-
-  /**
-   * A8 - DELETE /plan/:id
-   * Batalkan plan (hanya selagi status draft).
-   */
-  cancel: (id) => api.delete(planEndpoints.cancel(id)).then((res) => res.data),
-
-  /**
-   * A9 - PUT /plan/:id/menus/:menuId/discount
-   * Body: { discountPercentage, startDate, endDate, reason? }
-   * -> set/replace diskon 1 menu di dalam plan (draft atau active).
-   */
-  setDiscount: (id, menuId, payload) =>
-    api
-      .put(planEndpoints.setDiscount(id, menuId), payload)
-      .then((res) => res.data),
-
-  /**
-   * A10 - DELETE /plan/:id/menus/:menuId/discount
-   * Hapus diskon aktif dari 1 menu di dalam plan.
-   */
-  removeDiscount: (id, menuId) =>
-    api
-      .delete(planEndpoints.removeDiscount(id, menuId))
-      .then((res) => res.data),
-
-      // =========================
-      // Plan Report
-      // =========================
-
-      createReport: (payload) =>
-        api.post(planEndpoints.createReport(), payload).then((res) => res.data),
-
-      listReports: (params) =>
-        api.get(planEndpoints.listReports(), { params }).then((res) => res.data),
-
-      reviewReport: (reportId, payload) =>
-        api.put(planEndpoints.reviewReport(reportId), payload).then((res) => res.data),
-
-      addReportInventory: (reportId, payload) =>
-        api.post(planEndpoints.addReportInventory(reportId), payload).then((res) => res.data),
+// =============================================================================
+// ENDPOINT A5 — POST /api/plan/:id/check-availability
+// Refresh simulasi ketersediaan bahan (hanya saat draft)
+// =============================================================================
+export const checkAvailabilityPlan = (id) => {
+  const url = PLAN_ENDPOINTS.refreshAvailability(id);
+  console.log("checkAvailabilityPlan URL:", url); // ✅ lihat di browser console
+  console.log("checkAvailabilityPlan id:", id); // ✅ pastikan id benar
+  return api.post(url);
 };
+
+// =============================================================================
+// ENDPOINT A6 — POST /api/plan/:id/approve
+// Setujui plan → deduct Inventory, bekukan frozenSellingPrice
+// =============================================================================
+export const approvePlan = (id) => api.post(PLAN_ENDPOINTS.approve(id));
+
+// =============================================================================
+// ENDPOINT A7 — POST /api/plan/:id/stop
+// Hentikan paksa, active → stopped
+// =============================================================================
+export const stopPlan = (id, payload) =>
+  api.post(PLAN_ENDPOINTS.stop(id), payload);
+
+// =============================================================================
+// ENDPOINT A8 — DELETE /api/plan/:id
+// Batalkan draft (hanya saat draft)
+// =============================================================================
+export const cancelPlan = (id) => api.delete(PLAN_ENDPOINTS.cancel(id));
+
+// =============================================================================
+// ENDPOINT A9 — PUT /api/plan/:id/menus/:menuId/discount
+// Set/ganti slot diskon
+// =============================================================================
+export const setMenuDiscount = (id, menuId, payload) =>
+  api.put(PLAN_ENDPOINTS.setDiscount(id, menuId), payload);
+
+// =============================================================================
+// ENDPOINT A10 — DELETE /api/plan/:id/menus/:menuId/discount
+// Hapus slot diskon
+// =============================================================================
+export const deleteMenuDiscount = (id, menuId) =>
+  api.delete(PLAN_ENDPOINTS.removeDiscount(id, menuId));

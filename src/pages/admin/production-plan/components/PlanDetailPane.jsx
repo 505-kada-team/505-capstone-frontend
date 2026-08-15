@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import {
@@ -8,6 +8,9 @@ import {
   StopCircle,
   Lightbulb,
   Link,
+  Plus,
+  Ban,
+  RefreshCw,
 } from "lucide-react";
 
 import StatusBadge from "@/components/shared/StatusBadge";
@@ -33,12 +36,20 @@ import { useDeletePlanPromo } from "@/hooks/plan/usePlanDiscount";
  * Helper to derive badge variant.
  */
 function deriveBadgeVariant(plan) {
-  if (plan.status === "active") return "active";
-  if (plan.status === "completed") return "completed";
-  if (plan.status === "stopped" || plan.status === "cancelled")
-    return "stopped";
-  if (!plan.readyToApprove || plan.hasUnsafeBatch) return "low stock";
-  return "in-stock";
+  switch (plan.status) {
+    case "draft":
+      return "draft";
+    case "active":
+      return "active";
+    case "completed":
+      return "completed";
+    case "stopped":
+      return "stopped";
+    case "cancelled":
+      return "cancelled";
+    default:
+      return "deleted";
+  }
 }
 
 function getInitials(name) {
@@ -123,6 +134,30 @@ export default function PlanDetailPane({ planId, onRefreshList }) {
     setIsDiscountModalOpen(true);
   };
 
+  const [availabilityError, setAvailabilityError] = useState(null);
+
+  useEffect(() => {
+    setAvailabilityError(null);
+  }, [planId]);
+
+  const handleRefreshAvailability = async () => {
+    try {
+      await refreshAvailability();
+      setAvailabilityError(null);
+      toast.success("Availability simulation updated");
+    } catch (err) {
+      console.error("Refresh availability error:", err);
+      const rawMessage = err?.response?.data?.message || err?.message || "";
+
+      const message = /Inventory .+ not found/.test(rawMessage)
+        ? "One of the ingredients in this plan has been deleted from inventory. Please edit the menu recipe before refreshing again."
+        : rawMessage || "Failed to refresh availability simulation";
+
+      setAvailabilityError(message);
+      toast.error(message);
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="flex flex-col items-center justify-center h-full text-muted-foreground py-24 gap-3 animate-pulse">
@@ -139,21 +174,21 @@ export default function PlanDetailPane({ planId, onRefreshList }) {
   const badgeVariant = deriveBadgeVariant(plan);
   const isDraft = plan.status === "draft";
   const isActive = plan.status === "active";
+  const isCancelled = plan.status === "cancelled";
   const totalTarget =
     plan.menus?.reduce((sum, menu) => sum + (menu.quantityPlanned || 0), 0) ||
     0;
 
+  // Deteksi apakah ada menu dengan bahan tidak aman (insufficient)
+  const hasInsufficientMenu = plan.menus?.some((menu) => {
+    const ingredients = mapMenuIngredients(menu, isDraft);
+    return ingredients.some((ing) => ing.status !== "safe");
+  });
+
   return (
-    // h-full sengaja dilepas: section pembungkus di PlanHistoryView tidak lagi
-    // memberi tinggi pasti (kiri sekarang sticky, kanan mengikuti tinggi
-    // konten & halaman yang scroll). overflow-hidden aman dipertahankan di
-    // sini hanya untuk clipping sudut rounded, karena tinggi card sekarang
-    // selalu mengikuti kontennya sendiri (tidak pernah dipaksa kecil).
     <div className="flex flex-col bg-card rounded-lg border border-border shadow-sm overflow-hidden min-w-0">
       {/* ── Header ────────────────────────────────────────────── */}
       <div className="p-6 border-b border-border">
-        {/* flex-wrap + min-w-0 di kiri: judul panjang tidak lagi mendorong
-            tombol print/edit keluar layar di pane sempit */}
         <div className="flex items-start justify-between gap-3 flex-wrap">
           <div className="min-w-0">
             <div className="flex items-center gap-3 mb-2 flex-wrap">
@@ -166,7 +201,18 @@ export default function PlanDetailPane({ planId, onRefreshList }) {
               Plan your selling and estimate the flow.
             </p>
           </div>
+          {/* Tombol action kanan atas: Print, Edit, Diskon */}
           <div className="flex items-center gap-2 shrink-0">
+            {(isDraft || isActive) && !hasPlanDiscount && (
+              <Button
+                variant="outline"
+                size="sm"
+                className="text-[#F97316] border-[#F97316]/40 hover:bg-[#F97316]/10 h-9"
+                onClick={() => setIsDiscountModalOpen(true)}
+              >
+                <Plus className="w-4 h-4 mr-1" /> Diskon
+              </Button>
+            )}
             <Button
               variant="outline"
               size="icon"
@@ -190,8 +236,7 @@ export default function PlanDetailPane({ planId, onRefreshList }) {
           </div>
         </div>
 
-        {/* flex-wrap + gap yang lebih kecil di mobile: 3 blok info tidak lagi
-            memaksa scroll horizontal saat pane menyempit */}
+        {/* Info header */}
         <div className="flex flex-wrap items-start gap-x-8 gap-y-3 mt-6">
           <div className="flex flex-col gap-1 min-w-0">
             <span className="text-xs text-muted-foreground">Period</span>
@@ -211,6 +256,15 @@ export default function PlanDetailPane({ planId, onRefreshList }) {
               {totalTarget.toLocaleString("en-US")} units
             </span>
           </div>
+          {/* Sugesti tambah diskon jika ada insufficient */}
+          {hasInsufficientMenu && (
+            <div className="flex flex-col gap-1 min-w-0">
+              <span className="text-xs text-muted-foreground">Suggestion</span>
+              <span className="text-sm font-semibold text-[#F97316] flex items-center gap-1">
+                <Lightbulb className="w-4 h-4" /> Tambah Diskon
+              </span>
+            </div>
+          )}
         </div>
       </div>
 
@@ -223,6 +277,19 @@ export default function PlanDetailPane({ planId, onRefreshList }) {
             value="Stale Availability Simulation"
             variant="warning"
             className="mb-0"
+            action={
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleRefreshAvailability}
+                disabled={isMutating}
+              >
+                <RefreshCw
+                  className={`w-4 h-4 mr-2 ${isMutating ? "animate-spin" : ""}`}
+                />
+                {isMutating ? "Refreshing..." : "Refresh"}
+              </Button>
+            }
           />
         )}
         {plan.hasPendingLossReplacement && (
@@ -251,59 +318,86 @@ export default function PlanDetailPane({ planId, onRefreshList }) {
           />
         )}
 
+        {availabilityError && (
+          <AlertSummaryCard
+            title="ERROR"
+            value={availabilityError}
+            variant="danger"
+            className="mb-0"
+          />
+        )}
+
         <div className="min-w-0">
-          <h3 className="font-semibold text-lg mb-4">Production Items</h3>
-
-          <div className="flex flex-col gap-3 min-w-0">
-            {plan.menus?.map((menu, idx) => {
-              const disc = menu.discount || {};
-              const menuHasDiscount = disc.discountPercentage > 0;
-              const menuIngredients = mapMenuIngredients(menu, isDraft);
-
-              const summary = {
-                quantity: menu.quantityPlanned,
-                originalPrice: menu.currentPrice || 25000,
-                estimatedRevenue:
-                  menu.quantityPlanned * (menu.currentPrice || 25000),
-                estimatedProfit:
-                  (menu.quantityPlanned * (menu.currentPrice || 25000)) / 2,
-                ...(menuHasDiscount
-                  ? {
-                      discountPercent: disc.discountPercentage,
-                      newPrice: disc.discountedPrice,
-                      newProfit:
-                        (menu.quantityPlanned * disc.discountedPrice) / 2,
-                    }
-                  : {}),
-              };
-
-              const hasUnsafe = menuIngredients.some(
-                (ing) => ing.status !== "safe",
-              );
-              const badges = hasUnsafe ? ["insufficient"] : ["sufficient"];
-
-              return (
-                <PlanMenuAccordion
-                  key={menu.menuId}
-                  variant="active"
-                  menuName={menu.name}
-                  menuInitials={getInitials(menu.name)}
-                  menuSubtitle="Beverage"
-                  targetQty={menu.quantityPlanned}
-                  badges={badges}
-                  summary={summary}
-                  ingredients={menuIngredients}
-                  defaultOpen={idx === 0}
-                />
-              );
-            })}
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="font-semibold text-lg">Production Items</h3>
+            {/* Tombol Diskon telah dipindah ke header kanan atas */}
           </div>
+
+          {isCancelled ? (
+            <div className="flex flex-col items-center justify-center gap-3 py-16 px-6 text-center border border-dashed border-border rounded-lg bg-muted/20">
+              <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center">
+                <Ban className="w-5 h-5 text-muted-foreground" />
+              </div>
+              <p className="text-sm font-semibold text-muted-foreground">
+                This plan has been cancelled
+              </p>
+              <p className="text-xs text-muted-foreground max-w-sm">
+                Production items and ingredient details are no longer available
+                for a cancelled plan.
+              </p>
+            </div>
+          ) : (
+            <div className="flex flex-col gap-3 min-w-0">
+              {plan.menus?.map((menu, idx) => {
+                const disc = menu.discount || {};
+                const menuHasDiscount = disc.discountPercentage > 0;
+                // Di dalam blok render menu
+                const menuIngredients = mapMenuIngredients(menu, isDraft);
+
+                const summary = {
+                  quantity: menu.quantityPlanned,
+                  originalPrice: menu.currentPrice || 25000,
+                  estimatedRevenue:
+                    menu.quantityPlanned * (menu.currentPrice || 25000),
+                  estimatedProfit:
+                    (menu.quantityPlanned * (menu.currentPrice || 25000)) / 2,
+                  ...(menuHasDiscount
+                    ? {
+                        discountPercent: disc.discountPercentage,
+                        newPrice: disc.discountedPrice,
+                        newProfit:
+                          (menu.quantityPlanned * disc.discountedPrice) / 2,
+                      }
+                    : {}),
+                };
+
+                const hasUnsafe = menuIngredients.some(
+                  (ing) => ing.status !== "safe",
+                );
+                const badges = hasUnsafe ? ["insufficient"] : ["sufficient"];
+
+                return (
+                  <PlanMenuAccordion
+                    key={menu.menuId}
+                    variant="active"
+                    menuName={menu.name}
+                    menuInitials={getInitials(menu.name)}
+                    menuSubtitle="Beverage"
+                    targetQty={menu.quantityPlanned}
+                    badges={badges}
+                    summary={summary}
+                    ingredients={menuIngredients}
+                    defaultOpen={idx === 0}
+                    menuStatus={menu.menuStatus} // ← tambahkan ini
+                  />
+                );
+              })}
+            </div>
+          )}
         </div>
       </div>
 
       {/* ── Footer Actions ────────────────────────────────────── */}
-      {/* flex-wrap: di layar sempit tombol turun ke baris baru alih-alih
-          terpotong; flex-col-reverse di mobile biar tombol primary di atas */}
       <div className="p-4 border-t border-border bg-muted/10 flex flex-wrap items-center justify-end gap-3">
         {isDraft && (
           <>
@@ -313,7 +407,7 @@ export default function PlanDetailPane({ planId, onRefreshList }) {
               onClick={reject}
               disabled={isMutating}
             >
-              Reject
+              Cancel
             </Button>
             <Button
               className="bg-[#4E6A3E] hover:bg-[#4E6A3E]/90 text-white"
@@ -377,6 +471,7 @@ export default function PlanDetailPane({ planId, onRefreshList }) {
         isOpen={isDiscountModalOpen}
         onClose={() => setIsDiscountModalOpen(false)}
         plan={plan}
+        planId={planId}
         editPromo={editPromo}
         onApply={() => refetch()}
       />
