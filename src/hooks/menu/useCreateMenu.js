@@ -8,11 +8,11 @@ import {
 export function useCreateMenu() {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const createRecipe = useCallback(async (formValues) => {
+  const createRecipe = useCallback(async (formValues, imageFile) => {
     setIsSubmitting(true);
     try {
       const payload = toCreateMenuPayload(formValues);
-      const res = await menuApi.create(payload);
+      const res = await menuApi.create(payload, imageFile); // teruskan file
       return {
         success: res.success,
         message: res.message,
