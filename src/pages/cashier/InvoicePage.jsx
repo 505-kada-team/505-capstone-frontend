@@ -13,16 +13,25 @@ import { formatCurrency } from '@/lib/formatCurrency';
 import { formatDate } from '@/lib/formatDate';
 import { usePagination } from '@/hooks/usePagination';
 import { useFetch } from '@/hooks/useFetch';
-import { getSaleHistory } from '@/services/cashierApi';
+import { getActivePlans, getSaleHistory } from '@/services/cashierApi';
 
 const PAGE_SIZE = 8;
 
 const formatInvoiceNumber = (id) => `INV-${id.slice(-6).toUpperCase()}`;
 
 const invoiceItemColumns = [
-  { key: 'menuName', header: 'Nama Produk' },
-  { key: 'priceUsed', header: 'Harga Satuan', cellClass: 'font-mono', render: (row) => formatCurrency(row.priceUsed) },
-  { key: 'quantitySold', header: 'Jumlah', cellClass: 'font-mono' },
+  { key: 'menuName', header: 'Menu Name' },
+  {
+    key: 'priceUsed',
+    header: 'Unit price',
+    cellClass: 'font-mono',
+    render: (row) => formatCurrency(row.priceUsed),
+  },
+  {
+    key: 'quantitySold',
+    header: 'Sold',
+    cellClass: 'font-mono',
+  },
   {
     key: 'subtotal',
     header: 'Sub Total',
@@ -32,8 +41,8 @@ const invoiceItemColumns = [
 ];
 
 const SORT_OPTIONS = [
-  { value: 'newest', label: 'Terbaru' },
-  { value: 'oldest', label: 'Terlama' },
+  { value: 'newest', label: 'Newest' },
+  { value: 'oldest', label: 'Oldest' },
   { value: 'name-asc', label: 'Nama Kasir (A-Z)' },
   { value: 'name-desc', label: 'Nama Kasir (Z-A)' },
 ];
@@ -46,64 +55,112 @@ const SORT_OPTIONS = [
  */
 export default function InvoicePage() {
   const { data, isLoading, error } = useFetch(getSaleHistory, []);
+
   const invoices = data?.transactions ?? [];
   const summary = data?.summary ?? null;
 
-  useEffect(() => {
-    if (!error) return;
-    console.error('[INVOICE ERROR]', error);
-    // Bukan error yang terikat 1 field spesifik → toast (DESIGN.md §5b).
-    toast.error('Gagal memuat daftar invoice. Silakan coba lagi.');
-  }, [error]);
-
+  const [activePlanIds, setActivePlanIds] = useState([]);
   const [search, setSearch] = useState('');
   const [sortBy, setSortBy] = useState('newest');
   const [selectedInvoiceId, setSelectedInvoiceId] = useState(null);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
 
+  useEffect(() => {
+    if (!error) return;
+
+    console.error('[INVOICE ERROR]', error);
+    toast.error('Failed to load the invoice list. Please try again.');
+  }, [error]);
+
+  useEffect(() => {
+    const fetchActivePlans = async () => {
+      try {
+        const result = await getActivePlans();
+
+        setActivePlanIds(
+          Array.isArray(result)
+            ? result.map((plan) => plan.planId)
+            : [],
+        );
+      } catch (error) {
+        console.error('[ACTIVE PLAN ERROR]', error);
+        setActivePlanIds([]);
+      }
+    };
+
+    fetchActivePlans();
+  }, []);
+
   const filteredInvoices = useMemo(() => {
     const keyword = search.toLowerCase();
 
     return invoices.filter((invoice) => {
-      const matchId = invoice.id?.toLowerCase().includes(keyword);
-      const matchCashier = invoice.cashierName?.toLowerCase().includes(keyword);
-      const matchMenu = invoice.items?.some((item) => item.menuName?.toLowerCase().includes(keyword));
+      const isActivePlan = activePlanIds.includes(invoice.planId);
 
-      return matchId || matchCashier || matchMenu;
+      const matchId = invoice.id?.toLowerCase().includes(keyword);
+      const matchCashier = invoice.cashierName
+        ?.toLowerCase()
+        .includes(keyword);
+      const matchMenu = invoice.items?.some((item) =>
+        item.menuName?.toLowerCase().includes(keyword),
+      );
+
+      const matchesSearch =
+        matchId || matchCashier || matchMenu;
+
+      return isActivePlan && matchesSearch;
     });
-  }, [invoices, search]);
+  }, [invoices, activePlanIds, search]);
 
   const sortedInvoices = useMemo(() => {
     const sorted = [...filteredInvoices];
 
     switch (sortBy) {
       case 'oldest':
-        sorted.sort((a, b) => new Date(a.soldAt) - new Date(b.soldAt));
+        sorted.sort(
+          (a, b) =>
+            new Date(a.soldAt) - new Date(b.soldAt),
+        );
         break;
 
       case 'name-asc':
-        sorted.sort((a, b) => a.cashierName.localeCompare(b.cashierName));
+        sorted.sort((a, b) =>
+          a.cashierName.localeCompare(b.cashierName),
+        );
         break;
 
       case 'name-desc':
-        sorted.sort((a, b) => b.cashierName.localeCompare(a.cashierName));
+        sorted.sort((a, b) =>
+          b.cashierName.localeCompare(a.cashierName),
+        );
         break;
 
       case 'newest':
       default:
-        sorted.sort((a, b) => new Date(b.soldAt) - new Date(a.soldAt));
+        sorted.sort(
+          (a, b) =>
+            new Date(b.soldAt) - new Date(a.soldAt),
+        );
     }
 
     return sorted;
   }, [filteredInvoices, sortBy]);
 
-  const { currentPage, totalPages, paginatedItems: paginatedInvoices, setPage, resetPage } = usePagination(
-    sortedInvoices,
-    PAGE_SIZE
-  );
+  const {
+    currentPage,
+    totalPages,
+    paginatedItems: paginatedInvoices,
+    setPage,
+    resetPage,
+  } = usePagination(sortedInvoices, PAGE_SIZE);
 
-  const selectedInvoice = invoices.find((invoice) => invoice.id === selectedInvoiceId) ?? null;
-  const selectedInvoiceTotal = selectedInvoice?.total ?? 0;
+  const selectedInvoice =
+    invoices.find(
+      (invoice) => invoice.id === selectedInvoiceId,
+    ) ?? null;
+
+  const selectedInvoiceTotal =
+    selectedInvoice?.total ?? 0;
 
   const openDetail = (id) => {
     setSelectedInvoiceId(id);
@@ -115,14 +172,36 @@ export default function InvoicePage() {
   };
 
   const columns = [
-    { key: 'id', header: 'No. Invoice', cellClass: 'font-mono', render: (row) => formatInvoiceNumber(row.id) },
-    { key: 'soldAt', header: 'Tanggal', render: (row) => formatDate(row.soldAt) },
-    { key: 'cashierName', header: 'Kasir' },
-    { key: 'itemCount', header: 'Item', cellClass: 'font-mono', render: (row) => row.items?.length ?? 0 },
-    { key: 'total', header: 'Total', cellClass: 'font-mono', render: (row) => formatCurrency(row.total) },
+    {
+      key: 'id',
+      header: 'Invoice',
+      cellClass: 'font-mono',
+      render: (row) => formatInvoiceNumber(row.id),
+    },
+    {
+      key: 'soldAt',
+      header: 'Date',
+      render: (row) => formatDate(row.soldAt),
+    },
+    {
+      key: 'cashierName',
+      header: 'Cashier',
+    },
+    {
+      key: 'itemCount',
+      header: 'Item',
+      cellClass: 'font-mono',
+      render: (row) => row.items?.length ?? 0,
+    },
+    {
+      key: 'total',
+      header: 'Total',
+      cellClass: 'font-mono',
+      render: (row) => formatCurrency(row.total),
+    },
     {
       key: 'actions',
-      header: 'Aksi',
+      header: 'Action',
       headerClass: 'text-center',
       cellClass: 'text-center',
       render: (row) => (
@@ -139,13 +218,13 @@ export default function InvoicePage() {
 
   return (
     <div className="flex h-full min-h-0 flex-col">
-      <div className="shrink-0">
+      <div className="shrink-0 pb-4">
         <PageHeader
           title="Invoices"
           action={
             <div className="flex items-center gap-2">
               <SearchInput
-                placeholder="Cari..."
+                placeholder="Search..."
                 value={search}
                 onChange={(value) => {
                   setSearch(value);
@@ -174,7 +253,11 @@ export default function InvoicePage() {
             columns={columns}
             data={paginatedInvoices}
             loading={isLoading}
-            emptyMessage={error ? 'Gagal memuat invoice.' : 'Belum ada invoice.'}
+            emptyMessage={
+              error
+                ? 'Failed to load invoice.'
+                : 'No invoice yet.'
+            }
           />
         </div>
 
@@ -189,22 +272,44 @@ export default function InvoicePage() {
         </div>
       </div>
 
-      <Modal open={isDetailOpen} onOpenChange={setIsDetailOpen} title="Detail Invoice" className="max-w-2xl sm:max-w-2xl">
+      <Modal
+        open={isDetailOpen}
+        onOpenChange={setIsDetailOpen}
+        title="Detail Invoice"
+        className="max-w-2xl sm:max-w-2xl"
+      >
         {selectedInvoice && (
           <>
             <div className="space-y-1.5 px-6 py-4 text-sm">
-              <DetailRow label="No. Invoice">{formatInvoiceNumber(selectedInvoice.id)}</DetailRow>
-              <DetailRow label="Tanggal">{formatDate(selectedInvoice.soldAt)}</DetailRow>
-              <DetailRow label="Cashier name">{selectedInvoice.cashierName}</DetailRow>
+              <DetailRow label="Invoice">
+                {formatInvoiceNumber(selectedInvoice.id)}
+              </DetailRow>
+
+              <DetailRow label="Date">
+                {formatDate(selectedInvoice.soldAt)}
+              </DetailRow>
+
+              <DetailRow label="Cashier name">
+                {selectedInvoice.cashierName}
+              </DetailRow>
             </div>
 
             <div className="max-h-64 overflow-y-auto border-t border-neutral-200">
-              <DataTable columns={invoiceItemColumns} data={selectedInvoice.items} emptyMessage="Tidak ada item." />
+              <DataTable
+                columns={invoiceItemColumns}
+                data={selectedInvoice.items}
+                emptyMessage="No items."
+              />
             </div>
 
             <div className="flex items-center justify-between border-t border-neutral-200 px-6 py-4">
-              <p className="text-base font-semibold text-foreground">Total Pembayaran</p>
-              <p className="font-mono text-lg font-semibold text-accent">{formatCurrency(selectedInvoiceTotal)}</p>
+              <p className="text-base font-semibold text-foreground">
+                Total payment
+              </p>
+
+              <p className="font-mono text-lg font-semibold text-accent">
+                {formatCurrency(selectedInvoiceTotal)}
+              </p>
             </div>
 
             <div className="flex justify-end border-t border-neutral-200 bg-muted/30 px-6 py-4">

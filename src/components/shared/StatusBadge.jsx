@@ -46,7 +46,7 @@ const variantMap = {
       "bg-[#C4441F]/15 text-[#C4441F] border border-[#C4441F]/40 dark:bg-[#C4441F]/10 dark:text-[#E07055]",
   },
   deleted: {
-    label: "Archived",
+    label: "Deleted",
     className: "bg-muted text-muted-foreground border border-border",
   },
 

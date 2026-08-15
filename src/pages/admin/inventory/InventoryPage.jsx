@@ -140,7 +140,9 @@ const sortItems = (items, sortBy) => {
         (a, b) => (a.lastCostBatch ?? Infinity) - (b.lastCostBatch ?? Infinity),
       );
     default:
-      return sorted;
+      return sorted.sort(
+        (a, b) => new Date(b.createdAt) - new Date(a.createdAt),
+      );
   }
 };
 
@@ -167,7 +169,7 @@ export default function InventoryPage() {
   // ── Filter state ──────────────────────────────────────────
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState("all");
-  const { sortBy, setSortBy } = useSortable("name_asc");
+  const { sortBy, setSortBy } = useSortable("");
   const [page, setPage] = useState(1);
 
   // ── Dialog state ──────────────────────────────────────────
@@ -232,7 +234,7 @@ export default function InventoryPage() {
     },
     {
       key: "lastCostBatch",
-      header: "Cost per Unit",
+      header: "Total Cost",
       headerClass: "w-[20%]",
       cellClass: "font-mono text-sm",
       render: (row) => (
