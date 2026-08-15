@@ -188,6 +188,7 @@ export default function PlanDetailModal({ isOpen, onClose, planId }) {
         isOpen={isDiscountModalOpen}
         onClose={() => setIsDiscountModalOpen(false)}
         plan={plan}
+        planId={planId}
         editPromo={editPromo}
         onApply={refetch}
       />

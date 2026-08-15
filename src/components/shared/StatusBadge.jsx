@@ -76,10 +76,15 @@ const variantMap = {
     className:
       "bg-[#F97316]/15 text-[#F97316] border border-[#F97316]/30 dark:bg-[#F97316]/10 dark:text-[#F97316]",
   },
-  completed: {
-    // Plan selesai durasi (status: 'completed')
-    label: "Completed",
-    className: "bg-muted text-muted-foreground border border-border",
+  draft: {
+    label: "Draft",
+    className:
+      "bg-[#B45309]/15 text-[#B45309] border border-[#B45309]/40 dark:bg-[#B45309]/10 dark:text-[#D4810A]",
+  },
+  cancelled: {
+    label: "Cancelled",
+    className:
+      "bg-[#C4441F]/15 text-[#C4441F] border border-[#C4441F]/40 dark:bg-[#C4441F]/10 dark:text-[#E07055]",
   },
   stopped: {
     // Plan dihentikan paksa (status: 'stopped' | 'cancelled')

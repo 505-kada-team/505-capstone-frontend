@@ -1,38 +1,48 @@
 import { useMemo } from "react";
 
 /**
- * Turunkan 1 "grup promo" dari plan.menus untuk ditampilkan di
- * DiscountDetailModal/AlertSummaryCard.
+ * Mengelompokkan diskon dari daftar menu plan menjadi satu objek promo group.
+ * Diasumsikan hanya ada satu grup diskon per plan.
  *
- * Catatan desain: di data model, tiap menu punya slot `discount` yang
- * independen (bisa beda reason/periode per menu). UI saat ini menyatukan
- * semuanya jadi SATU kartu promo, diambil dari diskon menu PERTAMA yang
- * discountPercentage > 0 -- sama seperti perilaku asli di
- * PlanDetailPane/PlanDetailModal sebelum di-refactor. Kalau nanti produk
- * butuh multi-promo per plan, ganti hook ini jadi usePlanPromoGroups
- * (plural) yang group-by reason+periode, dan sesuaikan
- * DiscountDetailModal untuk menerima array.
+ * @param {Array} menus - array menu dari detail plan
+ * @returns {Object|null} promo group dengan struktur:
+ *   {
+ *     menuId: string,          // menuId pertama yang memiliki diskon (untuk delete)
+ *     reason: string,
+ *     startDate: string,
+ *     endDate: string,
+ *     menus: Array<{
+ *       menuId: string,
+ *       name: string,
+ *       originalPrice: number,
+ *       discountPercentage: number,
+ *       discountedPrice: number
+ *     }>
+ *   }
  */
 export function usePlanPromoGroup(menus) {
   return useMemo(() => {
-    if (!menus) return null;
-    const discountedMenus = menus.filter(
-      (m) => m.discount?.discountPercentage > 0,
-    );
-    if (discountedMenus.length === 0) return null;
+    if (!menus || !Array.isArray(menus)) return null;
 
-    const firstDiscount = discountedMenus[0].discount;
+    const menusWithDiscount = menus.filter((menu) => menu.discount);
+    if (menusWithDiscount.length === 0) return null;
+
+    const firstDiscount = menusWithDiscount[0].discount;
+
+    const promoMenus = menusWithDiscount.map((menu) => ({
+      menuId: menu.menuId,
+      name: menu.name,
+      originalPrice: menu.effectiveSellingPrice,
+      discountPercentage: menu.discount.discountPercentage,
+      discountedPrice: menu.discount.discountedPrice,
+    }));
+
     return {
-      reason: firstDiscount.reason || "Promo",
+      menuId: menusWithDiscount[0].menuId, // dipakai untuk delete single menu
+      reason: firstDiscount.reason,
       startDate: firstDiscount.startDate,
       endDate: firstDiscount.endDate,
-      menus: discountedMenus.map((m) => ({
-        menuId: m.menuId,
-        name: m.name,
-        originalPrice: m.effectiveSellingPrice ?? m.frozenSellingPrice ?? 0,
-        discountPercentage: m.discount.discountPercentage,
-        discountedPrice: m.discount.discountedPrice ?? 0,
-      })),
+      menus: promoMenus,
     };
   }, [menus]);
 }

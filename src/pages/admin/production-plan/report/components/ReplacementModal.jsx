@@ -1,65 +1,75 @@
-import { useEffect, useState } from 'react';
-import { toast } from 'sonner';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
-import { Label } from '@/components/ui/label';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { planApi } from '@/services/plan/plan.api';
+import { useEffect, useState } from "react";
+import { toast } from "sonner";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { usePlanDetail } from "@/hooks/plan/usePlanDetail";
+import { useAddInventoryReplacement } from "@/hooks/report/useAddInventoryReplacement";
 
 export default function ReplacementModal({ open, report, onClose, onRefresh }) {
-  const [replacementQuantity, setReplacementQuantity] = useState('');
-  const [varianceNote, setVarianceNote] = useState('');
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [planStatus, setPlanStatus] = useState(null);
-  const [isLoading, setIsLoading] = useState(false);
+  const [replacementQuantity, setReplacementQuantity] = useState("");
+  const [varianceNote, setVarianceNote] = useState("");
 
-  useEffect(() => {
-    if (!open || !report?.planId) return;
+  // ── Ambil detail plan untuk cek status ─────────────────────
+  const planIdToFetch = open && report?.planId ? report.planId : null;
+  const {
+    plan: planDetail,
+    isLoading: isLoadingPlan,
+    error: planError,
+  } = usePlanDetail(planIdToFetch);
 
-    setIsLoading(true);
-    setPlanStatus(null);
+  // ── Hook untuk submit stok pengganti ────────────────────────
+  const reportId = open && report?.id ? report.id : null;
+  const { addInventory, isAdding } = useAddInventoryReplacement(reportId);
 
-    planApi.detail(report.planId)
-      .then((res) => {
-        console.log('[PLAN DETAIL RESPONSE]', res);
-        setPlanStatus(res.data?.status ?? null);
-      })
-      .catch((error) => {
-        console.error('[PLAN DETAIL ERROR]', error);
-        console.error('[PLAN DETAIL RESPONSE ERROR]', error.response?.data);
-        setPlanStatus('unknown');
-      })
-      .finally(() => setIsLoading(false));
-  }, [open, report?.planId]);
-
+  // Reset form saat modal ditutup
   useEffect(() => {
     if (!open) {
-      setReplacementQuantity('');
-      setVarianceNote('');
-      setPlanStatus(null);
+      setReplacementQuantity("");
+      setVarianceNote("");
     }
   }, [open]);
 
+  // Tampilkan error plan jika ada
+  useEffect(() => {
+    if (planError && open) {
+      console.error("[PLAN DETAIL ERROR]", planError);
+      toast.error(
+        planError.response?.data?.message ?? "Gagal memuat status plan",
+      );
+    }
+  }, [planError, open]);
+
   if (!report) return null;
 
-  const isPlanActive = planStatus === 'active';
+  const planStatus = planDetail?.status ?? null;
+  const isPlanActive = planStatus === "active";
 
   const handleSubmit = async (e) => {
     e.preventDefault();
 
     if (!replacementQuantity || Number(replacementQuantity) <= 0) {
-      toast.error('Kuantitas pengganti harus lebih besar dari 0');
+      toast.error("Kuantitas pengganti harus lebih besar dari 0");
       return;
     }
 
     if (!report.id) {
-      toast.error('ID laporan tidak ditemukan');
-      console.error('[REPLACEMENT REPORT ERROR] report.id tidak tersedia', report);
+      toast.error("ID laporan tidak ditemukan");
+      console.error(
+        "[REPLACEMENT REPORT ERROR] report.id tidak tersedia",
+        report,
+      );
       return;
     }
-
-    setIsSubmitting(true);
 
     try {
       const payload = {
@@ -67,29 +77,19 @@ export default function ReplacementModal({ open, report, onClose, onRefresh }) {
         varianceNote: varianceNote.trim() || null,
       };
 
-      console.log('[REPLACEMENT REPORT]', { reportId: report.id, payload });
+      await addInventory(payload);
 
-      const res = await planApi.addReportInventory(report.id, payload);
-
-      console.log('[REPLACEMENT RESPONSE]', res);
-
-      if (res.success) {
-        toast.success(res.message ?? 'Stok pengganti berhasil ditarik');
-        await onRefresh();
-        onClose();
-      }
+      toast.success("Stok pengganti berhasil ditarik");
+      await onRefresh?.();
+      onClose();
     } catch (error) {
-      console.error('[REPLACEMENT ERROR]', error);
-      console.error('[REPLACEMENT RESPONSE ERROR]', error.response?.data);
-      console.error('[REPLACEMENT DETAILS]', error.response?.data?.details);
-
+      console.error("[REPLACEMENT ERROR]", error);
       toast.error(
         error.response?.data?.details?.[0] ??
-        error.response?.data?.message ??
-        'Gagal menarik stok pengganti'
+          error.response?.data?.message ??
+          error.message ??
+          "Gagal menarik stok pengganti",
       );
-    } finally {
-      setIsSubmitting(false);
     }
   };
 
@@ -99,7 +99,8 @@ export default function ReplacementModal({ open, report, onClose, onRefresh }) {
         <DialogHeader>
           <DialogTitle>Tarik Stok Pengganti</DialogTitle>
           <DialogDescription>
-            Tentukan berapa kuantitas stok yang ingin ditarik dari gudang (Inventory) untuk mengganti bahan baku yang rusak atau hilang.
+            Tentukan berapa kuantitas stok yang ingin ditarik dari gudang
+            (Inventory) untuk mengganti bahan baku yang rusak atau hilang.
           </DialogDescription>
         </DialogHeader>
 
@@ -107,27 +108,32 @@ export default function ReplacementModal({ open, report, onClose, onRefresh }) {
           <div className="rounded-md bg-orange-50 p-3 text-sm text-orange-800">
             <div className="mb-1 font-semibold">Informasi Kerugian:</div>
             <p>
-              {report.nameRef ?? 'Ingredient'} mengalami kehilangan atau kerusakan sebanyak{' '}
+              {report.nameRef ?? "Ingredient"} mengalami kehilangan atau
+              kerusakan sebanyak{" "}
               <span className="font-bold">{report.quantityLost}</span>.
             </p>
           </div>
 
-          {isLoading && (
+          {isLoadingPlan && (
             <div className="rounded-md bg-muted p-3 text-sm text-muted-foreground">
               Memeriksa status plan...
             </div>
           )}
 
-          {!isLoading && !isPlanActive && planStatus !== null && (
+          {!isLoadingPlan && !isPlanActive && planStatus !== null && (
             <div className="rounded-md bg-red-50 p-3 text-sm text-red-800">
               <span className="block font-semibold">Plan Tidak Aktif</span>
               Plan induk untuk laporan ini tidak berstatus aktif
-              {planStatus !== 'unknown' ? ` (saat ini: ${planStatus})` : ''}. Anda tidak dapat menarik stok pengganti untuk plan yang sudah selesai atau berhenti.
+              {planStatus !== "unknown" ? ` (saat ini: ${planStatus})` : ""}.
+              Anda tidak dapat menarik stok pengganti untuk plan yang sudah
+              selesai atau berhenti.
             </div>
           )}
 
           <div className="grid gap-2">
-            <Label htmlFor="replacementQuantity">Kuantitas Pengganti yang Ditarik</Label>
+            <Label htmlFor="replacementQuantity">
+              Kuantitas Pengganti yang Ditarik
+            </Label>
 
             <Input
               id="replacementQuantity"
@@ -137,11 +143,12 @@ export default function ReplacementModal({ open, report, onClose, onRefresh }) {
               placeholder={`Referensi jumlah rusak: ${report.quantityLost}`}
               value={replacementQuantity}
               onChange={(e) => setReplacementQuantity(e.target.value)}
-              disabled={isLoading || !isPlanActive || isSubmitting}
+              disabled={isLoadingPlan || !isPlanActive || isAdding}
             />
 
             <p className="text-xs text-muted-foreground">
-              Kuantitas pengganti tidak wajib sama dengan jumlah yang rusak. Sesuaikan dengan kebutuhan aktual.
+              Kuantitas pengganti tidak wajib sama dengan jumlah yang rusak.
+              Sesuaikan dengan kebutuhan aktual.
             </p>
           </div>
 
@@ -153,17 +160,30 @@ export default function ReplacementModal({ open, report, onClose, onRefresh }) {
               placeholder="Misal: tarik lebih sedikit karena stok sisa di dapur masih cukup..."
               value={varianceNote}
               onChange={(e) => setVarianceNote(e.target.value)}
-              disabled={isLoading || !isPlanActive || isSubmitting}
+              disabled={isLoadingPlan || !isPlanActive || isAdding}
             />
           </div>
 
           <DialogFooter className="mt-2">
-            <Button type="button" variant="outline" onClick={onClose} disabled={isSubmitting}>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={onClose}
+              disabled={isAdding}
+            >
               Batal
             </Button>
 
-            <Button type="submit" disabled={isSubmitting || isLoading || !isPlanActive || !replacementQuantity}>
-              {isSubmitting ? 'Memproses...' : 'Tarik Stok'}
+            <Button
+              type="submit"
+              disabled={
+                isAdding ||
+                isLoadingPlan ||
+                !isPlanActive ||
+                !replacementQuantity
+              }
+            >
+              {isAdding ? "Memproses..." : "Tarik Stok"}
             </Button>
           </DialogFooter>
         </form>

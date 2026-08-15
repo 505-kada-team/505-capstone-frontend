@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react';
-import { toast } from 'sonner';
+import { useEffect, useState } from "react";
+import { toast } from "sonner";
 
 import {
   Dialog,
@@ -8,12 +8,11 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog';
-
-import { Button } from '@/components/ui/button';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import { planApi } from '@/services/plan/plan.api';
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { useReviewPlanReport } from "@/hooks/report/useReviewPlanReport";
 
 export default function ReviewReportModal({
   open,
@@ -22,80 +21,56 @@ export default function ReviewReportModal({
   onRefresh,
   readOnly = false,
 }) {
-  const [adminNote, setAdminNote] = useState('');
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [adminNote, setAdminNote] = useState("");
+  // Hook review — hanya akan dipanggil saat submit
+  const { review, isReviewing } = useReviewPlanReport(report?.id ?? null);
 
   useEffect(() => {
-    setAdminNote(report?.adminNote ?? '');
+    setAdminNote(report?.adminNote ?? "");
   }, [report]);
 
   if (!report) return null;
 
   const handleReview = async (decision) => {
-    setIsSubmitting(true);
-
     try {
-      const payload = {
+      await review({
         decision,
         adminNote: adminNote.trim(),
-      };
-
-      console.log('[REVIEW REPORT]', {
-        reportId: report.id,
-        payload,
       });
 
-      const res = await planApi.reviewReport(report.id, payload);
-
-      console.log('[REVIEW RESPONSE]', res);
-
-      if (res.success) {
-        toast.success(
-          res.message || 'Report reviewed successfully',
-        );
-
-        await onRefresh();
-        onClose();
-      }
+      toast.success("Report reviewed successfully");
+      await onRefresh?.();
+      onClose();
     } catch (error) {
-      console.error('[REVIEW ERROR]', error);
-      console.error(
-        '[REVIEW RESPONSE ERROR]',
-        error.response?.data,
-      );
-      console.error(
-        '[REVIEW DETAILS]',
-        error.response?.data?.details,
-      );
+      console.error("[REVIEW ERROR]", error);
 
       toast.error(
         error.response?.data?.details?.[0] ??
           error.response?.data?.message ??
-          'Failed to review report',
+          error.message ??
+          "Failed to review report",
       );
-    } finally {
-      setIsSubmitting(false);
     }
   };
 
-  const isMenu = report.category === 'menu';
+  const isMenu = report.category === "menu";
   const valuation = report.valuation;
 
   const formatRupiah = (value) =>
-    new Intl.NumberFormat('id-ID', {
-      style: 'currency',
-      currency: 'IDR',
+    new Intl.NumberFormat("id-ID", {
+      style: "currency",
+      currency: "IDR",
       minimumFractionDigits: 0,
     }).format(value || 0);
 
   const formatTime = (dateStr) =>
-    new Date(dateStr).toLocaleString('en-GB', {
-      timeZone: 'Asia/Jakarta',
-      day: '2-digit',
-      month: 'short',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
+    new Date(dateStr).toLocaleString("en-GB", {
+      timeZone: "Asia/Jakarta",
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
       hour12: false,
     });
 
@@ -104,15 +79,12 @@ export default function ReviewReportModal({
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
           <DialogTitle>
-            {readOnly
-              ? 'Incident Report Details'
-              : 'Review Incident Report'}
+            {readOnly ? "Incident Report Details" : "Review Incident Report"}
           </DialogTitle>
-
           <DialogDescription>
             {readOnly
-              ? 'Review the details of this incident report.'
-              : 'Review the incident details and provide a decision.'}
+              ? "Review the details of this incident report."
+              : "Review the incident details and provide a decision."}
           </DialogDescription>
         </DialogHeader>
 
@@ -122,17 +94,14 @@ export default function ReviewReportModal({
               <span className="mb-1 block font-semibold text-muted-foreground">
                 Reported By
               </span>
-
               <p>
                 {report.reportedBy} ({report.reportedByRole})
               </p>
             </div>
-
             <div>
               <span className="mb-1 block font-semibold text-muted-foreground">
                 Incident Time
               </span>
-
               <p>{formatTime(report.incidentAt)}</p>
             </div>
           </div>
@@ -142,17 +111,12 @@ export default function ReviewReportModal({
               <span className="mb-1 block font-semibold text-muted-foreground">
                 Category / Item
               </span>
-
-              <span className="capitalize">
-                {report.category}
-              </span>
+              <span className="capitalize">{report.category}</span>
             </div>
-
             <div>
               <span className="mb-1 block font-semibold text-muted-foreground">
                 Quantity Lost
               </span>
-
               <span className="font-semibold text-destructive">
                 {report.quantityLost}
               </span>
@@ -163,10 +127,7 @@ export default function ReviewReportModal({
             <span className="mb-1 block font-semibold text-muted-foreground">
               Incident Reason
             </span>
-
-            <p className="text-foreground">
-              {report.reason || '-'}
-            </p>
+            <p className="text-foreground">{report.reason || "-"}</p>
           </div>
 
           {isMenu && valuation && (
@@ -174,26 +135,20 @@ export default function ReviewReportModal({
               <span className="mb-1 font-semibold">
                 Estimated Loss Valuation
               </span>
-
               <div className="flex items-center justify-between">
                 <span className="text-muted-foreground">
                   Ingredient Cost Loss
                 </span>
-
                 <span className="font-semibold">
                   {formatRupiah(valuation.costLoss)}
                 </span>
               </div>
-
               <div className="flex items-center justify-between">
                 <span className="text-muted-foreground">
                   Potential Revenue Loss
                 </span>
-
                 <span className="font-semibold text-accent">
-                  {formatRupiah(
-                    valuation.lostRevenueEstimate,
-                  )}
+                  {formatRupiah(valuation.lostRevenueEstimate)}
                 </span>
               </div>
             </div>
@@ -201,21 +156,18 @@ export default function ReviewReportModal({
 
           <div className="mt-2 grid gap-2">
             <Label htmlFor="adminNote">
-              Admin Note {readOnly ? '' : '(Optional)'}
+              Admin Note {readOnly ? "" : "(Optional)"}
             </Label>
-
             {readOnly ? (
               <p className="min-h-10 rounded-md border border-border bg-muted/20 p-2 text-foreground">
-                {report.adminNote || '-'}
+                {report.adminNote || "-"}
               </p>
             ) : (
               <Textarea
                 id="adminNote"
                 placeholder="Add a note for the reporter..."
                 value={adminNote}
-                onChange={(event) =>
-                  setAdminNote(event.target.value)
-                }
+                onChange={(event) => setAdminNote(event.target.value)}
               />
             )}
           </div>
@@ -235,28 +187,22 @@ export default function ReviewReportModal({
               <Button
                 variant="outline"
                 onClick={onClose}
-                disabled={isSubmitting}
+                disabled={isReviewing}
               >
                 Cancel
               </Button>
-
               <Button
                 variant="destructive"
-                onClick={() =>
-                  handleReview('rejected')
-                }
-                disabled={isSubmitting}
+                onClick={() => handleReview("rejected")}
+                disabled={isReviewing}
               >
-                {isSubmitting ? 'Processing...' : 'Reject'}
+                {isReviewing ? "Processing..." : "Reject"}
               </Button>
-
               <Button
-                onClick={() =>
-                  handleReview('approved')
-                }
-                disabled={isSubmitting}
+                onClick={() => handleReview("approved")}
+                disabled={isReviewing}
               >
-                {isSubmitting ? 'Processing...' : 'Approve'}
+                {isReviewing ? "Processing..." : "Approve"}
               </Button>
             </>
           )}

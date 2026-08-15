@@ -1,13 +1,14 @@
-import { CalendarDays } from 'lucide-react';
-import StatusBadge from './StatusBadge';
-import { cn } from '@/lib/utils';
+import { CalendarDays } from "lucide-react";
+import StatusBadge from "./StatusBadge";
+import { cn } from "@/lib/utils";
 
 /**
  * PlanListCard.jsx — components/shared/
  *
  * Card item di list "Plan History" — halaman ProductionPlanPage.
- * Men-derive badge status dari kombinasi field API (bukan hanya plan.status),
- * sesuai API contract 505_Database Schema_producitonplan.md.
+ * Menampilkan:
+ *   - Badge status plan mentah (draft / active / completed / stopped / cancelled)
+ *   - Badge inventory khusus draft (In Stock / Low Stock)
  *
  * Props:
  *   plan       : { _id, name, status, startDate, endDate,
@@ -17,55 +18,87 @@ import { cn } from '@/lib/utils';
  *   onClick    : (id: string) => void
  */
 
-/**
- * Derive badge variant dari kombinasi field plan.
- * Status dari API: draft | active | completed | stopped | cancelled
- */
-function derivePlanBadgeVariant(plan) {
-  if (plan.status === 'active') return 'active';
-  if (plan.status === 'completed') return 'completed';
-  if (plan.status === 'stopped' || plan.status === 'cancelled') return 'stopped';
-  // status === 'draft':
-  if (!plan.readyToApprove || plan.hasUnsafeBatch) return 'low stock';
-  return 'in-stock';
+function derivePlanStatusVariant(plan) {
+  switch (plan.status) {
+    case "draft":
+      return "draft";
+    case "active":
+      return "active";
+    case "completed":
+      return "completed";
+    case "stopped":
+      return "stopped";
+    case "cancelled":
+      return "cancelled";
+    default:
+      return "deleted"; // fallback
+  }
+}
+
+function deriveInventoryVariant(plan) {
+  if (plan.status !== "draft") return null;
+
+  return plan.readyToApprove && !plan.hasUnsafeBatch ? "in-stock" : "low stock";
 }
 
 function formatDateRange(startDate, endDate) {
-  if (!startDate) return '—';
+  if (!startDate) return "—";
   const fmt = (d) => {
     const date = new Date(d);
-    return `${String(date.getDate()).padStart(2, '0')} ${
-      ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-       'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][date.getMonth()]
+    return `${String(date.getDate()).padStart(2, "0")} ${
+      [
+        "Jan",
+        "Feb",
+        "Mar",
+        "Apr",
+        "May",
+        "Jun",
+        "Jul",
+        "Aug",
+        "Sep",
+        "Oct",
+        "Nov",
+        "Dec",
+      ][date.getMonth()]
     } ${date.getFullYear()}`;
   };
   return endDate ? `${fmt(startDate)} – ${fmt(endDate)}` : fmt(startDate);
 }
 
 export default function PlanListCard({ plan, isSelected = false, onClick }) {
-  const badgeVariant = derivePlanBadgeVariant(plan);
+  const planStatusVariant = derivePlanStatusVariant(plan);
+  const inventoryVariant = deriveInventoryVariant(plan);
 
   return (
     <button
       type="button"
       onClick={() => onClick?.(plan._id)}
       className={cn(
-        'w-full text-left rounded-lg border p-3 transition-all duration-150',
-        'bg-card hover:bg-accent/5 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#F97316]/40',
+        "w-full text-left rounded-lg border p-3 transition-all duration-150",
+        "bg-card hover:bg-accent/5 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#F97316]/40",
         isSelected
-          ? 'border-[#F97316] bg-[#F97316]/5 shadow-sm'
-          : 'border-border hover:border-[#F97316]/40',
+          ? "border-[#F97316] bg-[#F97316]/5 shadow-sm"
+          : "border-border hover:border-[#F97316]/40",
       )}
     >
-      {/* Row 1: Name + Badge */}
+      {/* Row 1: Name + Badges */}
       <div className="flex items-start justify-between gap-2">
-        <span className={cn(
-          'text-sm font-semibold leading-snug',
-          isSelected ? 'text-foreground' : 'text-foreground/90'
-        )}>
+        <span
+          className={cn(
+            "text-sm font-semibold leading-snug",
+            isSelected ? "text-foreground" : "text-foreground/90",
+          )}
+        >
           {plan.name}
         </span>
-        <StatusBadge variant={badgeVariant} />
+
+        <div className="flex items-center gap-1.5 shrink-0">
+          {/* Badge 1: status plan */}
+          <StatusBadge variant={planStatusVariant} />
+
+          {/* Badge 2: inventory status khusus draft */}
+          {inventoryVariant && <StatusBadge variant={inventoryVariant} />}
+        </div>
       </div>
 
       {/* Row 2: Date range */}

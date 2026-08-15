@@ -1,6 +1,7 @@
-import { useState, useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { Clock, Plus } from "lucide-react";
+
 import PageHeader from "@/components/shared/PageHeader";
 import DataTable from "@/components/shared/DataTable";
 import Pagination from "@/components/shared/Pagination";
@@ -14,11 +15,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-//import { getPlanReportList } from '@/services/api';
-import { planApi } from "@/services/plan/plan.api";
-import { mapPlanReportList } from "@/services/plan/plan.mapper";
 import { useSortable } from "@/hooks/useSortable";
 import { usePagination } from "@/hooks/usePagination";
+import { usePlanReportList } from "@/hooks/report/usePlanReportList";
 
 import ReviewReportModal from "./components/ReviewReportModal";
 import ReplacementModal from "./components/ReplacementModal";
@@ -27,8 +26,6 @@ import AddReportModal from "./components/AddReportModal";
 const LIMIT = 8;
 
 export default function PlanReportPage() {
-  const [reports, setReports] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
   const { sortBy, setSortBy } = useSortable("date_newest");
 
   // Filters state
@@ -36,48 +33,41 @@ export default function PlanReportPage() {
   const [filterCategory, setFilterCategory] = useState("all");
   const [search, setSearch] = useState("");
 
+  // Hook untuk fetch report
+  const {
+    reports,
+    isLoading,
+    error: listError,
+    refetch,
+    setParams,
+  } = usePlanReportList();
+
+  // Kirim filter status & category ke API
+  useEffect(() => {
+    setParams({
+      ...(filterStatus !== "all" && { status: filterStatus }),
+      ...(filterCategory !== "all" && { category: filterCategory }),
+    });
+  }, [filterStatus, filterCategory, setParams]);
+
+  // Handle error dari list
+  useEffect(() => {
+    if (listError) {
+      console.error("[PLAN REPORT ERROR]", listError);
+      toast.error(
+        listError.response?.data?.message ??
+          listError.message ??
+          "Gagal mengambil daftar laporan",
+      );
+    }
+  }, [listError]);
+
   // Modals state
   const [reviewReport, setReviewReport] = useState(null);
   const [replaceReport, setReplaceReport] = useState(null);
   const [isAddOpen, setIsAddOpen] = useState(false);
 
-  const fetchData = async () => {
-    setIsLoading(true);
-
-    try {
-      const params = {
-        ...(filterStatus !== "all" && { status: filterStatus }),
-        ...(filterCategory !== "all" && { category: filterCategory }),
-      };
-
-      console.log("[PLAN REPORT PARAMS]", params);
-
-      const res = await planApi.listReports(params);
-
-      console.log("[PLAN REPORT RESPONSE]", res);
-
-      if (res.success) {
-        setReports(mapPlanReportList(res.data));
-      }
-    } catch (error) {
-      console.error("[PLAN REPORT ERROR]", error);
-      console.error("[PLAN REPORT RESPONSE ERROR]", error.response?.data);
-
-      toast.error(
-        error.response?.data?.message ??
-          error.message ??
-          "Gagal mengambil daftar laporan",
-      );
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchData();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [filterStatus, filterCategory]);
-
+  // Filter & sort client-side
   const filteredReports = useMemo(() => {
     const keyword = search.trim().toLowerCase();
 
@@ -324,7 +314,7 @@ export default function PlanReportPage() {
         open={!!reviewReport}
         report={reviewReport}
         onClose={() => setReviewReport(null)}
-        onRefresh={fetchData}
+        onRefresh={refetch}
         readOnly={reviewReport?.status !== "pending"}
       />
 
@@ -332,13 +322,13 @@ export default function PlanReportPage() {
         open={!!replaceReport}
         report={replaceReport}
         onClose={() => setReplaceReport(null)}
-        onRefresh={fetchData}
+        onRefresh={refetch}
       />
 
       <AddReportModal
         open={isAddOpen}
         onClose={() => setIsAddOpen(false)}
-        onRefresh={fetchData}
+        onRefresh={refetch}
       />
     </div>
   );

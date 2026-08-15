@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import {
   RefreshCw,
   PlusCircle,
@@ -21,6 +21,7 @@ import {
 } from "@/components/ui/select";
 import { usePlanList } from "@/hooks/plan/usePlanList";
 import { usePagination } from "@/hooks/usePagination";
+import { useSearchParams } from "react-router-dom";
 
 const PAGE_SIZE = 6;
 
@@ -51,10 +52,20 @@ function ListSkeleton() {
 
 export default function PlanHistoryView({ onNavigateToCreate }) {
   const { plans, isLoading: isLoadingList, refetch } = usePlanList();
-  const [selectedPlanId, setSelectedPlanId] = useState(null);
   const [search, setSearch] = useState("");
   const [filterStatus, setFilterStatus] = useState("all");
   const [sortOrder, setSortOrder] = useState("newest");
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [selectedPlanId, setSelectedPlanId] = useState(
+    searchParams.get("detail") || null,
+  );
+
+  const detailParam = searchParams.get("detail");
+  useEffect(() => {
+    if (detailParam) {
+      setSelectedPlanId(detailParam);
+    }
+  }, [detailParam]);
 
   const filteredPlans = useMemo(() => {
     const result = plans.filter((plan) => {
@@ -95,7 +106,17 @@ export default function PlanHistoryView({ onNavigateToCreate }) {
     setSortOrder(value);
     resetPage();
   };
-  const handleSelectPlan = (id) => setSelectedPlanId(id);
+  const handleSelectPlan = (id) => {
+    setSelectedPlanId(id);
+
+    // Hapus query param 'detail' agar tidak terkunci
+    if (searchParams.get("detail")) {
+      const next = new URLSearchParams(searchParams);
+      next.delete("detail");
+      setSearchParams(next, { replace: true });
+    }
+  };
+
   const handleReload = () => refetch();
 
   return (
