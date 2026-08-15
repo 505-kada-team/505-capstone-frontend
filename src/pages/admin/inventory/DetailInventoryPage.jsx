@@ -73,7 +73,6 @@ export default function DetailInventoryPage() {
     updateInventory,
     isUpdating: submittingEdit,
     updateError,
-    resetUpdateError,
     archiveInventory,
     isArchiving: archivingItem,
     archiveError,
@@ -153,6 +152,12 @@ export default function DetailInventoryPage() {
       render: (row) => formatDate(row.inDate),
     },
     {
+      key: "batchCode",
+      header: "Batch Code",
+      cellClass: "font-mono text-xs text-muted-foreground",
+      render: (row) => row.batchCode || "—",
+    },
+    {
       key: "costPrices",
       header: "Total Cost",
       cellClass: "font-mono text-sm",
@@ -228,7 +233,7 @@ export default function DetailInventoryPage() {
         <div className="bg-card rounded-lg border border-border p-6 shadow-sm">
           <form onSubmit={handleSubmit(handleEditSubmit)} className="space-y-6">
             <div className="grid grid-cols-12 gap-4">
-              <div className="col-span-6 space-y-1.5">
+              <div className="col-span-5 space-y-1.5">
                 <Label
                   htmlFor="edit-name"
                   className="text-sm text-muted-foreground font-normal"
@@ -248,7 +253,18 @@ export default function DetailInventoryPage() {
                 )}
               </div>
 
-              <div className="col-span-4 space-y-1.5">
+              <div className="col-span-3 space-y-1.5">
+                <Label className="text-sm text-muted-foreground font-normal">
+                  Item Code
+                </Label>
+                <Input
+                  value={data.itemCode || "—"}
+                  disabled
+                  className="bg-muted text-muted-foreground border-border font-mono"
+                />
+              </div>
+
+              <div className="col-span-2 space-y-1.5">
                 <Label className="text-sm text-muted-foreground font-normal">
                   Category
                 </Label>

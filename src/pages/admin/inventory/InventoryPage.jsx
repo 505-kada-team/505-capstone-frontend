@@ -214,10 +214,17 @@ export default function InventoryPage() {
     {
       key: "name",
       header: "Item Name",
-      headerClass: "w-[40%]",
+      headerClass: "w-[30%]",
       render: (row) => (
         <span className="font-medium text-foreground text-sm">{row.name}</span>
       ),
+    },
+    {
+      key: "itemCode",
+      header: "Item Code",
+      headerClass: "w-[15%]",
+      cellClass: "font-mono text-xs text-muted-foreground",
+      render: (row) => row.itemCode || "—",
     },
     {
       key: "quantityTotal",
@@ -235,7 +242,7 @@ export default function InventoryPage() {
     {
       key: "lastCostBatch",
       header: "Total Cost",
-      headerClass: "w-[20%]",
+      headerClass: "w-[18%]",
       cellClass: "font-mono text-sm",
       render: (row) => (
         <span
@@ -248,7 +255,7 @@ export default function InventoryPage() {
     {
       key: "category",
       header: "Category",
-      headerClass: "w-[15%]",
+      headerClass: "w-[12%]",
       render: (row) => <CategoryBadge category={row.category} />,
     },
     {
