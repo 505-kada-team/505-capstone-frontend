@@ -8,9 +8,10 @@ import { usePagination } from "@/hooks/usePagination";
 import { usePlanReportList } from "@/hooks/report/usePlanReportList";
 import { formatCurrency } from "@/lib/formatCurrency";
 
-const LIMIT = 8; // jumlah baris per halaman
+const LIMIT = 8;
 
 export default function WasteReport({
+  planId,
   startDate,
   endDate,
   onExportDataChange,
@@ -18,9 +19,13 @@ export default function WasteReport({
   // ── Fetch data via hook ─────────────────────────────────────
   const { reports: allReports, isLoading, error } = usePlanReportList();
 
-  // ── Filter client-side berdasarkan tanggal ──────────────────
+  // ── Filter client-side berdasarkan plan & tanggal ───────────
   const filteredReports = useMemo(() => {
     return allReports.filter((report) => {
+      if (planId && report.planId !== planId) {
+        return false;
+      }
+
       if (!report.incidentAt) return false;
 
       const incidentDate = new Date(report.incidentAt);
@@ -35,22 +40,27 @@ export default function WasteReport({
 
       return true;
     });
-  }, [allReports, startDate, endDate]);
+  }, [allReports, planId, startDate, endDate]);
 
   // ── Pagination ──────────────────────────────────────────────
-  const { currentPage, totalPages, paginatedItems, setPage, resetPage } =
-    usePagination(filteredReports, LIMIT);
+  const {
+    currentPage,
+    totalPages,
+    paginatedItems,
+    setPage,
+    resetPage,
+  } = usePagination(filteredReports, LIMIT);
 
-  // Reset ke halaman pertama setiap kali filter berubah
   useEffect(() => {
     resetPage();
-  }, [startDate, endDate, resetPage]);
+  }, [planId, startDate, endDate, resetPage]);
 
   // ── Error handling ─────────────────────────────────────────
   useEffect(() => {
     if (error) {
       toast.error(
-        error.response?.data?.message ?? "Failed to load waste report",
+        error.response?.data?.message ??
+          "Failed to load waste report",
       );
     }
   }, [error]);
@@ -75,14 +85,18 @@ export default function WasteReport({
         key: "category",
         header: "Category",
         render: (row) => (
-          <span className="capitalize">{row.category ?? "—"}</span>
+          <span className="capitalize">
+            {row.category ?? "—"}
+          </span>
         ),
       },
       {
         key: "quantityLost",
         header: "Lost Quantity",
         render: (row) => (
-          <span className="font-mono">{row.quantityLost ?? 0}</span>
+          <span className="font-mono">
+            {row.quantityLost ?? 0}
+          </span>
         ),
       },
       {
@@ -103,7 +117,9 @@ export default function WasteReport({
         render: (row) =>
           row.valuation?.lostRevenueEstimate != null ? (
             <span className="font-mono">
-              {formatCurrency(row.valuation.lostRevenueEstimate)}
+              {formatCurrency(
+                row.valuation.lostRevenueEstimate,
+              )}
             </span>
           ) : (
             "—"
@@ -125,14 +141,20 @@ export default function WasteReport({
         key: "isLateReport",
         header: "Late Report",
         render: (row) => (
-          <span className="text-sm">{row.isLateReport ? "Yes" : "No"}</span>
+          <span className="text-sm">
+            {row.isLateReport ? "Yes" : "No"}
+          </span>
         ),
       },
       {
         key: "status",
         header: "Status",
         render: (row) =>
-          row.status ? <StatusBadge variant={row.status} /> : "—",
+          row.status ? (
+            <StatusBadge variant={row.status} />
+          ) : (
+            "—"
+          ),
       },
     ],
     [],
@@ -149,19 +171,25 @@ export default function WasteReport({
         { key: "lostQuantity", label: "Lost Quantity" },
         { key: "costLoss", label: "Cost Loss" },
         { key: "lostRevenue", label: "Lost Revenue" },
-        { key: "replacementCost", label: "Replacement Cost" },
+        {
+          key: "replacementCost",
+          label: "Replacement Cost",
+        },
         { key: "lateReport", label: "Late Report" },
         { key: "status", label: "Status" },
       ],
       rows: filteredReports.map((report) => ({
         incidentDate: report.incidentAt
-          ? new Date(report.incidentAt).toISOString().slice(0, 10)
+          ? new Date(report.incidentAt)
+              .toISOString()
+              .slice(0, 10)
           : "",
         item: report.nameRef ?? "",
         category: report.category ?? "",
         lostQuantity: report.quantityLost ?? 0,
         costLoss: report.valuation?.costLoss ?? 0,
-        lostRevenue: report.valuation?.lostRevenueEstimate ?? 0,
+        lostRevenue:
+          report.valuation?.lostRevenueEstimate ?? 0,
         replacementCost: report.replacementCost ?? "",
         lateReport: report.isLateReport ? "Yes" : "No",
         status: report.status ?? "",
@@ -173,10 +201,13 @@ export default function WasteReport({
   return (
     <section className="rounded-lg border border-border bg-card">
       <div className="border-b p-6">
-        <h2 className="text-lg font-semibold">Waste & Loss Report</h2>
+        <h2 className="text-lg font-semibold">
+          Waste & Loss Report
+        </h2>
 
         <p className="mt-1 text-sm text-muted-foreground">
-          Ingredient and menu losses within the selected period.
+          Ingredient and menu losses within the selected
+          period.
         </p>
       </div>
 
@@ -190,7 +221,7 @@ export default function WasteReport({
             <DataTable
               columns={columns}
               data={paginatedItems}
-              emptyMessage="Tidak ada data waste & loss untuk periode ini"
+              emptyMessage="No waste & loss data found for the selected filters."
             />
           </div>
 

@@ -1,4 +1,6 @@
+import { useEffect, useState } from "react";
 import { Download, FileText, Filter, RotateCcw } from "lucide-react";
+import { toast } from "sonner";
 
 import PageHeader from "@/components/shared/PageHeader";
 import { Button } from "@/components/ui/button";
@@ -18,11 +20,14 @@ import SalesReport from "./components/SalesReport";
 import ProductionPlanReport from "./components/ProductionPlanReport";
 import InventoryReport from "./components/InventoryReport";
 import { useReportFilter } from "@/hooks/report/useReportFilter";
+import { getPlanList } from "@/services/api";
 
 export default function ReportPage() {
   const {
     reportType,
     setReportType,
+    planId,
+    setPlanId,
     startDate,
     setStartDate,
     endDate,
@@ -35,8 +40,43 @@ export default function ReportPage() {
     handleExportCsv,
   } = useReportFilter();
 
+  const [stoppedPlans, setStoppedPlans] = useState([]);
+  const [isLoadingPlans, setIsLoadingPlans] = useState(false);
+
+  useEffect(() => {
+    const fetchStoppedPlans = async () => {
+      setIsLoadingPlans(true);
+
+      try {
+        const response = await getPlanList();
+        const plans = response.data?.data ?? [];
+
+        const filteredPlans = Array.isArray(plans)
+          ? plans.filter((plan) => plan.status === "stopped")
+          : [];
+
+        setStoppedPlans(filteredPlans);
+      } catch (error) {
+        console.error("[STOPPED PLAN ERROR]", error);
+        setStoppedPlans([]);
+        toast.error("Failed to load completed plans.");
+      } finally {
+        setIsLoadingPlans(false);
+      }
+    };
+
+    fetchStoppedPlans();
+  }, []);
+
+  //   useEffect(() => {
+  //   if (reportType === "inventory") {
+  //     setPlanId("");
+  //   }
+  // }, [reportType, setPlanId]);
+
   const renderReport = () => {
     const commonProps = {
+      planId: appliedFilter.planId,
       startDate: appliedFilter.startDate,
       endDate: appliedFilter.endDate,
       onExportDataChange: handleExportDataChange,
@@ -73,7 +113,7 @@ export default function ReportPage() {
             </h2>
 
             <p className="mt-1.5 text-sm text-muted-foreground">
-              Filter operational reports by type and period.
+              Filter operational reports by plan, type, and period.
             </p>
           </div>
         </div>
@@ -81,7 +121,7 @@ export default function ReportPage() {
         <Separator />
 
         {/* Filter fields */}
-        <div className="grid grid-cols-1 gap-4 p-6 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid grid-cols-1 gap-4 p-6 sm:grid-cols-2 lg:grid-cols-4">
           <div className="grid gap-2">
             <Label htmlFor="reportType">Report Type</Label>
 
@@ -97,6 +137,45 @@ export default function ReportPage() {
                 <SelectItem value="inventory">Inventory Report</SelectItem>
               </SelectContent>
             </Select>
+          </div>
+
+          <div className="grid gap-2">
+            <Label htmlFor="planId">Plan</Label>
+              <Select
+                value={
+                  reportType === "inventory" || reportType === "plan"
+                    ? ""
+                    : planId
+                }
+                onValueChange={setPlanId}
+                disabled={
+                  reportType === "inventory" ||
+                  reportType === "plan" ||
+                  isLoadingPlans
+                }
+              >
+                <SelectTrigger className="w-full">
+                  <SelectValue
+                    placeholder={
+                      reportType === "inventory"
+                        ? "Not applicable"
+                        : reportType === "plan"
+                          ? "All completed plans"
+                          : isLoadingPlans
+                            ? "Loading plans..."
+                            : "Select stopped plan"
+                    }
+                  />
+                </SelectTrigger>
+
+                <SelectContent>
+                  {stoppedPlans.map((plan) => (
+                    <SelectItem key={plan._id} value={plan._id}>
+                      {plan.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
           </div>
 
           <div className="grid gap-2">
