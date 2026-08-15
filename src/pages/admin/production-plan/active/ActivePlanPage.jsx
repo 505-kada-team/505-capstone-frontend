@@ -505,7 +505,6 @@ export default function ActivePlanPage() {
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="all">All Statuses</SelectItem>
-                      <SelectItem value="completed">Executed</SelectItem>
                       <SelectItem value="cancelled">Cancelled</SelectItem>
                       <SelectItem value="stopped">Stopped</SelectItem>
                     </SelectContent>

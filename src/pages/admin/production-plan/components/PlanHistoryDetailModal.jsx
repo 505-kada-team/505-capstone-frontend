@@ -7,11 +7,10 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { mapPlanDetail } from "@/services/plan/plan.mapper"; // tidak perlu lagi
 import { getSellingHistory } from "@/services/api";
 import { formatCurrency } from "@/lib/formatCurrency";
 import StatusBadge from "@/components/shared/StatusBadge";
-import { ClipboardList, CheckCircle2, ShieldAlert } from "lucide-react";
+import { ClipboardList, ShieldAlert } from "lucide-react";
 import { toast } from "sonner";
 import { usePlanDetail } from "@/hooks/plan/usePlanDetail";
 
@@ -167,13 +166,18 @@ export default function PlanHistoryDetailModal({ isOpen, onClose, planId }) {
                 </span>
                 <StatusBadge
                   variant={
-                    plan.status === "completed" ? "completed" : "stopped"
+                    plan.status === "completed"
+                      ? "completed"
+                      : plan.status === "cancelled"
+                        ? "cancelled"
+                        : "stopped"
                   }
                 />
               </DialogTitle>
             </DialogHeader>
 
             <div className="border-t border-border pt-4 mt-2 space-y-6">
+              {/* Periode plan tetap ditampilkan */}
               <div className="text-xs text-muted-foreground font-medium">
                 Plan Period:{" "}
                 <span className="text-foreground">
@@ -181,270 +185,294 @@ export default function PlanHistoryDetailModal({ isOpen, onClose, planId }) {
                 </span>
               </div>
 
-              {/* ── Sales Details ─────────────────────────────── */}
-              <div>
-                <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2">
-                  Sales Details
-                </h3>
-                <div className="border rounded-lg overflow-hidden">
-                  <div className="overflow-x-auto">
-                    <table className="w-full text-sm text-left min-w-[640px]">
-                      <thead className="bg-muted text-muted-foreground text-xs uppercase">
-                        <tr>
-                          <th className="px-4 py-2.5 font-medium">Menu Name</th>
-                          <th className="px-4 py-2.5 font-medium text-right">
-                            Planned
-                          </th>
-                          <th className="px-4 py-2.5 font-medium text-right">
-                            Price
-                          </th>
-                          <th className="px-4 py-2.5 font-medium text-right hidden sm:table-cell">
-                            Est. Revenue
-                          </th>
-                          <th className="px-4 py-2.5 font-medium text-right">
-                            Sold
-                          </th>
-                          <th className="px-4 py-2.5 font-medium text-right">
-                            Actual Rev
-                          </th>
-                          <th className="px-4 py-2.5 font-medium text-right">
-                            Variance
-                          </th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y font-normal">
-                        {menusWithAnalysis.map((m) => {
-                          const estRev =
-                            (m.quantityPlanned || 0) * m.analysis.normalPrice;
-                          const actRev = m.analysis.totalActualRevenue;
-                          const variance = actRev - estRev;
-
-                          return (
-                            <tr
-                              key={m.menuId}
-                              className="bg-background hover:bg-muted/10"
-                            >
-                              <td className="px-4 py-3 font-medium text-foreground">
-                                <div className="flex items-center gap-2">
-                                  <span className="truncate">{m.name}</span>
-                                  {m.discount?.discountPercentage > 0 && (
-                                    <span className="text-[10px] font-semibold text-[#F97316] bg-[#F97316]/10 px-1.5 py-0.5 rounded font-mono shrink-0">
-                                      {m.discount.discountPercentage}% Off
-                                    </span>
-                                  )}
-                                </div>
-                              </td>
-                              <td className="px-4 py-3 text-right font-mono text-xs">
-                                {m.quantityPlanned}
-                              </td>
-                              <td className="px-4 py-3 text-right font-mono text-xs">
-                                <div>
-                                  {formatCurrency(m.analysis.normalPrice)}
-                                </div>
-                                {m.analysis.discountedPrice && (
-                                  <div className="text-[10px] text-[#F97316] font-semibold mt-0.5">
-                                    Promo:{" "}
-                                    {formatCurrency(m.analysis.discountedPrice)}
-                                  </div>
-                                )}
-                              </td>
-                              <td className="px-4 py-3 text-right font-mono text-xs hidden sm:table-cell">
-                                {formatCurrency(estRev)}
-                              </td>
-                              <td className="px-4 py-3 text-right font-mono text-xs">
-                                <div>{m.soldQuantity}</div>
-                                {m.analysis.discountedPrice && (
-                                  <div className="text-[10px] text-muted-foreground mt-0.5">
-                                    ({m.analysis.normalQty}N/
-                                    {m.analysis.promoQty}P)
-                                  </div>
-                                )}
-                              </td>
-                              <td className="px-4 py-3 text-right font-mono text-xs text-foreground font-semibold">
-                                <div>{formatCurrency(actRev)}</div>
-                                {m.analysis.discountedPrice && (
-                                  <div className="text-[10px] text-green-700 font-normal mt-0.5">
-                                    (P: {formatCurrency(m.analysis.promoRev)})
-                                  </div>
-                                )}
-                              </td>
-                              <td
-                                className={`px-4 py-3 text-right font-mono text-xs font-semibold ${
-                                  variance < 0
-                                    ? "text-[#C4441F]"
-                                    : "text-green-700"
-                                }`}
-                              >
-                                {variance < 0 ? "-" : ""}
-                                {formatCurrency(Math.abs(variance))}
-                              </td>
-                            </tr>
-                          );
-                        })}
-                      </tbody>
-                    </table>
-                  </div>
+              {/* Jika plan dibatalkan, tampilkan pesan khusus */}
+              {plan.status === "cancelled" ? (
+                <div className="flex flex-col items-center justify-center py-12 text-center gap-3">
+                  <ShieldAlert className="w-8 h-8 text-muted-foreground" />
+                  <p className="text-sm font-semibold text-foreground">
+                    This plan has been cancelled
+                  </p>
+                  <p className="text-xs text-muted-foreground max-w-sm">
+                    Production items and ingredient details are no longer
+                    available for a cancelled plan.
+                  </p>
                 </div>
-              </div>
-
-              {/* ── Committed Ingredients Detail (non‑draft) ──── */}
-              {plan.status !== "draft" &&
-                menusWithAnalysis.some(
-                  (m) => m.committedIngredientsDetail?.length > 0,
-                ) && (
+              ) : (
+                <>
+                  {/* ── Sales Details ─────────────────────────────── */}
                   <div>
                     <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2">
-                      Committed Ingredients Detail
+                      Sales Details
                     </h3>
+                    <div className="border rounded-lg overflow-hidden">
+                      <div className="overflow-x-auto">
+                        <table className="w-full text-sm text-left min-w-[640px]">
+                          <thead className="bg-muted text-muted-foreground text-xs uppercase">
+                            <tr>
+                              <th className="px-4 py-2.5 font-medium">
+                                Menu Name
+                              </th>
+                              <th className="px-4 py-2.5 font-medium text-right">
+                                Planned
+                              </th>
+                              <th className="px-4 py-2.5 font-medium text-right">
+                                Price
+                              </th>
+                              <th className="px-4 py-2.5 font-medium text-right hidden sm:table-cell">
+                                Est. Revenue
+                              </th>
+                              <th className="px-4 py-2.5 font-medium text-right">
+                                Sold
+                              </th>
+                              <th className="px-4 py-2.5 font-medium text-right">
+                                Actual Rev
+                              </th>
+                              <th className="px-4 py-2.5 font-medium text-right">
+                                Variance
+                              </th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y font-normal">
+                            {menusWithAnalysis.map((m) => {
+                              const estRev =
+                                (m.quantityPlanned || 0) *
+                                m.analysis.normalPrice;
+                              const actRev = m.analysis.totalActualRevenue;
+                              const variance = actRev - estRev;
+
+                              return (
+                                <tr
+                                  key={m.menuId}
+                                  className="bg-background hover:bg-muted/10"
+                                >
+                                  <td className="px-4 py-3 font-medium text-foreground">
+                                    <div className="flex items-center gap-2">
+                                      <span className="truncate">{m.name}</span>
+                                      {m.discount?.discountPercentage > 0 && (
+                                        <span className="text-[10px] font-semibold text-[#F97316] bg-[#F97316]/10 px-1.5 py-0.5 rounded font-mono shrink-0">
+                                          {m.discount.discountPercentage}% Off
+                                        </span>
+                                      )}
+                                    </div>
+                                  </td>
+                                  <td className="px-4 py-3 text-right font-mono text-xs">
+                                    {m.quantityPlanned}
+                                  </td>
+                                  <td className="px-4 py-3 text-right font-mono text-xs">
+                                    <div>
+                                      {formatCurrency(m.analysis.normalPrice)}
+                                    </div>
+                                    {m.analysis.discountedPrice && (
+                                      <div className="text-[10px] text-[#F97316] font-semibold mt-0.5">
+                                        Promo:{" "}
+                                        {formatCurrency(
+                                          m.analysis.discountedPrice,
+                                        )}
+                                      </div>
+                                    )}
+                                  </td>
+                                  <td className="px-4 py-3 text-right font-mono text-xs hidden sm:table-cell">
+                                    {formatCurrency(estRev)}
+                                  </td>
+                                  <td className="px-4 py-3 text-right font-mono text-xs">
+                                    <div>{m.soldQuantity}</div>
+                                    {m.analysis.discountedPrice && (
+                                      <div className="text-[10px] text-muted-foreground mt-0.5">
+                                        ({m.analysis.normalQty}N/
+                                        {m.analysis.promoQty}P)
+                                      </div>
+                                    )}
+                                  </td>
+                                  <td className="px-4 py-3 text-right font-mono text-xs text-foreground font-semibold">
+                                    <div>{formatCurrency(actRev)}</div>
+                                    {m.analysis.discountedPrice && (
+                                      <div className="text-[10px] text-green-700 font-normal mt-0.5">
+                                        (P:{" "}
+                                        {formatCurrency(m.analysis.promoRev)})
+                                      </div>
+                                    )}
+                                  </td>
+                                  <td
+                                    className={`px-4 py-3 text-right font-mono text-xs font-semibold ${
+                                      variance < 0
+                                        ? "text-[#C4441F]"
+                                        : "text-green-700"
+                                    }`}
+                                  >
+                                    {variance < 0 ? "-" : ""}
+                                    {formatCurrency(Math.abs(variance))}
+                                  </td>
+                                </tr>
+                              );
+                            })}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* ── Committed Ingredients Detail (non‑draft) ──── */}
+                  {plan.status !== "draft" &&
+                    menusWithAnalysis.some(
+                      (m) => m.committedIngredientsDetail?.length > 0,
+                    ) && (
+                      <div>
+                        <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2">
+                          Committed Ingredients Detail
+                        </h3>
+                        <div className="space-y-4">
+                          {menusWithAnalysis.map((m) => {
+                            const details = m.committedIngredientsDetail;
+                            if (!details || details.length === 0) return null;
+                            return (
+                              <div
+                                key={m.menuId}
+                                className="border rounded-lg overflow-hidden"
+                              >
+                                <div className="px-4 py-2 bg-muted/40 border-b">
+                                  <span className="text-xs font-semibold text-foreground">
+                                    {m.name}
+                                  </span>
+                                </div>
+                                <div className="overflow-x-auto">
+                                  <table className="w-full text-sm text-left min-w-[500px]">
+                                    <thead className="bg-muted text-muted-foreground text-xs uppercase">
+                                      <tr>
+                                        <th className="px-4 py-2 font-medium">
+                                          Item Name
+                                        </th>
+                                        <th className="px-4 py-2 font-medium text-right">
+                                          Qty Needed
+                                        </th>
+                                        <th className="px-4 py-2 font-medium text-right">
+                                          Available
+                                        </th>
+                                        <th className="px-4 py-2 font-medium text-right">
+                                          Pool Shared
+                                        </th>
+                                        <th className="px-4 py-2 font-medium text-center">
+                                          Unsafe
+                                        </th>
+                                      </tr>
+                                    </thead>
+                                    <tbody className="divide-y font-normal">
+                                      {details.map((d, idx) => (
+                                        <tr
+                                          key={idx}
+                                          className="bg-background hover:bg-muted/10"
+                                        >
+                                          <td className="px-4 py-2 font-medium text-foreground">
+                                            {d.nameInventory}
+                                          </td>
+                                          <td className="px-4 py-2 text-right font-mono text-xs">
+                                            {d.quantityNeeded} {d.unit}
+                                          </td>
+                                          <td className="px-4 py-2 text-right font-mono text-xs">
+                                            {d.quantityAvailable ??
+                                              d.availableQuantity ??
+                                              0}{" "}
+                                            {d.unit}
+                                          </td>
+                                          <td className="px-4 py-2 text-right font-mono text-xs">
+                                            {d.poolShared ? "Yes" : "No"}
+                                          </td>
+                                          <td className="px-4 py-2 text-center">
+                                            {d.hasUnsafeBatch ? (
+                                              <span className="text-[10px] font-semibold text-[#C4441F] bg-[#C4441F]/10 px-1.5 py-0.5 rounded">
+                                                Yes
+                                              </span>
+                                            ) : (
+                                              <span className="text-[10px] text-muted-foreground">
+                                                No
+                                              </span>
+                                            )}
+                                          </td>
+                                        </tr>
+                                      ))}
+                                    </tbody>
+                                  </table>
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
+
+                  {/* ── Lower Section (Status & Financial) ─────────── */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-2 border-t border-border">
+                    {/* Sales Status */}
                     <div className="space-y-4">
-                      {menusWithAnalysis.map((m) => {
-                        const details = m.committedIngredientsDetail;
-                        if (!details || details.length === 0) return null;
-                        return (
-                          <div
-                            key={m.menuId}
-                            className="border rounded-lg overflow-hidden"
-                          >
-                            <div className="px-4 py-2 bg-muted/40 border-b">
-                              <span className="text-xs font-semibold text-foreground">
+                      <div>
+                        <h4 className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2">
+                          Sales Status
+                        </h4>
+                        <div className="space-y-1.5 pl-1">
+                          {remainingStatusList.map((m, idx) => (
+                            <div
+                              key={idx}
+                              className="flex justify-between items-center text-xs"
+                            >
+                              <span className="font-medium text-foreground">
                                 {m.name}
                               </span>
+                              <span
+                                className={`font-mono font-semibold px-2 py-0.5 rounded-full ${
+                                  m.isSoldOut
+                                    ? "bg-red-50 text-[#C4441F] dark:bg-red-950/20"
+                                    : "bg-neutral-100 text-neutral-600 dark:bg-neutral-800 dark:text-neutral-300"
+                                }`}
+                              >
+                                {m.isSoldOut
+                                  ? "Sold Out"
+                                  : `${m.remaining} pcs remaining`}
+                              </span>
                             </div>
-                            <div className="overflow-x-auto">
-                              <table className="w-full text-sm text-left min-w-[500px]">
-                                <thead className="bg-muted text-muted-foreground text-xs uppercase">
-                                  <tr>
-                                    <th className="px-4 py-2 font-medium">
-                                      Item Name
-                                    </th>
-                                    <th className="px-4 py-2 font-medium text-right">
-                                      Qty Needed
-                                    </th>
-                                    <th className="px-4 py-2 font-medium text-right">
-                                      Available
-                                    </th>
-                                    <th className="px-4 py-2 font-medium text-right">
-                                      Pool Shared
-                                    </th>
-                                    <th className="px-4 py-2 font-medium text-center">
-                                      Unsafe
-                                    </th>
-                                  </tr>
-                                </thead>
-                                <tbody className="divide-y font-normal">
-                                  {details.map((d, idx) => (
-                                    <tr
-                                      key={idx}
-                                      className="bg-background hover:bg-muted/10"
-                                    >
-                                      <td className="px-4 py-2 font-medium text-foreground">
-                                        {d.nameInventory}
-                                      </td>
-                                      <td className="px-4 py-2 text-right font-mono text-xs">
-                                        {d.quantityNeeded} {d.unit}
-                                      </td>
-                                      <td className="px-4 py-2 text-right font-mono text-xs">
-                                        {d.quantityAvailable ??
-                                          d.availableQuantity ??
-                                          0}{" "}
-                                        {d.unit}
-                                      </td>
-                                      <td className="px-4 py-2 text-right font-mono text-xs">
-                                        {d.poolShared ? "Yes" : "No"}
-                                      </td>
-                                      <td className="px-4 py-2 text-center">
-                                        {d.hasUnsafeBatch ? (
-                                          <span className="text-[10px] font-semibold text-[#C4441F] bg-[#C4441F]/10 px-1.5 py-0.5 rounded">
-                                            Yes
-                                          </span>
-                                        ) : (
-                                          <span className="text-[10px] text-muted-foreground">
-                                            No
-                                          </span>
-                                        )}
-                                      </td>
-                                    </tr>
-                                  ))}
-                                </tbody>
-                              </table>
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </div>
-                )}
-
-              {/* ── Lower Section (Status & Financial) ─────────── */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-2 border-t border-border">
-                {/* Sales Status */}
-                <div className="space-y-4">
-                  <div>
-                    <h4 className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2">
-                      Sales Status
-                    </h4>
-                    <div className="space-y-1.5 pl-1">
-                      {remainingStatusList.map((m, idx) => (
-                        <div
-                          key={idx}
-                          className="flex justify-between items-center text-xs"
-                        >
-                          <span className="font-medium text-foreground">
-                            {m.name}
-                          </span>
-                          <span
-                            className={`font-mono font-semibold px-2 py-0.5 rounded-full ${
-                              m.isSoldOut
-                                ? "bg-red-50 text-[#C4441F] dark:bg-red-950/20"
-                                : "bg-neutral-100 text-neutral-600 dark:bg-neutral-800 dark:text-neutral-300"
-                            }`}
-                          >
-                            {m.isSoldOut
-                              ? "Sold Out"
-                              : `${m.remaining} pcs remaining`}
-                          </span>
+                          ))}
                         </div>
-                      ))}
+                      </div>
+                    </div>
+
+                    {/* Sales Revenue Summary */}
+                    <div className="border border-border bg-secondary/10 dark:bg-muted/30 rounded-lg p-4 space-y-3">
+                      <h4 className="text-xs font-bold text-foreground uppercase tracking-wider border-b border-border pb-1.5">
+                        Sales Summary
+                      </h4>
+                      <div className="flex justify-between items-center text-sm">
+                        <span className="text-muted-foreground font-medium">
+                          Estimated Revenue
+                        </span>
+                        <span className="font-mono font-bold text-foreground">
+                          {formatCurrency(totalEstimatedRevenue)}
+                        </span>
+                      </div>
+                      <div className="flex justify-between items-center text-sm">
+                        <span className="text-muted-foreground font-medium">
+                          Actual Revenue
+                        </span>
+                        <span className="font-mono font-bold text-[#4E6A3E]">
+                          {formatCurrency(totalActualRevenue)}
+                        </span>
+                      </div>
+                      <div className="flex justify-between items-center text-sm border-t border-dashed border-border pt-2 font-bold">
+                        <span className="text-foreground">
+                          Revenue Variance
+                        </span>
+                        <span
+                          className={`font-mono ${
+                            totalRevenueVariance < 0
+                              ? "text-[#C4441F]"
+                              : "text-green-700"
+                          }`}
+                        >
+                          {totalRevenueVariance < 0 ? "-" : ""}
+                          {formatCurrency(Math.abs(totalRevenueVariance))}
+                        </span>
+                      </div>
                     </div>
                   </div>
-                </div>
-
-                {/* Sales Revenue Summary */}
-                <div className="border border-border bg-secondary/10 dark:bg-muted/30 rounded-lg p-4 space-y-3">
-                  <h4 className="text-xs font-bold text-foreground uppercase tracking-wider border-b border-border pb-1.5">
-                    Sales Summary
-                  </h4>
-                  <div className="flex justify-between items-center text-sm">
-                    <span className="text-muted-foreground font-medium">
-                      Estimated Revenue
-                    </span>
-                    <span className="font-mono font-bold text-foreground">
-                      {formatCurrency(totalEstimatedRevenue)}
-                    </span>
-                  </div>
-                  <div className="flex justify-between items-center text-sm">
-                    <span className="text-muted-foreground font-medium">
-                      Actual Revenue
-                    </span>
-                    <span className="font-mono font-bold text-[#4E6A3E]">
-                      {formatCurrency(totalActualRevenue)}
-                    </span>
-                  </div>
-                  <div className="flex justify-between items-center text-sm border-t border-dashed border-border pt-2 font-bold">
-                    <span className="text-foreground">Revenue Variance</span>
-                    <span
-                      className={`font-mono ${
-                        totalRevenueVariance < 0
-                          ? "text-[#C4441F]"
-                          : "text-green-700"
-                      }`}
-                    >
-                      {totalRevenueVariance < 0 ? "-" : ""}
-                      {formatCurrency(Math.abs(totalRevenueVariance))}
-                    </span>
-                  </div>
-                </div>
-              </div>
+                </>
+              )}
             </div>
 
             <DialogFooter className="mt-6">
