@@ -16,7 +16,9 @@ import {
 import StatusBadge from "@/components/shared/StatusBadge";
 import AlertSummaryCard from "@/components/shared/AlertSummaryCard";
 import PlanMenuAccordion from "@/components/shared/PlanMenuAccordion";
+import PlanInventoryAccordion from "@/components/shared/PlanInventoryAccordion";
 import { Button } from "@/components/ui/button";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import {
   Dialog,
   DialogContent,
@@ -52,53 +54,37 @@ function deriveBadgeVariant(plan) {
   }
 }
 
-function getInitials(name) {
-  if (!name) return "";
-  const words = name.split(" ");
-  if (words.length === 1) return words[0].substring(0, 2).toUpperCase();
-  return (words[0][0] + words[1][0]).toUpperCase();
-}
-
 function formatDate(dateStr) {
   if (!dateStr) return "";
   const date = new Date(dateStr);
   return `${String(date.getDate()).padStart(2, "0")} ${
     [
-      "Jul",
-      "Aug",
-      "Sep",
-      "Oct",
-      "Nov",
-      "Dec",
       "Jan",
       "Feb",
       "Mar",
       "Apr",
       "May",
       "Jun",
+      "Jul",
+      "Aug",
+      "Sep",
+      "Oct",
+      "Nov",
+      "Dec",
     ][date.getMonth()]
   } ${date.getFullYear()}`;
 }
 
-function mapMenuIngredients(menu, isDraft) {
-  const details = isDraft
-    ? menu?.ingredientsDetail
-    : menu?.committedIngredientsDetail;
-  if (!details?.length) return [];
-  return details.map((ing) => {
-    let status = "safe";
-    if (ing.hasUnsafeBatch) status = "unsafe";
-
-    const available = isDraft ? ing.availableQuantity : ing.quantityAvailable;
-
-    return {
-      name: ing.nameInventory,
-      needed: `${ing.quantityNeeded ?? 0} ${ing.unit || ""}`.trim(),
-      available: `${available ?? 0} ${ing.unit || ""}`.trim(),
-      status,
-      expired: ing.nearestExpiry ? formatDate(ing.nearestExpiry) : "-/-/-",
-    };
-  });
+// Ubah bentuk ingredient hasil mapper (sudah seragam untuk semua status)
+// jadi row siap-tampil untuk tabel dropdown menu.
+function formatIngredientRow(ing) {
+  return {
+    name: ing.nameInventory,
+    needed: `${ing.quantityNeeded ?? 0} ${ing.unit || ""}`.trim(),
+    available: `${ing.availableQuantity ?? 0} ${ing.unit || ""}`.trim(),
+    status: ing.hasUnsafeBatch ? "unsafe" : "safe",
+    expired: ing.nearestExpiry ? formatDate(ing.nearestExpiry) : "-/-/-",
+  };
 }
 
 export default function PlanDetailPane({ planId, onRefreshList }) {
@@ -179,11 +165,20 @@ export default function PlanDetailPane({ planId, onRefreshList }) {
     plan.menus?.reduce((sum, menu) => sum + (menu.quantityPlanned || 0), 0) ||
     0;
 
-  // Deteksi apakah ada menu dengan bahan tidak aman (insufficient)
-  const hasInsufficientMenu = plan.menus?.some((menu) => {
-    const ingredients = mapMenuIngredients(menu, isDraft);
-    return ingredients.some((ing) => ing.status !== "safe");
-  });
+  // Hitung duration dari tanggal, bukan dari field backend yang bisa salah
+  const computedDuration =
+    plan.startDate && plan.endDate
+      ? Math.round(
+          (new Date(plan.endDate).getTime() -
+            new Date(plan.startDate).getTime()) /
+            (1000 * 60 * 60 * 24),
+        ) + 1
+      : plan.duration ?? 0;
+
+  // Suggestion tambah diskon: berdasarkan field asli dari backend
+  // (inventorySafetyStatus + suggestion), bukan hasil hitung ulang FE.
+  const showAddDiscountSuggestion =
+    isDraft && plan.suggestion === "add_discount" && !hasPlanDiscount;
 
   return (
     <div className="flex flex-col bg-card rounded-lg border border-border shadow-sm overflow-hidden min-w-0">
@@ -196,6 +191,13 @@ export default function PlanDetailPane({ planId, onRefreshList }) {
                 {plan.name}
               </h2>
               <StatusBadge variant={badgeVariant} />
+              {isDraft && plan.inventorySafetyStatus && (
+                <StatusBadge
+                  variant={
+                    plan.inventorySafetyStatus === "unsafe" ? "unsafe" : "safe"
+                  }
+                />
+              )}
             </div>
             <p className="text-muted-foreground text-sm">
               Plan your selling and estimate the flow.
@@ -245,9 +247,9 @@ export default function PlanDetailPane({ planId, onRefreshList }) {
             </span>
           </div>
           <div className="flex flex-col gap-1 min-w-0">
-            <span className="text-xs text-muted-foreground">Created By</span>
-            <span className="text-sm font-semibold truncate">
-              Admin Production
+            <span className="text-xs text-muted-foreground">Duration</span>
+            <span className="text-sm font-semibold whitespace-nowrap">
+              {computedDuration} days
             </span>
           </div>
           <div className="flex flex-col gap-1 min-w-0">
@@ -256,8 +258,17 @@ export default function PlanDetailPane({ planId, onRefreshList }) {
               {totalTarget.toLocaleString("en-US")} units
             </span>
           </div>
-          {/* Sugesti tambah diskon jika ada insufficient */}
-          {hasInsufficientMenu && (
+          {/* Hanya plan yang sudah diapprove (active/stopped/completed) yang punya approvedBy */}
+          {!isDraft && !isCancelled && plan.approvedBy && (
+            <div className="flex flex-col gap-1 min-w-0">
+              <span className="text-xs text-muted-foreground">Approved By</span>
+              <span className="text-sm font-semibold truncate">
+                {plan.approvedBy}
+              </span>
+            </div>
+          )}
+          {/* Sugesti tambah diskon jika backend menandai inventorySafetyStatus unsafe */}
+          {showAddDiscountSuggestion && (
             <div className="flex flex-col gap-1 min-w-0">
               <span className="text-xs text-muted-foreground">Suggestion</span>
               <span className="text-sm font-semibold text-[#F97316] flex items-center gap-1">
@@ -328,11 +339,6 @@ export default function PlanDetailPane({ planId, onRefreshList }) {
         )}
 
         <div className="min-w-0">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="font-semibold text-lg">Production Items</h3>
-            {/* Tombol Diskon telah dipindah ke header kanan atas */}
-          </div>
-
           {isCancelled ? (
             <div className="flex flex-col items-center justify-center gap-3 py-16 px-6 text-center border border-dashed border-border rounded-lg bg-muted/20">
               <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center">
@@ -347,52 +353,68 @@ export default function PlanDetailPane({ planId, onRefreshList }) {
               </p>
             </div>
           ) : (
-            <div className="flex flex-col gap-3 min-w-0">
-              {plan.menus?.map((menu, idx) => {
-                const disc = menu.discount || {};
-                const menuHasDiscount = disc.discountPercentage > 0;
-                // Di dalam blok render menu
-                const menuIngredients = mapMenuIngredients(menu, isDraft);
+            <Tabs defaultValue="menu" className="min-w-0">
+              <TabsList className="mb-4 w-full grid grid-cols-2">
+                <TabsTrigger value="menu">Menu</TabsTrigger>
+                <TabsTrigger value="inventory">Inventory</TabsTrigger>
+              </TabsList>
 
-                const summary = {
-                  quantity: menu.quantityPlanned,
-                  originalPrice: menu.currentPrice || 25000,
-                  estimatedRevenue:
-                    menu.quantityPlanned * (menu.currentPrice || 25000),
-                  estimatedProfit:
-                    (menu.quantityPlanned * (menu.currentPrice || 25000)) / 2,
-                  ...(menuHasDiscount
-                    ? {
-                        discountPercent: disc.discountPercentage,
-                        newPrice: disc.discountedPrice,
-                        newProfit:
-                          (menu.quantityPlanned * disc.discountedPrice) / 2,
-                      }
-                    : {}),
-                };
+              <TabsContent value="menu" className="min-w-0">
+                <div className="flex flex-col gap-3 min-w-0">
+                  {plan.menus?.map((menu, idx) => {
+                    const disc = menu.discount || {};
+                    const menuHasDiscount = disc.discountPercentage > 0;
+                    const menuIngredients = (menu.ingredientsDetail ?? []).map(
+                      formatIngredientRow,
+                    );
 
-                const hasUnsafe = menuIngredients.some(
-                  (ing) => ing.status !== "safe",
-                );
-                const badges = hasUnsafe ? ["insufficient"] : ["sufficient"];
+                    const summary = {
+                      quantity: menu.quantityPlanned,
+                      originalPrice: menu.effectiveSellingPrice,
+                      costPerPortion: menu.costPerPortion,
+                      estimatedProfit: menu.estimatedProfit,
+                      ...(menuHasDiscount
+                        ? {
+                            discountPercent: disc.discountPercentage,
+                            newPrice: disc.discountedPrice,
+                            newProfit:
+                              menu.costPerPortion != null
+                                ? (disc.discountedPrice - menu.costPerPortion) *
+                                  menu.quantityPlanned
+                                : null,
+                          }
+                        : {}),
+                    };
 
-                return (
-                  <PlanMenuAccordion
-                    key={menu.menuId}
-                    variant="active"
-                    menuName={menu.name}
-                    menuInitials={getInitials(menu.name)}
-                    menuSubtitle="Beverage"
-                    targetQty={menu.quantityPlanned}
-                    badges={badges}
-                    summary={summary}
-                    ingredients={menuIngredients}
-                    defaultOpen={idx === 0}
-                    menuStatus={menu.menuStatus} // ← tambahkan ini
-                  />
-                );
-              })}
-            </div>
+                    // Badge kecukupan kuantitas bahan diambil langsung dari
+                    // field `lowStock` backend, bukan dihitung ulang dari
+                    // status expiry tiap bahan.
+                    const badges = menu.lowStock
+                      ? ["insufficient"]
+                      : ["sufficient"];
+
+                    return (
+                      <PlanMenuAccordion
+                        key={menu.menuId}
+                        variant={isDraft ? "draft" : "active"}
+                        menuName={menu.name}
+                        badges={badges}
+                        summary={summary}
+                        ingredients={menuIngredients}
+                        defaultOpen={idx === 0}
+                      />
+                    );
+                  })}
+                </div>
+              </TabsContent>
+
+              <TabsContent value="inventory" className="min-w-0">
+                <PlanInventoryAccordion
+                  inventoryList={plan.inventoryList}
+                  defaultOpen
+                />
+              </TabsContent>
+            </Tabs>
           )}
         </div>
       </div>
