@@ -1,11 +1,4 @@
-/**
- * AI/contextEngine/contextEngineApi.js
- * ------------------------------------
- * Data sources for the context engine: active plan window, ML sales
- * predictions, weather, and upcoming holidays.
- */
-
-import { getPlanList } from "@/services/api";
+import api, { getPlanList } from "@/services/api";
 
 const MS_PER_DAY = 24 * 60 * 60 * 1000;
 const toISODate = (date) => date.toISOString().slice(0, 10);
@@ -16,7 +9,8 @@ const toISODate = (date) => date.toISOString().slice(0, 10);
 
 export const getActivePlanWindow = async () => {
   const res = await getPlanList({ status: "active" });
-  const active = res.data?.[0];
+  // console.log("getPlanList response.data:", JSON.stringify(res.data, null, 2))
+  const active = res.data?.data?.[0];
 
   if (!active) {
     throw new Error(
@@ -24,12 +18,16 @@ export const getActivePlanWindow = async () => {
     );
   }
 
+  const startDate = new Date(active.startDate);
+  const endDate = new Date(active.endDate);
+  const duration = Math.round((endDate - startDate) / (1000 * 60 * 60 * 24));
+
   return {
     planId: active._id,
     planName: active.name,
-    startDate: new Date(active.startDate),
-    endDate: new Date(active.endDate),
-    duration: active.duration,
+    startDate,
+    endDate,
+    duration,
     tags: active.tags ?? [],
   };
 };
@@ -41,30 +39,17 @@ export const getActivePlanWindow = async () => {
 // =============================================================================
 
 export const getSalesPredictions = async (plan) => {
-  const baseUrl = import.meta.env.VITE_ML_API_URL;
-  if (!baseUrl) {
-    throw new Error("VITE_ML_API_URL belum diisi di .env — dibutuhkan untuk manggil service ML prediction.");
-  }
-
-  const response = await fetch(`${baseUrl}/predict-assortment`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      duration: plan.duration,
-      startDate: plan.startDate.toISOString(),
-      tags: plan.tags,
-      menus: plan.menus,
-    }),
+  // Dipanggil lewat backend sendiri (bukan langsung ke service ML di Vercel),
+  // supaya dapat baseURL, auth header, dan refresh-token handling dari axios
+  // instance yang sudah ada di services/api.js — konsisten dengan endpoint lain.
+  const response = await api.post("/predictions/assortment", {
+    duration: plan.duration,
+    startDate: plan.startDate.toISOString().slice(0, 10), // format YYYY-MM-DD
+    tags: plan.tags,
   });
 
-  if (!response.ok) {
-    throw new Error(`ML prediction API failed: ${response.status}`);
-  }
-
-  const raw = await response.json();
-  const items = Array.isArray(raw) ? raw : (raw.data ?? []);
-
-  const predictions = items.map((item) => ({
+  const raw = response.data?.data ?? [];
+  const predictions = raw.map((item) => ({
     menu: item.name,
     quantity: item.recommendedQuantity,
     menuId: item.menuId,
@@ -125,16 +110,22 @@ export const getUpcomingHolidays = async ({ startDate, endDate }) => {
   const years = [];
   for (let year = startYear; year <= endYear; year++) years.push(year);
 
+  const baseUrl = import.meta.env.VITE_HOLIDAY_API_URL;
+  if (!baseUrl) {
+    throw new Error("VITE_HOLIDAY_API_URL belum diisi di .env — dibutuhkan untuk ambil data hari libur.");
+  }
+
   const responses = await Promise.all(
     years.map(async (year) => {
-      const url = `https://api-harilibur.vercel.app/api?year=${year}`;
+      const url = `${baseUrl}/api/holidays?year=${year}`;
       const response = await fetch(url);
 
       if (!response.ok) {
         throw new Error(`Holiday API failed (${year}): ${response.status}`);
       }
 
-      return response.json();
+      const json = await response.json();
+      return json.data ?? []; // proxy kamu membungkus jadi { success, data: [...] }
     })
   );
 
@@ -142,10 +133,10 @@ export const getUpcomingHolidays = async ({ startDate, endDate }) => {
 
   const upcoming = raw
     .filter((item) => {
-      const d = new Date(item.holiday_date);
-      return d >= startDate && d <= endDate && item.is_national_holiday;
+      const d = new Date(item.date);
+      return d >= startDate && d <= endDate;
     })
-    .map((item) => ({ date: item.holiday_date, name: item.holiday_name }));
+    .map((item) => ({ date: item.date, name: item.description }));
 
   return { data: upcoming };
 };
