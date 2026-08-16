@@ -113,11 +113,19 @@ export default function PlanAuditReport({ planId, onExportDataChange }) {
         discountGiven: 0,
       };
 
-      // Fallback to plan's own soldQuantity and pricing if transaction history is empty or zero
-      const qty = txData.quantitySold || menu.soldQuantity || 0;
-      const price = menu.frozenSellingPrice || menu.effectiveSellingPrice || 0;
-      const revenue = txData.revenue || (qty * price) || 0;
-      const discountGiven = txData.discountGiven || 0;
+      // Fallback to plan's own soldQuantity and pricing (including discounts) if transaction history is empty or zero
+      const hasTxData = txData.quantitySold > 0;
+      const qty = hasTxData ? txData.quantitySold : (menu.soldQuantity || 0);
+
+      // Extract original and actual (discounted) prices from plan
+      const originalPrice = menu.frozenSellingPrice || menu.effectiveSellingPrice || 0;
+      const actualPrice = menu.discountedPrice ?? menu.effectiveSellingPrice ?? menu.frozenSellingPrice ?? 0;
+
+      const fallbackRevenue = qty * actualPrice;
+      const fallbackDiscountGiven = qty * Math.max(originalPrice - actualPrice, 0);
+
+      const revenue = hasTxData ? txData.revenue : fallbackRevenue;
+      const discountGiven = hasTxData ? txData.discountGiven : fallbackDiscountGiven;
 
       return {
         menuId: menu.menuId,
