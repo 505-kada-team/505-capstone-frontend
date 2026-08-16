@@ -275,8 +275,8 @@ export default function ActiveMenuDetailModal({
             {/* ── Tab Transaksi ──────────────────────────────────── */}
             <TabsContent value="transactions" className="min-w-0">
               {/* Filter bar */}
-              <div className="flex flex-wrap items-end gap-2 mb-4 p-3 border border-border rounded-lg bg-muted/10">
-                <div className="flex flex-col gap-1">
+              <div className="flex flex-wrap items-end gap-2 mb-4 p-3 border border-border rounded-lg bg-muted/10 w-full">
+                <div className="flex flex-col gap-1 flex-1 min-w-0">
                   <label className="text-xs font-medium text-muted-foreground">
                     Date
                   </label>
@@ -284,10 +284,10 @@ export default function ActiveMenuDetailModal({
                     type="date"
                     value={filterDate}
                     onChange={(e) => setFilterDate(e.target.value)}
-                    className="h-8 w-[150px] text-xs"
+                    className="h-8 w-full text-xs"
                   />
                 </div>
-                <div className="flex flex-col gap-1">
+                <div className="flex flex-col gap-1 flex-1 min-w-0">
                   <label className="text-xs font-medium text-muted-foreground">
                     Start Time
                   </label>
@@ -295,10 +295,10 @@ export default function ActiveMenuDetailModal({
                     type="time"
                     value={filterStartTime}
                     onChange={(e) => setFilterStartTime(e.target.value)}
-                    className="h-8 w-[120px] text-xs"
+                    className="h-8 w-full text-xs"
                   />
                 </div>
-                <div className="flex flex-col gap-1">
+                <div className="flex flex-col gap-1 flex-1 min-w-0">
                   <label className="text-xs font-medium text-muted-foreground">
                     End Time
                   </label>
@@ -306,7 +306,7 @@ export default function ActiveMenuDetailModal({
                     type="time"
                     value={filterEndTime}
                     onChange={(e) => setFilterEndTime(e.target.value)}
-                    className="h-8 w-[120px] text-xs"
+                    className="h-8 w-full text-xs"
                   />
                 </div>
                 <Button
