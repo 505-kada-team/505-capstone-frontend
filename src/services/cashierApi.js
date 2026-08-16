@@ -96,9 +96,13 @@ const normalizeSaleTransaction = (transaction) => {
 };
 
 const normalizeSaleHistory = (result) => {
-  const transactions = Array.isArray(result?.data)
-    ? result.data.map(normalizeSaleTransaction).filter(Boolean)
-    : [];
+  const transactionsRaw = Array.isArray(result?.data?.data)
+    ? result.data.data
+    : Array.isArray(result?.data)
+      ? result.data
+      : [];
+
+  const transactions = transactionsRaw.map(normalizeSaleTransaction).filter(Boolean);
 
   const fallbackTotalRevenue = transactions.reduce((sum, tx) => sum + tx.total, 0);
   const fallbackTotalDiscountGiven = transactions.reduce((sum, tx) => {
@@ -110,12 +114,14 @@ const normalizeSaleHistory = (result) => {
     }, 0);
   }, 0);
 
+  const summaryRaw = result?.data?.summary ?? result?.summary ?? {};
+
   return {
     transactions,
     summary: {
-      totalTransaction: result?.summary?.totalTransaction || transactions.length,
-      totalRevenue: result?.summary?.totalRevenue || fallbackTotalRevenue,
-      totalDiscountGiven: result?.summary?.totalDiscountGiven || fallbackTotalDiscountGiven,
+      totalTransaction: summaryRaw.totalTransaction || transactions.length,
+      totalRevenue: summaryRaw.totalRevenue || fallbackTotalRevenue,
+      totalDiscountGiven: summaryRaw.totalDiscountGiven || fallbackTotalDiscountGiven,
     },
   };
 };
