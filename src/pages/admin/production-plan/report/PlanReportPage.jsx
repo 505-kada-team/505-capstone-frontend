@@ -57,7 +57,7 @@ export default function PlanReportPage() {
       toast.error(
         listError.response?.data?.message ??
           listError.message ??
-          "Gagal mengambil daftar laporan",
+          "Failed to load reports",
       );
     }
   }, [listError]);
