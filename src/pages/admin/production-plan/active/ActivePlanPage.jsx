@@ -563,8 +563,6 @@ export default function ActivePlanPage() {
                     paginatedPlans.map((p) => {
                       let displayStatus = p.status;
                       if (p.status === "completed") displayStatus = "Executed";
-                      if (p.status === "cancelled" || p.status === "stopped")
-                        displayStatus = "Terminated";
 
                       return (
                         <tr key={p._id} className="hover:bg-muted/30">
