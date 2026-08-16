@@ -595,7 +595,7 @@ export default function PlanAuditReport({ planId, onExportDataChange }) {
                           {index > 0 && <span className="text-[10px] text-muted-foreground block pl-2">↳ Batch: {batch.subInventoryId}</span>}
                         </td>
                         <td className="py-2 px-4 text-center font-mono">
-                          {batch.quantityUsed.toLocaleString("id-ID")}
+                          {batch.quantityUsed.toLocaleString("id-ID")} {ing.unit || ""}
                         </td>
                         <td className="py-2 px-4 text-right font-mono">
                           {formatCurrency(batch.costPriceUsed)}

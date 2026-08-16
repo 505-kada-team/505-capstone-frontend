@@ -56,14 +56,14 @@ export default function ChatWidget() {
       {isOpen && (
         <div className="flex h-[420px] w-80 flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-xl">
           <div className="flex items-center justify-between border-b border-border px-4 py-3">
-            <span className="font-heading text-sm font-semibold text-foreground">Asisten AI</span>
+            <span className="font-heading text-sm font-semibold text-foreground">AI Assistant</span>
             <button onClick={() => setIsOpen(false)} aria-label="Tutup chat" className="rounded-md p-1 text-muted-foreground hover:bg-muted">
               <CloseIcon />
             </button>
           </div>
 
           <div ref={scrollRef} className="flex-1 space-y-3 overflow-y-auto px-4 py-3">
-            {messages.length === 0 && <p className="text-sm text-muted-foreground">Halo, ada yang bisa dibantu soal stok, menu, atau penjualan?</p>}
+            {messages.length === 0 && <p className="text-sm text-muted-foreground">Hello, is there anything I can help you with regarding stock, menu, or sales?</p>}
 
             {messages.map((m, i) => (
               <div key={i} className={`flex flex-col ${m.role === 'user' ? 'items-end' : 'items-start'}`}>
@@ -84,7 +84,7 @@ export default function ChatWidget() {
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={handleKeyDown}
-              placeholder="Tanya sesuatu..."
+              placeholder="Ask something..."
               className="h-9 flex-1 rounded-md border border-input bg-background px-3 text-sm outline-none focus:ring-2 focus:ring-ring"
             />
             <button onClick={handleSend} disabled={isLoading || !input.trim()} aria-label="Kirim" className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-accent text-accent-foreground disabled:opacity-50">
