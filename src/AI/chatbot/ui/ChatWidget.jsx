@@ -1,5 +1,5 @@
-import { useState, useRef, useEffect } from "react";
-import { useChatbot } from "../useChatbot";
+import { useState, useRef, useEffect } from 'react';
+import { useChatbot } from '../useChatbot';
 
 function ChatIcon() {
   return (
@@ -29,23 +29,23 @@ function SendIcon() {
 
 export default function ChatWidget() {
   const [isOpen, setIsOpen] = useState(false);
-  const [input, setInput] = useState("");
+  const [input, setInput] = useState('');
   const { messages, sendMessage, isLoading } = useChatbot();
   const scrollRef = useRef(null);
 
   useEffect(() => {
-    scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
+    scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' });
   }, [messages, isLoading]);
 
   const handleSend = () => {
     const text = input.trim();
     if (!text || isLoading) return;
-    setInput("");
+    setInput('');
     sendMessage(text);
   };
 
   const handleKeyDown = (e) => {
-    if (e.key === "Enter" && !e.shiftKey) {
+    if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       handleSend();
     }
@@ -57,46 +57,24 @@ export default function ChatWidget() {
         <div className="flex h-[420px] w-80 flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-xl">
           <div className="flex items-center justify-between border-b border-border px-4 py-3">
             <span className="font-heading text-sm font-semibold text-foreground">Asisten AI</span>
-            <button
-              onClick={() => setIsOpen(false)}
-              aria-label="Tutup chat"
-              className="rounded-md p-1 text-muted-foreground hover:bg-muted"
-            >
+            <button onClick={() => setIsOpen(false)} aria-label="Tutup chat" className="rounded-md p-1 text-muted-foreground hover:bg-muted">
               <CloseIcon />
             </button>
           </div>
 
           <div ref={scrollRef} className="flex-1 space-y-3 overflow-y-auto px-4 py-3">
-            {messages.length === 0 && (
-              <p className="text-sm text-muted-foreground">
-                Halo, ada yang bisa dibantu soal stok, menu, atau penjualan?
-              </p>
-            )}
+            {messages.length === 0 && <p className="text-sm text-muted-foreground">Halo, ada yang bisa dibantu soal stok, menu, atau penjualan?</p>}
 
             {messages.map((m, i) => (
-              <div key={i} className={`flex flex-col ${m.role === "user" ? "items-end" : "items-start"}`}>
-                <div
-                  className={`max-w-[85%] rounded-2xl px-3 py-2 text-sm ${
-                    m.role === "user"
-                      ? "bg-accent text-accent-foreground"
-                      : "bg-muted text-foreground"
-                  }`}
-                >
-                  {m.content}
-                </div>
-                {m.sourcesUsed?.length > 0 && (
-                  <span className="mt-1 text-[11px] text-muted-foreground">
-                    data dicek: {m.sourcesUsed.join(", ")}
-                  </span>
-                )}
+              <div key={i} className={`flex flex-col ${m.role === 'user' ? 'items-end' : 'items-start'}`}>
+                <div className={`max-w-[85%] rounded-2xl px-3 py-2 text-sm ${m.role === 'user' ? 'bg-accent text-accent-foreground' : 'bg-muted text-foreground'}`}>{m.content}</div>
+                {m.sourcesUsed?.length > 0 && <span className="mt-1 text-[11px] text-muted-foreground">data dicek: {m.sourcesUsed.join(', ')}</span>}
               </div>
             ))}
 
             {isLoading && (
               <div className="flex items-start">
-                <div className="rounded-2xl bg-muted px-3 py-2 text-sm text-muted-foreground">
-                  ...
-                </div>
+                <div className="rounded-2xl bg-muted px-3 py-2 text-sm text-muted-foreground">...</div>
               </div>
             )}
           </div>
@@ -109,12 +87,7 @@ export default function ChatWidget() {
               placeholder="Tanya sesuatu..."
               className="h-9 flex-1 rounded-md border border-input bg-background px-3 text-sm outline-none focus:ring-2 focus:ring-ring"
             />
-            <button
-              onClick={handleSend}
-              disabled={isLoading || !input.trim()}
-              aria-label="Kirim"
-              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-accent text-accent-foreground disabled:opacity-50"
-            >
+            <button onClick={handleSend} disabled={isLoading || !input.trim()} aria-label="Kirim" className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-accent text-accent-foreground disabled:opacity-50">
               <SendIcon />
             </button>
           </div>
@@ -123,7 +96,7 @@ export default function ChatWidget() {
 
       <button
         onClick={() => setIsOpen((prev) => !prev)}
-        aria-label={isOpen ? "Tutup chatbot" : "Buka chatbot"}
+        aria-label={isOpen ? 'Tutup chatbot' : 'Buka chatbot'}
         className="flex h-14 w-14 items-center justify-center rounded-full bg-accent text-accent-foreground shadow-lg transition-transform hover:scale-105 active:scale-95"
       >
         {isOpen ? <CloseIcon /> : <ChatIcon />}
