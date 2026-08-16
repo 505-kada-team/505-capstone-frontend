@@ -42,7 +42,7 @@ export default function AdminPeakActivityCard({ hourlyTrends = [] }) {
             <div className="flex items-end justify-between gap-4">
               <div>
                 <p className="text-3xl font-bold font-mono text-foreground">
-                  {peak.timeBucket}
+                  {`${String(peak.hour).padStart(2, "0")}:00`}
                 </p>
 
                 <p className="mt-1 text-xs text-muted-foreground">

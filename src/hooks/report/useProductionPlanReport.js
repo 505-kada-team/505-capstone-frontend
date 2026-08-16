@@ -14,7 +14,7 @@ export function useProductionPlanReport({ startDate = "", endDate = "" } = {}) {
       setError(null);
 
       try {
-        const listRes = await getPlanList();
+        const listRes = await getPlanList({ limit: 100 });
         const rawPlans = listRes?.data?.data ?? [];
 
         const filteredPlans = rawPlans.filter((plan) => {

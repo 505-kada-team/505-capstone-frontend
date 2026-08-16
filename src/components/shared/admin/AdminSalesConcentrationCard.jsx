@@ -67,7 +67,7 @@ export default function AdminSalesConcentrationCard({
                     key={hour.hour}
                     className="rounded-md bg-muted px-2 py-1 font-mono text-[11px] text-muted-foreground"
                   >
-                    {hour.timeBucket}
+                     {`${String(hour.hour).padStart(2, '0')}:00`}
                   </span>
                 ))}
               </div>

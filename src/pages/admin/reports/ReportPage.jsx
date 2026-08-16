@@ -19,8 +19,17 @@ import WasteReport from "./components/WasteReport";
 import SalesReport from "./components/SalesReport";
 import ProductionPlanReport from "./components/ProductionPlanReport";
 import InventoryReport from "./components/InventoryReport";
+import PlanAuditReport from "./components/PlanAuditReport";
 import { useReportFilter } from "@/hooks/report/useReportFilter";
 import { getPlanList } from "@/services/api";
+
+const reportTypeLabels = {
+  sales: "Sales Report",
+  plan: "Production Plan Report",
+  waste: "Waste & Loss Report",
+  inventory: "Inventory Report",
+  plan_audit: "Plan Profit & Loss Audit",
+};
 
 export default function ReportPage() {
   const {
@@ -40,39 +49,33 @@ export default function ReportPage() {
     handleExportCsv,
   } = useReportFilter();
 
-  const [stoppedPlans, setStoppedPlans] = useState([]);
+  const [selectablePlans, setSelectablePlans] = useState([]);
   const [isLoadingPlans, setIsLoadingPlans] = useState(false);
 
   useEffect(() => {
-    const fetchStoppedPlans = async () => {
+    const fetchSelectablePlans = async () => {
       setIsLoadingPlans(true);
 
       try {
-        const response = await getPlanList();
+        const response = await getPlanList({ limit: 100 });
         const plans = response.data?.data ?? [];
 
         const filteredPlans = Array.isArray(plans)
-          ? plans.filter((plan) => plan.status === "stopped")
+          ? plans.filter((plan) => plan.status !== "draft" && plan.status !== "cancelled")
           : [];
 
-        setStoppedPlans(filteredPlans);
+        setSelectablePlans(filteredPlans);
       } catch (error) {
-        console.error("[STOPPED PLAN ERROR]", error);
-        setStoppedPlans([]);
-        toast.error("Failed to load completed plans.");
+        console.error("[SELECTABLE PLAN ERROR]", error);
+        setSelectablePlans([]);
+        toast.error("Failed to load plans.");
       } finally {
         setIsLoadingPlans(false);
       }
     };
 
-    fetchStoppedPlans();
+    fetchSelectablePlans();
   }, []);
-
-  //   useEffect(() => {
-  //   if (reportType === "inventory") {
-  //     setPlanId("");
-  //   }
-  // }, [reportType, setPlanId]);
 
   const renderReport = () => {
     const commonProps = {
@@ -91,6 +94,13 @@ export default function ReportPage() {
         return <WasteReport {...commonProps} />;
       case "inventory":
         return <InventoryReport {...commonProps} />;
+      case "plan_audit":
+        return (
+          <PlanAuditReport
+            planId={appliedFilter.planId}
+            onExportDataChange={handleExportDataChange}
+          />
+        );
       default:
         return null;
     }
@@ -127,7 +137,9 @@ export default function ReportPage() {
 
             <Select value={reportType} onValueChange={setReportType}>
               <SelectTrigger id="reportType" className="w-full">
-                <SelectValue placeholder="Select report type" />
+                <SelectValue placeholder="Select report type">
+                  {reportTypeLabels[reportType] || "Select report type"}
+                </SelectValue>
               </SelectTrigger>
 
               <SelectContent>
@@ -135,6 +147,7 @@ export default function ReportPage() {
                 <SelectItem value="plan">Production Plan Report</SelectItem>
                 <SelectItem value="waste">Waste & Loss Report</SelectItem>
                 <SelectItem value="inventory">Inventory Report</SelectItem>
+                <SelectItem value="plan_audit">Plan Profit &amp; Loss Audit</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -151,7 +164,8 @@ export default function ReportPage() {
                 disabled={
                   reportType === "inventory" ||
                   reportType === "plan" ||
-                  isLoadingPlans
+                  isLoadingPlans ||
+                  selectablePlans.length === 0
                 }
               >
                 <SelectTrigger className="w-full">
@@ -163,17 +177,29 @@ export default function ReportPage() {
                           ? "All completed plans"
                           : isLoadingPlans
                             ? "Loading plans..."
-                            : "Select stopped plan"
+                            : selectablePlans.length === 0
+                              ? "No plans found"
+                              : "Select production plan"
                     }
-                  />
+                  >
+                    {(() => {
+                      const selectedPlan = selectablePlans.find(
+                        (p) => (p._id || p.id) === planId
+                      );
+                      return selectedPlan ? selectedPlan.name : undefined;
+                    })()}
+                  </SelectValue>
                 </SelectTrigger>
 
                 <SelectContent>
-                  {stoppedPlans.map((plan) => (
-                    <SelectItem key={plan._id} value={plan._id}>
-                      {plan.name}
-                    </SelectItem>
-                  ))}
+                  {selectablePlans.map((plan) => {
+                    const id = plan._id || plan.id;
+                    return (
+                      <SelectItem key={id} value={id}>
+                        {plan.name}
+                      </SelectItem>
+                    );
+                  })}
                 </SelectContent>
               </Select>
           </div>
@@ -184,9 +210,10 @@ export default function ReportPage() {
             <Input
               id="startDate"
               type="date"
-              value={startDate}
+              value={reportType === "plan_audit" ? "" : startDate}
               max={endDate || undefined}
               onChange={(e) => setStartDate(e.target.value)}
+              disabled={reportType === "plan_audit"}
             />
           </div>
 
@@ -196,9 +223,10 @@ export default function ReportPage() {
             <Input
               id="endDate"
               type="date"
-              value={endDate}
+              value={reportType === "plan_audit" ? "" : endDate}
               min={startDate || undefined}
               onChange={(e) => setEndDate(e.target.value)}
+              disabled={reportType === "plan_audit"}
             />
           </div>
         </div>

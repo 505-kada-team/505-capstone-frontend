@@ -69,13 +69,29 @@ const normalizeActiveSellingPlans = (plans) => {
 const normalizeSaleTransaction = (transaction) => {
   if (!transaction) return null;
 
+  const items = Array.isArray(transaction.items)
+    ? transaction.items
+    : [
+        {
+          menuId: transaction.menuId,
+          menuName: transaction.menuName || "—",
+          quantitySold: transaction.quantitySold || 0,
+          originalPrice: transaction.originalPrice || 0,
+          priceUsed: transaction.priceUsed || 0,
+        },
+      ];
+
+  const total =
+    transaction.transactionRevenue ??
+    (Number(transaction.quantitySold || 0) * Number(transaction.priceUsed || 0));
+
   return {
     id: transaction._id,
     planId: transaction.planId,
     cashierName: transaction.cashierName,
     soldAt: transaction.soldAt,
-    items: transaction.items ?? [],
-    total: transaction.transactionRevenue ?? 0,
+    items,
+    total,
   };
 };
 
@@ -84,12 +100,22 @@ const normalizeSaleHistory = (result) => {
     ? result.data.map(normalizeSaleTransaction).filter(Boolean)
     : [];
 
+  const fallbackTotalRevenue = transactions.reduce((sum, tx) => sum + tx.total, 0);
+  const fallbackTotalDiscountGiven = transactions.reduce((sum, tx) => {
+    return sum + (tx.items || []).reduce((itemSum, item) => {
+      const qty = Number(item.quantitySold || 0);
+      const orig = Number(item.originalPrice || 0);
+      const price = Number(item.priceUsed || 0);
+      return itemSum + qty * Math.max(orig - price, 0);
+    }, 0);
+  }, 0);
+
   return {
     transactions,
     summary: {
-      totalTransaction: result?.summary?.totalTransaction ?? 0,
-      totalRevenue: result?.summary?.totalRevenue ?? 0,
-      totalDiscountGiven: result?.summary?.totalDiscountGiven ?? 0,
+      totalTransaction: result?.summary?.totalTransaction || transactions.length,
+      totalRevenue: result?.summary?.totalRevenue || fallbackTotalRevenue,
+      totalDiscountGiven: result?.summary?.totalDiscountGiven || fallbackTotalDiscountGiven,
     },
   };
 };
@@ -142,7 +168,7 @@ export const createSale = (payload) => api.post("/selling", payload).then(unwrap
 export const getSaleHistory = (params) =>
   api
     .get("/selling/history", { params })
-    .then(unwrap)
+    .then((response) => response.data)
     .then(normalizeSaleHistory);
 
 // =============================================================================

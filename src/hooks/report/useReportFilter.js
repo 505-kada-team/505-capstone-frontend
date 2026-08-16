@@ -31,11 +31,12 @@ export function useReportFilter() {
       return;
     }
 
-    setAppliedFilter({ reportType, startDate, endDate });
+    setAppliedFilter({ reportType, planId, startDate, endDate });
   }, [reportType, planId, startDate, endDate]);
 
   const handleReset = useCallback(() => {
     setReportType(INITIAL_FILTER.reportType);
+    setPlanId(INITIAL_FILTER.planId);
     setStartDate(INITIAL_FILTER.startDate);
     setEndDate(INITIAL_FILTER.endDate);
     setAppliedFilter(INITIAL_FILTER);
@@ -105,6 +106,7 @@ export function useReportFilter() {
     reportType,
     setReportType,
     planId,
+    setPlanId,
     startDate,
     setStartDate,
     endDate,
