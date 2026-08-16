@@ -36,9 +36,9 @@ function derivePlanStatusVariant(plan) {
 }
 
 function deriveInventoryVariant(plan) {
-  if (plan.status !== "draft") return null;
+  if (plan.status !== "draft" && plan.status !== "cancelled") return null;
 
-  return plan.readyToApprove && !plan.hasUnsafeBatch ? "in-stock" : "low stock";
+  return plan.readyToApprove ? "in-stock" : "low stock";
 }
 
 function formatDateRange(startDate, endDate) {
