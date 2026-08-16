@@ -23,6 +23,14 @@ import PlanAuditReport from "./components/PlanAuditReport";
 import { useReportFilter } from "@/hooks/report/useReportFilter";
 import { getPlanList } from "@/services/api";
 
+const reportTypeLabels = {
+  sales: "Sales Report",
+  plan: "Production Plan Report",
+  waste: "Waste & Loss Report",
+  inventory: "Inventory Report",
+  plan_audit: "Plan Profit & Loss Audit",
+};
+
 export default function ReportPage() {
   const {
     reportType,
@@ -68,12 +76,6 @@ export default function ReportPage() {
 
     fetchSelectablePlans();
   }, []);
-
-  //   useEffect(() => {
-  //   if (reportType === "inventory") {
-  //     setPlanId("");
-  //   }
-  // }, [reportType, setPlanId]);
 
   const renderReport = () => {
     const commonProps = {
@@ -135,7 +137,9 @@ export default function ReportPage() {
 
             <Select value={reportType} onValueChange={setReportType}>
               <SelectTrigger id="reportType" className="w-full">
-                <SelectValue placeholder="Select report type" />
+                <SelectValue placeholder="Select report type">
+                  {reportTypeLabels[reportType] || "Select report type"}
+                </SelectValue>
               </SelectTrigger>
 
               <SelectContent>
@@ -177,15 +181,25 @@ export default function ReportPage() {
                               ? "No plans found"
                               : "Select production plan"
                     }
-                  />
+                  >
+                    {(() => {
+                      const selectedPlan = selectablePlans.find(
+                        (p) => (p._id || p.id) === planId
+                      );
+                      return selectedPlan ? selectedPlan.name : undefined;
+                    })()}
+                  </SelectValue>
                 </SelectTrigger>
 
                 <SelectContent>
-                  {selectablePlans.map((plan) => (
-                    <SelectItem key={plan._id} value={plan._id}>
-                      {plan.name}
-                    </SelectItem>
-                  ))}
+                  {selectablePlans.map((plan) => {
+                    const id = plan._id || plan.id;
+                    return (
+                      <SelectItem key={id} value={id}>
+                        {plan.name}
+                      </SelectItem>
+                    );
+                  })}
                 </SelectContent>
               </Select>
           </div>

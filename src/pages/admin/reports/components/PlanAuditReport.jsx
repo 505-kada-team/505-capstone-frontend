@@ -147,6 +147,7 @@ export default function PlanAuditReport({ planId, onExportDataChange }) {
     const totalRevenue = menuSalesList.reduce((sum, item) => sum + item.revenue, 0);
     const totalDiscountGiven = menuSalesList.reduce((sum, item) => sum + item.discountGiven, 0);
     const totalTransactions = sales.summary?.totalTransaction || (totalRevenue > 0 ? (sales.transactions || []).length : 0);
+    const totalItemsSold = menuSalesList.reduce((sum, item) => sum + item.quantitySold, 0);
 
     // 2. COGS / HPP
     // Committed Ingredients Cost
@@ -191,6 +192,7 @@ export default function PlanAuditReport({ planId, onExportDataChange }) {
       totalRevenue,
       totalDiscountGiven,
       totalTransactions,
+      totalItemsSold,
       menuSalesList,
       committedCost,
       replacementCost,
@@ -321,6 +323,7 @@ export default function PlanAuditReport({ planId, onExportDataChange }) {
     totalRevenue,
     totalDiscountGiven,
     totalTransactions,
+    totalItemsSold,
     menuSalesList,
     committedCost,
     replacementCost,
@@ -410,7 +413,9 @@ export default function PlanAuditReport({ planId, onExportDataChange }) {
               {formatCurrency(totalRevenue)}
             </p>
             <p className="text-[10px] text-muted-foreground">
-              {totalTransactions} transaksi tercatat
+              {totalTransactions > 0
+                ? `${totalTransactions} transaksi tercatat`
+                : `${totalItemsSold} porsi terjual (plan)`}
             </p>
           </div>
           <div className="flex flex-col gap-1 pt-4 md:pt-0 md:px-4">

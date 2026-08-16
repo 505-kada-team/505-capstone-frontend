@@ -113,7 +113,7 @@ const normalizeSaleHistory = (result) => {
   return {
     transactions,
     summary: {
-      totalTransaction: result?.summary?.totalTransaction ?? transactions.length,
+      totalTransaction: result?.summary?.totalTransaction || transactions.length,
       totalRevenue: result?.summary?.totalRevenue || fallbackTotalRevenue,
       totalDiscountGiven: result?.summary?.totalDiscountGiven || fallbackTotalDiscountGiven,
     },
