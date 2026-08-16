@@ -9,6 +9,9 @@ const formatRupiah = (value) =>
     minimumFractionDigits: 0,
   }).format(value || 0);
 
+const formatHour = (hour) =>
+  `${String(hour).padStart(2, "0")}:00`;
+
 export default function AdminAIInsightsCard({
   hourlyTrends = [],
   menuBreakdown = [],
@@ -38,11 +41,11 @@ export default function AdminAIInsightsCard({
   let localInsight = "No significant sales insight available yet.";
 
   if (hasLocalData && peakHour?.revenue > 0 && topMenu?.unitsSold > 0) {
-    localInsight = `Sales peaked at ${peakHour.timeBucket} with ${formatRupiah(
+    localInsight = `Sales peaked at ${formatHour(peakHour.hour)} with ${formatRupiah(
       peakHour.revenue
     )}. ${topMenu.name} was the best-selling menu with ${topMenu.unitsSold} cups sold.`;
   } else if (peakHour?.revenue > 0) {
-    localInsight = `Sales peaked at ${peakHour.timeBucket} with ${formatRupiah(
+    localInsight = `Sales peaked at ${formatHour(peakHour.hour)} with ${formatRupiah(
       peakHour.revenue
     )}.`;
   } else if (topMenu?.unitsSold > 0) {
@@ -105,7 +108,9 @@ export default function AdminAIInsightsCard({
               </div>
               {result?.generatedAt && (
                 <span className="text-[10px] text-muted-foreground">
-                  {new Date(result.generatedAt).toLocaleString("id-ID")}
+                  {new Date(result.generatedAt).toLocaleString("id-ID", {
+                    timeZone: "Asia/Jakarta",
+                  })}
                 </span>
               )}
             </div>
