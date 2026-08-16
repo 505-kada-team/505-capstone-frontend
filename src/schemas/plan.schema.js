@@ -73,6 +73,15 @@ export const discountFormSchema = z
       .array(z.string())
       .min(1, "Pilih minimal satu menu untuk didiskon"),
   })
+  .refine((data) => {
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    tomorrow.setHours(0, 0, 0, 0);
+    return data.startDate >= tomorrow;
+  }, {
+    message: "Tanggal mulai diskon minimal harus H+1 dari hari set diskon (mulai besok)",
+    path: ["startDate"],
+  })
   .refine((data) => data.endDate >= data.startDate, {
     message: "Tanggal akhir tidak boleh sebelum tanggal mulai",
     path: ["endDate"],

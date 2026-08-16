@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { setMenuDiscount } from "@/services/plan/plan.api";
+import { toast } from "sonner";
 
 // --------------------------------------------------------------
 // Hook untuk form diskon banyak menu (DiscountModal)
@@ -80,13 +81,34 @@ export function usePlanDiscountForm({
     if (!reason.trim()) return false;
     if (!date?.from || !date?.to) return false;
 
+    // Validasi H+1 (Minimal besok)
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    tomorrow.setHours(0, 0, 0, 0);
+
+    const fromDate = new Date(date.from);
+    fromDate.setHours(0, 0, 0, 0);
+
+    const planStart = plan?.startDate ? new Date(plan.startDate) : null;
+    if (planStart) {
+      planStart.setHours(0, 0, 0, 0);
+    }
+    const minAllowed = planStart && planStart > tomorrow ? planStart : tomorrow;
+
+    if (fromDate < minAllowed) {
+      toast.error(
+        "Tanggal mulai diskon minimal harus H+1 dari hari set diskon (mulai besok) dan berada dalam masa aktif plan"
+      );
+      return false;
+    }
+
     // Kumpulkan menu yang dipilih
     const menusToProcess = plan.menus.filter((m) => selectedMenus[m.menuId]);
     if (menusToProcess.length === 0) return false;
 
     // Tentukan persentase per menu
     const percentMap = {};
-    menusToProcess.forEach((menu) => {
+    for (const menu of menusToProcess) {
       if (mode === "sama_rata") {
         const pct = Number(globalPercent);
         if (!pct || pct < 1 || pct > 100) return false;
@@ -96,7 +118,7 @@ export function usePlanDiscountForm({
         if (!pct || pct < 1 || pct > 100) return false;
         percentMap[menu.menuId] = pct;
       }
-    });
+    }
 
     setIsSubmitting(true);
     try {
@@ -117,7 +139,9 @@ export function usePlanDiscountForm({
     } catch (err) {
       console.error("Gagal menyimpan diskon:", err);
       console.error("Status:", err.response?.status);
-      console.error("Response data:", err.response?.data); // <-- tambahkan ini
+      console.error("Response data:", err.response?.data);
+      const errMsg = err.response?.data?.message || err.message || "Gagal menyimpan diskon";
+      toast.error(errMsg);
       return false;
     } finally {
       setIsSubmitting(false);

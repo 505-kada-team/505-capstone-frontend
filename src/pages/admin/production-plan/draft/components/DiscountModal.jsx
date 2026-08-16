@@ -69,18 +69,17 @@ export default function DiscountModal({
 
   if (!isOpen) return null;
 
+  const tomorrow = new Date().getTime() + 24 * 60 * 60 * 1000;
   const minDate = plan?.startDate
-    ? new Date(
-        Math.max(new Date().getTime(), new Date(plan.startDate).getTime()),
-      )
-    : new Date();
+    ? new Date(Math.max(tomorrow, new Date(plan.startDate).getTime()))
+    : new Date(tomorrow);
   const maxDate = plan?.endDate ? new Date(plan.endDate) : undefined;
 
   const selectedCount = Object.values(selectedMenus).filter(Boolean).length;
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="flex max-h-[200vh] w-[calc(100vw-2rem)] max-w-2xl sm:max-w-2xl flex-col gap-0 overflow-hidden rounded-2xl p-0 sm:w-full">
+      <DialogContent className="flex max-h-[85vh] w-[calc(100vw-2rem)] max-w-lg sm:max-w-lg flex-col gap-0 overflow-hidden rounded-2xl p-0 sm:w-full">
         {/* Header */}
         <DialogHeader className="shrink-0 space-y-1.5 border-b bg-background px-5 py-4 sm:px-6">
           <DialogTitle className="flex items-center gap-2 text-base font-bold sm:text-lg">
