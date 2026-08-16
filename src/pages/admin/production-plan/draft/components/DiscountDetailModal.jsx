@@ -120,9 +120,9 @@ export default function DiscountDetailModal({
                 </span>
               </div>
 
-              <div className="border rounded-xl overflow-hidden">
+              <div className="border rounded-xl max-h-60 overflow-y-auto">
                 <table className="w-full text-sm text-left">
-                  <thead className="bg-muted/40 text-xs text-muted-foreground">
+                  <thead className="bg-muted text-xs text-muted-foreground sticky top-0 z-10 shadow-sm">
                     <tr>
                       <th className="px-4 py-2.5 font-medium">Menu Name</th>
                       <th className="px-4 py-2.5 font-medium text-right">
