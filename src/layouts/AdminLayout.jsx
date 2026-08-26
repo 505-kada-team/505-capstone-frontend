@@ -17,12 +17,43 @@ export default function AdminLayout() {
   const { user, logout } = useAuth();
   const location = useLocation();
 
+  const isProdPlanActive = location.pathname.includes('/production-plan');
+
   // State untuk sidebar collapse (jika fitur aktif, default terbuka. Jika nonaktif, selalu terbuka)
-  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return window.innerWidth > 768; // 768px adalah breakpoint md Tailwind
+    }
+    return true;
+  });
 
   // Buka accordion secara default jika kita sedang berada di child route-nya
-  const isProdPlanActive = location.pathname.includes('/production-plan');
-  const [isProductionPlanOpen, setIsProductionPlanOpen] = useState(isProdPlanActive);
+  const [isProductionPlanOpen, setIsProductionPlanOpen] = useState(() => {
+    const isSidebarInitOpen = typeof window !== 'undefined' ? window.innerWidth > 768 : true;
+    return isProdPlanActive && isSidebarInitOpen;
+  });
+
+  // Listener media query untuk auto-collapse/expand berdasarkan ukuran layar
+  useEffect(() => {
+    const mediaQuery = window.matchMedia('(max-width: 768px)');
+    
+    const handleTabletChange = (e) => {
+      if (e.matches) {
+        // Masuk ke md atau lebih kecil (tablet/mobile) -> tutup sidebar & accordion
+        setIsSidebarOpen(false);
+        setIsProductionPlanOpen(false);
+      } else {
+        // Kembali ke desktop -> buka sidebar
+        setIsSidebarOpen(true);
+      }
+    };
+
+    // Daftarkan listener
+    mediaQuery.addEventListener('change', handleTabletChange);
+    
+    // Cleanup listener saat unmount
+    return () => mediaQuery.removeEventListener('change', handleTabletChange);
+  }, []);
 
   // Update accordion state jika navigasi berubah dari luar
   useEffect(() => {

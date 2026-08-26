@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom';
-import { DollarSign, Coffee, Calendar as CalendarIcon, Package, AlertTriangle, ChevronRight, TrendingUp, Layers } from 'lucide-react';
+import { Coffee, Calendar as CalendarIcon, HandCoins, AlertTriangle, ChevronRight, TrendingUp, Layers } from 'lucide-react';
 import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip } from 'recharts';
 import { format } from 'date-fns';
 
@@ -120,7 +120,7 @@ export default function DashboardPage() {
 
       {/* KPI Cards Row */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <StatCard title="Total Revenue" value={formatRupiah(kpi.totalRevenue)} subtitle={`Sales on ${selectedDate}`} icon={DollarSign} />
+        <StatCard title="Total Revenue" value={formatRupiah(kpi.totalRevenue)} subtitle={`Sales on ${selectedDate}`} icon={HandCoins} />
         <StatCard title="Total Cups Sold" value={`${kpi.totalCupsSold.toLocaleString()} cups`} subtitle={`Volume on ${selectedDate}`} icon={Coffee} />
         <StatCard title="Avg. Revenue / Cup" value={formatRupiah(averageRevenuePerCup)} subtitle={kpi.totalCupsSold > 0 ? `Based on ${kpi.totalCupsSold} cups sold` : 'No sales recorded'} icon={TrendingUp} />
 
