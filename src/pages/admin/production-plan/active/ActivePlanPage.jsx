@@ -429,7 +429,7 @@ export default function ActivePlanPage() {
 
                       return (
                         <tr key={menu.menuId} className="hover:bg-muted/30">
-                          <td className="py-3.5 px-4 sm:px-5 font-medium sticky left-0 z-10 shadow-[2px_0_4px_-2px_rgba(0,0,0,0.1)]">
+                          <td className="py-3.5 px-4 sm:px-5 font-medium sticky left-0 z-10 shadow-[2px_0_4px_-2px_rgba(0,0,0,0.1)] bg-background">
                             <div className="flex items-center gap-2">
                               <span className="truncate">{menu.name}</span>
                               {menu.discount?.discountPercentage > 0 && (
@@ -526,7 +526,7 @@ export default function ActivePlanPage() {
               <table className="w-full text-sm text-left min-w-[420px]">
                 <thead className="text-xs text-muted-foreground sticky top-0 bg-background z-10">
                   <tr>
-                    <th className="py-3 px-4 sm:px-5 font-medium sticky left-0 z-10 shadow-[2px_0_4px_-2px_rgba(0,0,0,0.1)]">
+                    <th className="py-3 px-4 sm:px-5 font-medium">
                       Plan Name
                     </th>
                     <th className="py-3 px-4 sm:px-5 font-medium hidden sm:table-cell">
@@ -535,7 +535,7 @@ export default function ActivePlanPage() {
                     <th className="py-3 px-4 sm:px-5 font-medium text-center">
                       Status
                     </th>
-                    <th className="py-3 px-4 sm:px-5 font-medium text-center">
+                    <th className="py-3 px-4 sm:px-5 font-medium sticky right-0 z-10 shadow-[2px_0_4px_-2px_rgba(0,0,0,0.1)] bg-background text-center">
                       Actions
                     </th>
                   </tr>
@@ -566,7 +566,7 @@ export default function ActivePlanPage() {
 
                       return (
                         <tr key={p._id} className="hover:bg-muted/30">
-                          <td className="py-3.5 px-4 sm:px-5 font-medium sticky left-0 z-10 shadow-[2px_0_4px_-2px_rgba(0,0,0,0.1)]">
+                          <td className="py-3.5 px-4 sm:px-5 font-medium">
                             {p.name}
                             <div className="sm:hidden text-xs text-muted-foreground font-mono mt-1">
                               {formatDate(p.startDate)} -{" "}
@@ -581,7 +581,7 @@ export default function ActivePlanPage() {
                               variant={displayStatus.toLowerCase()}
                             />
                           </td>
-                          <td className="py-3.5 px-4 sm:px-5 text-center">
+                          <td className="py-3.5 px-4 sm:px-5 text-center sticky right-0 z-10 shadow-[2px_0_4px_-2px_rgba(0,0,0,0.1)] bg-background">
                             <button
                               className="text-[#F97316] font-medium hover:underline text-sm"
                               onClick={() => setSelectedHistoryPlanId(p._id)}
