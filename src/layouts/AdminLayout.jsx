@@ -193,7 +193,7 @@ export default function AdminLayout() {
       </aside>
 
       {/* MAIN CONTENT AREA */}
-      <div className={`flex-1 flex flex-col min-h-screen transition-[margin] duration-300 ease-in-out ${isSidebarOpen ? 'ml-64' : 'ml-20'}`}>
+      <div className={`flex-1 flex flex-col min-w-0 min-h-screen transition-[margin] duration-300 ease-in-out ${isSidebarOpen ? 'ml-64' : 'ml-20'}`}>
         {/* HEADER (Fixed Top) */}
         <header className={`h-16 fixed top-0 right-0 bg-background border-b border-border z-10 flex items-center justify-between px-6 transition-[left] duration-300 ease-in-out ${isSidebarOpen ? 'left-64' : 'left-20'}`}>
           {/* Toggle Sidebar Button */}

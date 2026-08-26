@@ -220,7 +220,7 @@ export default function InventoryPage() {
     {
       key: "name",
       header: "Item Name",
-      headerClass: "w-[25%]",
+      headerClass: "min-w-[180px] sm:min-w-[240px]",
       render: (row) => (
         <span className="font-medium text-foreground text-sm">{row.name}</span>
       ),
@@ -228,14 +228,14 @@ export default function InventoryPage() {
     {
       key: "itemCode",
       header: "Item Code",
-      headerClass: "w-[15%]",
+      headerClass: "min-w-[120px]",
       cellClass: "font-mono text-xs text-muted-foreground",
       render: (row) => row.itemCode || "—",
     },
     {
       key: "totalSubInventory",
       header: "Active Batches",
-      headerClass: "w-[15%]",
+      headerClass: "min-w-[110px]",
       cellClass: "font-mono text-xs text-foreground",
       render: (row) => {
         const count = row.totalSubInventory;
@@ -246,7 +246,7 @@ export default function InventoryPage() {
     {
       key: "quantityTotal",
       header: "Quantity",
-      headerClass: "w-[18%]",
+      headerClass: "min-w-[120px]",
       cellClass: "font-mono text-sm",
       render: (row) => (
         <span
@@ -259,13 +259,13 @@ export default function InventoryPage() {
     {
       key: "category",
       header: "Category",
-      headerClass: "w-[12%]",
+      headerClass: "min-w-[100px]",
       render: (row) => <CategoryBadge category={row.category} />,
     },
     {
       key: "aksi",
       header: "Action",
-      headerClass: "w-[20%] text-right",
+      headerClass: "min-w-[80px] text-right",
       cellClass: "text-right",
       render: (row) => (
         <div className="flex items-center justify-end gap-1.5">
@@ -303,47 +303,49 @@ export default function InventoryPage() {
       />
 
       {/* Filter Bar */}
-      <div className="flex flex-col md:flex-row md:items-center gap-3">
-        <SearchInput
-          id="inventory-search"
-          placeholder="Search by name or ID..."
-          value={search}
-          onChange={handleSearch}
-          className="w-full md:flex-[3] md:min-w-0 h-9"
-        />
+      <div className="flex-shrink-0 mt-4">
+        <div className="flex flex-col sm:flex-row sm:items-center gap-3 rounded-lg border border-border/60 bg-muted/20 p-3">
+          <SearchInput
+            id="inventory-search"
+            placeholder="Search by name or ID..."
+            value={search}
+            onChange={handleSearch}
+            className="w-full sm:w-[320px] sm:flex-none h-9 bg-background"
+          />
 
-        <div className="flex flex-nowrap items-center gap-2 w-full md:w-auto md:flex-[4] md:min-w-0">
-          <Select value={category} onValueChange={handleCategory}>
-            <SelectTrigger
-              id="inventory-category-filter"
-              className="flex-[3] min-w-0 md:w-[130px] md:flex-none h-9 text-muted-foreground font-normal text-xs"
-            >
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {CATEGORY_FILTER_OPTIONS.map((opt) => (
-                <SelectItem key={opt.value} value={opt.value}>
-                  {opt.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <div className="grid grid-cols-2 sm:flex sm:items-center gap-2 sm:ml-auto w-full sm:w-auto">
+            <Select value={category} onValueChange={handleCategory}>
+              <SelectTrigger
+                id="inventory-category-filter"
+                className="w-full sm:w-[130px] h-9 bg-background text-muted-foreground font-normal text-xs"
+              >
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {CATEGORY_FILTER_OPTIONS.map((opt) => (
+                  <SelectItem key={opt.value} value={opt.value}>
+                    {opt.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
 
-          <Select value={sortBy} onValueChange={setSortBy}>
-            <SelectTrigger className="flex-[4] min-w-0 md:w-[130px] md:flex-none h-9 text-muted-foreground font-normal text-xs">
-              <SelectValue placeholder="Sort By" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="newest">Newest Added</SelectItem>
-              <SelectItem value="oldest">Oldest Added</SelectItem>
-              <SelectItem value="name_asc">Name (A-Z)</SelectItem>
-              <SelectItem value="name_desc">Name (Z-A)</SelectItem>
-              <SelectItem value="stock_high">Highest Stock</SelectItem>
-              <SelectItem value="stock_low">Lowest Stock</SelectItem>
-              <SelectItem value="cost_high">Highest Cost</SelectItem>
-              <SelectItem value="cost_low">Lowest Cost</SelectItem>
-            </SelectContent>
-          </Select>
+            <Select value={sortBy} onValueChange={setSortBy}>
+              <SelectTrigger className="w-full sm:w-[130px] h-9 bg-background text-muted-foreground font-normal text-xs">
+                <SelectValue placeholder="Sort By" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="newest">Newest Added</SelectItem>
+                <SelectItem value="oldest">Oldest Added</SelectItem>
+                <SelectItem value="name_asc">Name (A-Z)</SelectItem>
+                <SelectItem value="name_desc">Name (Z-A)</SelectItem>
+                <SelectItem value="stock_high">Highest Stock</SelectItem>
+                <SelectItem value="stock_low">Lowest Stock</SelectItem>
+                <SelectItem value="cost_high">Highest Cost</SelectItem>
+                <SelectItem value="cost_low">Lowest Cost</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
         </div>
       </div>
 
