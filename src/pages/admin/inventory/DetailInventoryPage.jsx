@@ -220,30 +220,35 @@ export default function DetailInventoryPage() {
     {
       key: "inDate",
       header: "Received",
+      headerClass: "min-w-[120px]",
       cellClass: "font-mono text-xs",
       render: (row) => formatDate(row.inDate),
     },
     {
       key: "batchCode",
       header: "Batch Code",
+      headerClass: "min-w-[130px]",
       cellClass: "font-mono text-xs text-muted-foreground",
       render: (row) => row.batchCode || "—",
     },
     {
       key: "costPrices",
       header: "Total Cost",
+      headerClass: "min-w-[120px]",
       cellClass: "font-mono text-sm",
       render: (row) => formatCurrency(row.costPrices),
     },
     {
       key: "quantity",
       header: "Quantity",
+      headerClass: "min-w-[110px]",
       cellClass: "font-mono text-sm",
       render: (row) => formatQuantity(row.quantity, data?.unit),
     },
     {
       key: "expired",
       header: "Expired",
+      headerClass: "min-w-[120px]",
       cellClass: "font-mono text-xs",
       render: (row) =>
         data?.category === "packaging" ? "—" : formatDate(row.expired),
@@ -251,13 +256,14 @@ export default function DetailInventoryPage() {
     {
       key: "status",
       header: "Status",
+      headerClass: "min-w-[100px]",
       render: (row) => <StatusBadge variant={row.status} />,
     },
     {
       key: "aksi",
       header: "Action",
-      headerClass: "text-right",
-      cellClass: "text-right",
+      headerClass: "min-w-[85px] text-right sticky right-0 z-10 bg-background",
+      cellClass: "text-right sticky right-0 z-10 bg-background",
       render: (row) => (
         <Button
           variant="ghost"
