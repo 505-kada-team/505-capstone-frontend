@@ -265,8 +265,8 @@ export default function InventoryPage() {
     {
       key: "aksi",
       header: "Action",
-      headerClass: "min-w-[80px] text-right",
-      cellClass: "text-right",
+      headerClass: "min-w-[80px] text-right sticky right-0 z-10 shadow-[2px_0_4px_-2px_rgba(0,0,0,0.1)] bg-background",
+      cellClass: "text-right sticky right-0 z-10 shadow-[2px_0_4px_-2px_rgba(0,0,0,0.1)] bg-background",
       render: (row) => (
         <div className="flex items-center justify-end gap-1.5">
           <Button

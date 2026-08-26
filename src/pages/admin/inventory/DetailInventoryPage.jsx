@@ -262,8 +262,8 @@ export default function DetailInventoryPage() {
     {
       key: "aksi",
       header: "Action",
-      headerClass: "min-w-[85px] text-right",
-      cellClass: "text-right",
+      headerClass: "min-w-[85px] text-right sticky right-0 z-10 bg-background",
+      cellClass: "text-right sticky right-0 z-10 bg-background",
       render: (row) => (
         <Button
           variant="ghost"

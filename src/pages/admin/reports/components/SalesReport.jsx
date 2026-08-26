@@ -204,8 +204,8 @@ export default function SalesReport({
       {
         key: 'actions',
         header: 'Action',
-        headerClass: 'text-center',
-        cellClass: 'text-center',
+        headerClass: 'text-center sticky right-0 z-10 bg-background',
+        cellClass: 'text-center sticky right-0 z-10 bg-background',
         render: (row) => (
           <button
             type="button"

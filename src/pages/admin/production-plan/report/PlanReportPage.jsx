@@ -105,6 +105,7 @@ export default function PlanReportPage() {
     {
       key: "incidentAt",
       header: "Date & Time",
+      headerClass: "min-w-[130px]",
       render: (row) => (
         <div className="flex flex-col gap-1">
           <span className="font-medium">
@@ -131,6 +132,7 @@ export default function PlanReportPage() {
     {
       key: "item",
       header: "Category & Item",
+      headerClass: "min-w-[150px]",
       render: (row) => (
         <div className="flex flex-col">
           <span className="font-semibold capitalize text-foreground">
@@ -145,6 +147,7 @@ export default function PlanReportPage() {
     {
       key: "quantityLost",
       header: "Quantity Lost",
+      headerClass: "min-w-[110px]",
       render: (row) => (
         <span className="font-semibold text-destructive">
           {row.quantityLost}
@@ -154,6 +157,7 @@ export default function PlanReportPage() {
     {
       key: "reportedBy",
       header: "Reporter",
+      headerClass: "min-w-[125px]",
       render: (row) => (
         <div className="flex flex-col">
           <span className="text-sm font-medium">{row.reportedBy}</span>
@@ -166,6 +170,7 @@ export default function PlanReportPage() {
     {
       key: "status",
       header: "Status",
+      headerClass: "min-w-[140px]",
       render: (row) => {
         const varMap = {
           pending: "low stock",
@@ -183,8 +188,8 @@ export default function PlanReportPage() {
     {
       key: "actions",
       header: "Actions",
-      headerClass: "text-right",
-      cellClass: "text-right",
+      headerClass: "min-w-[105px] text-right sticky right-0 z-10 bg-background",
+      cellClass: "text-right sticky right-0 z-10 bg-background",
       render: (row) => {
         if (row.status === "pending") {
           return (
@@ -244,53 +249,55 @@ export default function PlanReportPage() {
       />
 
       {/* Filter Bar */}
-      <div className="flex flex-col md:flex-row md:items-center gap-3">
-        <SearchInput
-          id="report-search"
-          placeholder="Search name or reason..."
-          value={search}
-          onChange={setSearch}
-          className="w-full md:flex-[3] md:min-w-0 h-9"
-        />
+      <div className="flex-shrink-0 mt-4">
+        <div className="flex flex-col sm:flex-row sm:items-center gap-3 rounded-lg border border-border/60 bg-muted/20 p-3">
+          <SearchInput
+            id="report-search"
+            placeholder="Search name or reason..."
+            value={search}
+            onChange={setSearch}
+            className="w-full sm:w-[320px] sm:flex-none h-9 bg-background"
+          />
 
-        <div className="flex flex-nowrap items-center gap-2 w-full md:w-auto md:flex-[4] md:min-w-0">
-          <Select value={filterStatus} onValueChange={setFilterStatus}>
-            <SelectTrigger className="flex-[3] min-w-0 md:w-[130px] md:flex-none h-9 text-muted-foreground font-normal text-xs">
-              <SelectValue placeholder="Status" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Status</SelectItem>
-              <SelectItem value="pending">Pending</SelectItem>
-              <SelectItem value="approved">Approved</SelectItem>
-              <SelectItem value="rejected">Rejected</SelectItem>
-            </SelectContent>
-          </Select>
+          <div className="grid grid-cols-2 sm:flex sm:items-center gap-2 sm:ml-auto w-full sm:w-auto">
+            <Select value={filterStatus} onValueChange={setFilterStatus}>
+              <SelectTrigger className="w-full sm:w-[130px] h-9 bg-background text-muted-foreground font-normal text-xs">
+                <SelectValue placeholder="Status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Status</SelectItem>
+                <SelectItem value="pending">Pending</SelectItem>
+                <SelectItem value="approved">Approved</SelectItem>
+                <SelectItem value="rejected">Rejected</SelectItem>
+              </SelectContent>
+            </Select>
 
-          <Select value={filterCategory} onValueChange={setFilterCategory}>
-            <SelectTrigger className="flex-[4] min-w-0 md:w-[130px] md:flex-none h-9 text-muted-foreground font-normal text-xs">
-              <SelectValue placeholder="Category" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Category</SelectItem>
-              <SelectItem value="menu">Menu</SelectItem>
-              <SelectItem value="ingredient">Ingredient</SelectItem>
-            </SelectContent>
-          </Select>
+            <Select value={filterCategory} onValueChange={setFilterCategory}>
+              <SelectTrigger className="w-full sm:w-[130px] h-9 bg-background text-muted-foreground font-normal text-xs">
+                <SelectValue placeholder="Category" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Category</SelectItem>
+                <SelectItem value="menu">Menu</SelectItem>
+                <SelectItem value="ingredient">Ingredient</SelectItem>
+              </SelectContent>
+            </Select>
 
-          <Select value={sortBy} onValueChange={setSortBy}>
-            <SelectTrigger className="flex-[3] min-w-0 md:w-[130px] md:flex-none h-9 text-muted-foreground font-normal text-xs">
-              <SelectValue placeholder="Sort By" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="newest">Newest</SelectItem>
-              <SelectItem value="oldest">Oldest</SelectItem>
-            </SelectContent>
-          </Select>
+            <Select value={sortBy} onValueChange={setSortBy}>
+              <SelectTrigger className="w-full sm:w-[130px] h-9 bg-background text-muted-foreground font-normal text-xs">
+                <SelectValue placeholder="Sort By" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="newest">Newest</SelectItem>
+                <SelectItem value="oldest">Oldest</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
         </div>
       </div>
 
       {/* Tabel Laporan */}
-      <div className="w-full min-w-[720px] rounded-lg border border-border bg-card shadow-sm overflow-x-auto mt-2">
+      <div className="w-full min-w-0 rounded-lg border border-border bg-card shadow-sm overflow-x-auto mt-2">
         <DataTable
           columns={columns}
           data={paginatedReports}
