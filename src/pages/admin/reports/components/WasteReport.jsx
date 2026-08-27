@@ -211,33 +211,27 @@ export default function WasteReport({
         </p>
       </div>
 
-      {isLoading ? (
-        <div className="p-12 text-center text-sm text-muted-foreground">
-          Loading report...
-        </div>
-      ) : (
-        <>
-          <div className="max-h-[500px] w-full min-w-0 overflow-auto p-0">
-            <DataTable
-              columns={columns}
-              data={paginatedItems}
-              emptyMessage="No waste & loss data found for the selected filters."
-            />
-          </div>
+      <div className="max-h-[500px] w-full min-w-0 overflow-auto p-0">
+        <DataTable
+          columns={columns}
+          data={paginatedItems}
+          loading={isLoading}
+          emptyMessage="No waste & loss data found for the selected filters."
+        />
+      </div>
 
-          {filteredReports.length > 0 && (
-            <div className="border-t p-4">
-              <Pagination
-                currentPage={currentPage}
-                totalPage={totalPages}
-                totalData={filteredReports.length}
-                limit={LIMIT}
-                onPageChange={setPage}
-              />
-            </div>
-          )}
-        </>
+      {!isLoading && filteredReports.length > 0 && (
+        <div className="border-t p-4">
+          <Pagination
+            currentPage={currentPage}
+            totalPage={totalPages}
+            totalData={filteredReports.length}
+            limit={LIMIT}
+            onPageChange={setPage}
+          />
+        </div>
       )}
+
     </section>
   );
 }

@@ -400,21 +400,17 @@ export default function InventoryReport({
           </p>
         </div>
 
-        {isLoading ? (
-          <LoadingState />
-        ) : activeTab === 'stock-in' ? (
-          <DataTable
-            columns={stockInColumns}
-            data={stockInRows}
-            emptyMessage="No stock-in history found for the selected period."
-          />
-        ) : (
-          <DataTable
-            columns={usageColumns}
-            data={usageRows}
-            emptyMessage="No inventory usage found for the selected period."
-          />
-        )}
+        <DataTable
+          columns={activeTab === 'stock-in' ? stockInColumns : usageColumns}
+          data={activeTab === 'stock-in' ? stockInRows : usageRows}
+          loading={isLoading}
+          emptyMessage={
+            activeTab === 'stock-in'
+              ? 'No stock-in history found for the selected period.'
+              : 'No inventory usage found for the selected period.'
+          }
+        />
+
       </section>
     </div>
   );
@@ -432,12 +428,4 @@ function SummaryItem({ label, value }) {
       </p>
     </div>
   );
-}
-
-function LoadingState() {
-  return (
-    <div className="p-12 text-center text-sm text-muted-foreground">
-      Loading inventory report...
-    </div>
-  );
-}
+}

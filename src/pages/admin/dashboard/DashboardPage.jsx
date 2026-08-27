@@ -4,6 +4,8 @@ import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tool
 import { format } from 'date-fns';
 
 import { cn } from '@/lib/utils';
+import { Skeleton } from '@/components/ui/skeleton';
+
 import { parseLocalDate, getLocalDateTimestamp, formatDateRange } from '@/lib/dateUtils';
 import { formatRupiah } from '@/lib/formatCurrency';
 
@@ -182,8 +184,28 @@ export default function DashboardPage() {
 
           <CardContent className="pt-2 pb-4">
             {isLoading ? (
-              <div className="h-[280px] flex items-center justify-center text-xs text-muted-foreground">Loading sales trend...</div>
+              <div className="h-[280px] w-full flex flex-col justify-between p-4 bg-muted/10 rounded-md">
+                <div className="flex justify-between items-end h-[200px] gap-2 pt-4">
+                  <Skeleton className="h-[40%] w-full" />
+                  <Skeleton className="h-[75%] w-full" />
+                  <Skeleton className="h-[55%] w-full" />
+                  <Skeleton className="h-[90%] w-full" />
+                  <Skeleton className="h-[65%] w-full" />
+                  <Skeleton className="h-[80%] w-full" />
+                  <Skeleton className="h-[45%] w-full" />
+                </div>
+                <div className="flex justify-between mt-2">
+                  <Skeleton className="h-3 w-10" />
+                  <Skeleton className="h-3 w-10" />
+                  <Skeleton className="h-3 w-10" />
+                  <Skeleton className="h-3 w-10" />
+                  <Skeleton className="h-3 w-10" />
+                  <Skeleton className="h-3 w-10" />
+                  <Skeleton className="h-3 w-10" />
+                </div>
+              </div>
             ) : (
+
               <div className="h-[280px] w-full">
                 <ResponsiveContainer width="100%" height="100%">
                   <AreaChart data={chartData} margin={{ top: 10, right: 10, left: -15, bottom: 0 }}>
