@@ -31,7 +31,8 @@ export default function AddReportModal({ open, onClose, onRefresh }) {
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[550px]">
+      <DialogContent className="w-[calc(100vw-2rem)] sm:max-w-[550px] max-h-[85vh] overflow-y-auto">
+
         <DialogHeader>
           <DialogTitle>Add Incident Report</DialogTitle>
           <DialogDescription>

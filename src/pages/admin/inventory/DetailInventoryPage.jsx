@@ -21,6 +21,8 @@ import StatusBadge from "@/components/shared/StatusBadge";
 import ConfirmDialog from "@/components/shared/ConfirmDialog";
 import SearchInput from "@/components/shared/SearchInput";
 import Pagination from "@/components/shared/Pagination";
+import { Skeleton } from "@/components/ui/skeleton";
+
 import AddBatchModal from "./components/AddBatchModal";
 
 import { useInventoryDetail } from "@/hooks/inventory/useInventoryDetail";
@@ -304,10 +306,74 @@ export default function DetailInventoryPage() {
       </div>
 
       {loading && !data ? (
-        <div className="p-12 text-center text-muted-foreground bg-card rounded-lg border border-border">
-          Loading...
+        <div className="bg-card rounded-lg border border-border p-6 shadow-sm animate-pulse">
+          {/* Form Skeleton */}
+          <div className="space-y-6">
+            <div className="grid grid-cols-12 gap-4">
+              <div className="col-span-5 space-y-1.5">
+                <Skeleton className="h-4 w-20" />
+                <Skeleton className="h-10 w-full" />
+              </div>
+              <div className="col-span-3 space-y-1.5">
+                <Skeleton className="h-4 w-20" />
+                <Skeleton className="h-10 w-full" />
+              </div>
+              <div className="col-span-2 space-y-1.5">
+                <Skeleton className="h-4 w-20" />
+                <Skeleton className="h-10 w-full" />
+              </div>
+              <div className="col-span-2 space-y-1.5">
+                <Skeleton className="h-4 w-20" />
+                <Skeleton className="h-10 w-full" />
+              </div>
+            </div>
+            <div className="space-y-1.5">
+              <Skeleton className="h-4 w-20" />
+              <Skeleton className="h-20 w-full" />
+            </div>
+            <div className="flex justify-between items-center pt-2">
+              <Skeleton className="h-10 w-32" />
+              <div className="flex gap-3">
+                <Skeleton className="h-10 w-28" />
+                <Skeleton className="h-10 w-28" />
+              </div>
+            </div>
+          </div>
+
+          {/* Batches Table Skeleton */}
+          <div className="mt-12 space-y-3">
+            <Skeleton className="h-6 w-40" />
+            <div className="flex flex-col md:flex-row md:items-center gap-3">
+              <Skeleton className="h-10 w-64" />
+              <Skeleton className="h-10 w-32 md:ml-auto" />
+            </div>
+            <div className="border border-border rounded-lg overflow-hidden">
+              <table className="w-full text-left text-sm">
+                <thead className="bg-muted text-muted-foreground border-b border-border">
+                  <tr>
+                    <th className="py-3 px-4 font-semibold">Received</th>
+                    <th className="py-3 px-4 font-semibold">Batch Code</th>
+                    <th className="py-3 px-4 font-semibold text-right">Qty</th>
+                    <th className="py-3 px-4 font-semibold text-center">Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {Array.from({ length: 4 }).map((_, idx) => (
+                    <tr key={idx} className="border-b border-border/50">
+                      <td className="py-4 px-4"><Skeleton className="h-4 w-20 bg-muted/60" /></td>
+                      <td className="py-4 px-4"><Skeleton className="h-4 w-24 bg-muted/60" /></td>
+                      <td className="py-4 px-4 text-right"><Skeleton className="h-4 w-12 ml-auto bg-muted/60" /></td>
+                      <td className="py-4 px-4 text-center"><Skeleton className="h-4 w-16 mx-auto bg-muted/60" /></td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
         </div>
       ) : data ? (
+
+
         <div className="bg-card rounded-lg border border-border p-6 shadow-sm">
           <form onSubmit={handleSubmit(handleEditSubmit)} className="space-y-6">
             <div className="grid grid-cols-12 gap-4">

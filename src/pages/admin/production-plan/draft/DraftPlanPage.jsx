@@ -24,8 +24,10 @@ import {
 import { getMenuList } from "@/services/api";
 import { getPlanDetail } from "@/services/plan/plan.api";
 import { getSalesPredictions } from "@/AI/contextEngine/contextEngineApi";
+import { Skeleton } from "@/components/ui/skeleton";
 // import PlanDetailModal from "./components/PlanDetailModal";
 import PlanHistoryView from "./components/PlanHistoryView";
+
 
 import {
   Dialog,
@@ -454,6 +456,8 @@ export default function DraftPlanPage() {
       </div>
     );
   }
+
+
 
   const goToHistoryWithDetail = () => {
     setSuccessModalOpen(false);
