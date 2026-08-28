@@ -18,6 +18,8 @@ import AlertSummaryCard from "@/components/shared/AlertSummaryCard";
 import PlanMenuAccordion from "@/components/shared/PlanMenuAccordion";
 import PlanInventoryAccordion from "@/components/shared/PlanInventoryAccordion";
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
+
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import {
   Dialog,
@@ -146,12 +148,73 @@ export default function PlanDetailPane({ planId, onRefreshList }) {
 
   if (isLoading) {
     return (
-      <div className="flex flex-col items-center justify-center h-full text-muted-foreground py-24 gap-3 animate-pulse">
-        <div className="w-8 h-8 rounded-full border-2 border-muted-foreground/30 border-t-muted-foreground animate-spin" />
-        <p className="text-sm">Loading plan details...</p>
+      <div className="flex flex-col bg-card rounded-lg border border-border shadow-sm overflow-hidden min-w-0 animate-pulse">
+        {/* Header Skeleton */}
+        <div className="p-6 border-b border-border space-y-4">
+          <div className="flex items-start justify-between gap-3 flex-wrap">
+            <div className="min-w-0 space-y-2 flex-1">
+              <div className="flex items-center gap-3">
+                <Skeleton className="h-7 w-48" />
+                <Skeleton className="h-5 w-20" />
+              </div>
+              <Skeleton className="h-4 w-64" />
+            </div>
+            <div className="flex items-center gap-2 shrink-0">
+              <Skeleton className="h-9 w-20" />
+              <Skeleton className="h-9 w-9" />
+              <Skeleton className="h-9 w-9" />
+            </div>
+          </div>
+
+          <div className="flex flex-wrap items-start gap-x-8 gap-y-3 mt-6">
+            {Array.from({ length: 3 }).map((_, idx) => (
+              <div key={idx} className="flex flex-col gap-2">
+                <Skeleton className="h-3 w-16" />
+                <Skeleton className="h-4 w-32" />
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Content Skeleton */}
+        <div className="p-6 space-y-6">
+          {/* Tabs list skeleton */}
+          <div className="w-full grid grid-cols-2 bg-muted p-1 rounded-lg">
+            <Skeleton className="h-8 w-full bg-background/50 rounded-md" />
+          </div>
+
+          {/* Accordion Stack Skeletons */}
+          <div className="space-y-3">
+            {Array.from({ length: 3 }).map((_, idx) => (
+              <div key={idx} className="border border-border rounded-lg p-4 space-y-3 bg-card">
+                <div className="flex justify-between items-center">
+                  <div className="flex items-center gap-2">
+                    <Skeleton className="h-4 w-5 bg-muted/60" />
+                    <Skeleton className="h-5 w-32 bg-muted/60" />
+                  </div>
+                  <Skeleton className="h-5 w-16 bg-muted/60" />
+                </div>
+                {idx === 0 && (
+                  <div className="border-t border-border pt-3 space-y-2">
+                    <div className="grid grid-cols-4 gap-4">
+                      {Array.from({ length: 4 }).map((_, i) => (
+                        <div key={i} className="space-y-1.5">
+                          <Skeleton className="h-3 w-16" />
+                          <Skeleton className="h-4 w-20" />
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
       </div>
     );
   }
+
+
 
   if (!plan) {
     return null;
@@ -212,7 +275,7 @@ export default function PlanDetailPane({ planId, onRefreshList }) {
                 className="text-[#F97316] border-[#F97316]/40 hover:bg-[#F97316]/10 h-9"
                 onClick={() => setIsDiscountModalOpen(true)}
               >
-                <Plus className="w-4 h-4 mr-1" /> Diskon
+                <Plus className="w-4 h-4 mr-1" /> Discount
               </Button>
             )}
             <Button
@@ -272,7 +335,7 @@ export default function PlanDetailPane({ planId, onRefreshList }) {
             <div className="flex flex-col gap-1 min-w-0">
               <span className="text-xs text-muted-foreground">Suggestion</span>
               <span className="text-sm font-semibold text-[#F97316] flex items-center gap-1">
-                <Lightbulb className="w-4 h-4" /> Tambah Diskon
+                <Lightbulb className="w-4 h-4" /> Add Discount
               </span>
             </div>
           )}

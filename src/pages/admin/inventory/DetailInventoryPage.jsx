@@ -347,30 +347,16 @@ export default function DetailInventoryPage() {
               <Skeleton className="h-10 w-64" />
               <Skeleton className="h-10 w-32 md:ml-auto" />
             </div>
-            <div className="border border-border rounded-lg overflow-hidden">
-              <table className="w-full text-left text-sm">
-                <thead className="bg-muted text-muted-foreground border-b border-border">
-                  <tr>
-                    <th className="py-3 px-4 font-semibold">Received</th>
-                    <th className="py-3 px-4 font-semibold">Batch Code</th>
-                    <th className="py-3 px-4 font-semibold text-right">Qty</th>
-                    <th className="py-3 px-4 font-semibold text-center">Status</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {Array.from({ length: 4 }).map((_, idx) => (
-                    <tr key={idx} className="border-b border-border/50">
-                      <td className="py-4 px-4"><Skeleton className="h-4 w-20 bg-muted/60" /></td>
-                      <td className="py-4 px-4"><Skeleton className="h-4 w-24 bg-muted/60" /></td>
-                      <td className="py-4 px-4 text-right"><Skeleton className="h-4 w-12 ml-auto bg-muted/60" /></td>
-                      <td className="py-4 px-4 text-center"><Skeleton className="h-4 w-16 mx-auto bg-muted/60" /></td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+            <div className="rounded-lg border border-border shadow-sm overflow-hidden bg-background">
+              <DataTable
+                columns={columns}
+                data={[]}
+                loading={true}
+              />
             </div>
           </div>
         </div>
+
       ) : data ? (
 
 

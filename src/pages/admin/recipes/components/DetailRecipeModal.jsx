@@ -60,15 +60,15 @@ export default function DetailRecipeModal({
                 <Skeleton className="h-4 w-3/4" />
               </div>
 
-              {/* Ingredients */}
+              {/* Table */}
               <div className="space-y-3">
                 <Skeleton className="h-3 w-20" />
                 <div className="border border-border rounded-md overflow-hidden">
                   <table className="w-full text-left text-sm">
                     <thead className="bg-muted text-muted-foreground border-b border-border">
                       <tr>
-                        <th className="py-2 px-4 font-semibold">Ingredient</th>
-                        <th className="py-2 px-4 text-right font-semibold">Quantity</th>
+                        <th className="py-4 px-4 font-semibold"></th>
+                        <th className="py-4 px-4 text-right font-semibold"></th>
                       </tr>
                     </thead>
                     <tbody>
