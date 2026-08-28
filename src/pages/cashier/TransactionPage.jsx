@@ -132,7 +132,9 @@ export default function TransaksiPage() {
         onCheckout={handleCheckout}
         onCancel={clearCart}
         total={getTotal()}
+        isCheckingOut={isCheckingOut}
       />
+
 
       <div className="flex h-full flex-col overflow-hidden">
         <SearchInput

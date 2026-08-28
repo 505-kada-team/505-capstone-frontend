@@ -11,6 +11,8 @@ import { TriangleAlert, Trash2, Edit2 } from "lucide-react";
 import { useMenuDetail } from "@/hooks/menu/useMenuDetail";
 import { toast } from "sonner";
 import { useEffect } from "react";
+import { Skeleton } from "@/components/ui/skeleton";
+
 
 export default function DetailRecipeModal({
   isOpen,
@@ -43,10 +45,53 @@ export default function DetailRecipeModal({
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="flex w-full max-w-xl max-h-[85vh] flex-col overflow-hidden p-0 sm:max-w-xl">
         {isLoading || !recipe ? (
-          <div className="flex flex-1 items-center justify-center py-12">
-            <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+          <div className="flex flex-col flex-1 overflow-hidden animate-pulse">
+            <DialogHeader className="shrink-0 border-b px-6 py-5">
+              <DialogTitle className="font-heading text-2xl font-bold text-foreground">
+                <Skeleton className="h-8 w-48" />
+              </DialogTitle>
+            </DialogHeader>
+
+            <div className="flex-1 overflow-y-auto px-6 py-5 space-y-6">
+              {/* Description */}
+              <div className="space-y-2">
+                <Skeleton className="h-3 w-16" />
+                <Skeleton className="h-4 w-full" />
+                <Skeleton className="h-4 w-3/4" />
+              </div>
+
+              {/* Table */}
+              <div className="space-y-3">
+                <Skeleton className="h-3 w-20" />
+                <div className="border border-border rounded-md overflow-hidden">
+                  <table className="w-full text-left text-sm">
+                    <thead className="bg-muted text-muted-foreground border-b border-border">
+                      <tr>
+                        <th className="py-4 px-4 font-semibold"></th>
+                        <th className="py-4 px-4 text-right font-semibold"></th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {Array.from({ length: 3 }).map((_, idx) => (
+                        <tr key={idx} className="border-b border-border/50">
+                          <td className="py-3 px-4"><Skeleton className="h-4 w-28 bg-muted/60" /></td>
+                          <td className="py-3 px-4 text-right"><Skeleton className="h-4 w-12 ml-auto bg-muted/60" /></td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+
+            <DialogFooter className="shrink-0 border-t bg-muted/10 px-6 py-4 flex gap-2">
+              <Skeleton className="h-9 w-20" />
+              <Skeleton className="h-9 w-20" />
+              <Skeleton className="h-9 w-20 ml-auto" />
+            </DialogFooter>
           </div>
         ) : (
+
           <>
             <DialogHeader className="shrink-0 border-b px-6 py-5">
               <DialogTitle className="font-heading text-2xl font-bold text-foreground">

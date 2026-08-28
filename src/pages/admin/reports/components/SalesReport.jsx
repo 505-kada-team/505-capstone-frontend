@@ -13,6 +13,7 @@ const PAGE_SIZE = 8;
 
 const formatInvoiceNumber = (id) =>
   id ? `INV-${id.slice(-6).toUpperCase()}` : '—';
+import { Skeleton } from '@/components/ui/skeleton';
 
 export default function SalesReport({
   planId,
@@ -272,21 +273,25 @@ export default function SalesReport({
         <SummaryItem
           label="Total"
           value={formatCurrency(summary.totalRevenue)}
+          isLoading={isLoading}
         />
 
         <SummaryItem
           label="Transactions"
           value={summary.totalTransactions}
+          isLoading={isLoading}
         />
 
         <SummaryItem
           label="Items Sold"
           value={summary.totalItemsSold}
+          isLoading={isLoading}
         />
 
         <SummaryItem
           label="Discount Given"
           value={formatCurrency(summary.totalDiscountGiven)}
+          isLoading={isLoading}
         />
       </section>
 
@@ -301,30 +306,23 @@ export default function SalesReport({
           </p>
         </div>
 
-        {isLoading ? (
-          <div className="p-12 text-center text-sm text-muted-foreground">
-            Loading sales report...
-          </div>
-        ) : (
-          <>
-            <DataTable
-              columns={columns}
-              data={paginatedItems}
-              emptyMessage="No sales transactions found for the selected filters."
-            />
+        <DataTable
+          columns={columns}
+          data={paginatedItems}
+          loading={isLoading}
+          emptyMessage="No sales transactions found for the selected filters."
+        />
 
-            {sortedTransactions.length > 0 && (
-              <div className="border-t px-4 py-3">
-                <Pagination
-                  currentPage={currentPage}
-                  totalPage={totalPages}
-                  totalData={sortedTransactions.length}
-                  limit={PAGE_SIZE}
-                  onPageChange={setPage}
-                />
-              </div>
-            )}
-          </>
+        {!isLoading && sortedTransactions.length > 0 && (
+          <div className="border-t px-4 py-3">
+            <Pagination
+              currentPage={currentPage}
+              totalPage={totalPages}
+              totalData={sortedTransactions.length}
+              limit={PAGE_SIZE}
+              onPageChange={setPage}
+            />
+          </div>
         )}
       </section>
 
@@ -337,16 +335,21 @@ export default function SalesReport({
   );
 }
 
-function SummaryItem({ label, value }) {
+function SummaryItem({ label, value, isLoading }) {
   return (
     <div className="p-5">
       <p className="text-xs text-muted-foreground">
         {label}
       </p>
 
-      <p className="mt-2 text-lg font-semibold text-foreground">
-        {value}
-      </p>
+      {isLoading ? (
+        <Skeleton className="mt-2.5 h-6 w-24" />
+      ) : (
+        <p className="mt-2 text-lg font-semibold text-foreground">
+          {value}
+        </p>
+      )}
     </div>
   );
 }
+

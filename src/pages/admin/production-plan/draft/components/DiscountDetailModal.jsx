@@ -78,7 +78,8 @@ export default function DiscountDetailModal({
   return (
     <>
       <Dialog open={isOpen} onOpenChange={onClose}>
-        <DialogContent className="sm:max-w-2xl">
+        <DialogContent className="w-[calc(100vw-2rem)] sm:max-w-2xl max-h-[85vh] overflow-y-auto">
+
           <DialogHeader>
             <DialogTitle className="text-lg font-bold">
               Discount Details

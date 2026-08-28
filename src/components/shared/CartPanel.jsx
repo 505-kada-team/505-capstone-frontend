@@ -1,4 +1,4 @@
-import { X } from "lucide-react";
+import { X, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { formatCurrency } from "@/lib/formatCurrency";
 
@@ -21,7 +21,9 @@ export default function CartPanel({
   onCheckout,
   onCancel,
   total,
+  isCheckingOut = false,
 }) {
+
   const isEmpty = items.length === 0;
 
   return (
@@ -71,18 +73,26 @@ export default function CartPanel({
             variant="outline"
             className="flex-1 rounded-md"
             onClick={onCancel}
-            disabled={isEmpty}
+            disabled={isEmpty || isCheckingOut}
           >
             Cancel
           </Button>
           <Button
-            className="bg-accent hover:bg-accent/90 flex-1 rounded-md text-white"
+            className="bg-accent hover:bg-accent/90 flex-1 rounded-md text-white gap-2 flex items-center justify-center"
             onClick={onCheckout}
-            disabled={isEmpty}
+            disabled={isEmpty || isCheckingOut}
           >
-            Checkout
+            {isCheckingOut ? (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin" />
+                Processing...
+              </>
+            ) : (
+              "Checkout"
+            )}
           </Button>
         </div>
+
       </div>
     </div>
   );

@@ -23,6 +23,8 @@ import Pagination from "@/components/shared/Pagination";
 import { ClipboardList, ShieldAlert, User, CalendarClock, Search } from "lucide-react";
 import { toast } from "sonner";
 import { usePlanDetail } from "@/hooks/plan/usePlanDetail";
+import { Skeleton } from "@/components/ui/skeleton";
+
 
 function formatDate(dateStr) {
   if (!dateStr) return "";
@@ -231,11 +233,51 @@ export default function PlanHistoryDetailModal({ isOpen, onClose, planId }) {
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="w-full sm:max-w-4xl mx-auto max-h-[90vh] overflow-y-auto">
         {isLoading || !plan ? (
-          <div className="py-20 flex flex-col items-center justify-center gap-3 text-muted-foreground">
-            <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
-            <p className="text-sm">Loading plan history details...</p>
+          <div className="space-y-6 py-4 animate-pulse">
+            <DialogHeader className="pr-8">
+              <DialogTitle className="text-lg font-bold text-foreground font-heading flex flex-col sm:flex-row sm:items-center gap-2">
+                <Skeleton className="h-6 w-48" />
+                <Skeleton className="h-5 w-20" />
+              </DialogTitle>
+            </DialogHeader>
+
+            <div className="border-t border-border pt-4 mt-2 space-y-6">
+              <div className="flex gap-2">
+                <Skeleton className="h-4 w-24" />
+                <Skeleton className="h-4 w-48" />
+              </div>
+
+              {/* Grid cards info skeleton */}
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                {Array.from({ length: 3 }).map((_, idx) => (
+                  <div key={idx} className="border border-border rounded-lg p-3 bg-muted/10 space-y-2">
+                    <Skeleton className="h-3 w-16" />
+                    <Skeleton className="h-4 w-24" />
+                    <Skeleton className="h-3 w-32" />
+                  </div>
+                ))}
+              </div>
+
+              {/* Tabs header skeleton */}
+              <div className="space-y-4">
+                <div className="flex border-b border-border gap-4 pb-1">
+                  <Skeleton className="h-8 w-24" />
+                  <Skeleton className="h-8 w-28" />
+                  <Skeleton className="h-8 w-36" />
+                </div>
+
+                <div className="space-y-3 pt-2">
+                  <Skeleton className="h-5 w-full" />
+                  <Skeleton className="h-5 w-full" />
+                  <Skeleton className="h-5 w-4/5" />
+                  <Skeleton className="h-5 w-5/6" />
+                </div>
+
+              </div>
+            </div>
           </div>
         ) : (
+
           <>
             <DialogHeader className="pr-8">
               <DialogTitle className="text-lg font-bold text-foreground font-heading flex flex-col sm:flex-row sm:items-center gap-2">
@@ -438,7 +480,7 @@ export default function PlanHistoryDetailModal({ isOpen, onClose, planId }) {
                   <Tabs defaultValue="inventory" className="w-full">
                     <TabsList className="mb-4 w-full grid grid-cols-2">
                       <TabsTrigger value="inventory">Inventory</TabsTrigger>
-                      <TabsTrigger value="transactions">Transaksi</TabsTrigger>
+                      <TabsTrigger value="transactions">Transaction</TabsTrigger>
                     </TabsList>
 
                     {/* ── Tab Inventory ──────────────────────────── */}

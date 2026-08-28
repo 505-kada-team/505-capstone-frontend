@@ -35,7 +35,7 @@ export default function RecipePage() {
     refetch,
   } = useMenuList();
 
-  const { archiveRecipe } = useArchiveMenu();
+  const { archiveRecipe, isArchiving } = useArchiveMenu();
 
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [detailModalId, setDetailModalId] = useState(null);
@@ -241,7 +241,9 @@ export default function RecipePage() {
         onConfirm={handleArchive}
         onClose={() => setArchiveTarget(null)}
         variant="destructive"
+        loading={isArchiving}
       />
+
     </div>
   );
 }

@@ -76,7 +76,8 @@ export default function ReviewReportModal({
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[500px]">
+      <DialogContent className="w-[calc(100vw-2rem)] sm:max-w-[500px] max-h-[85vh] overflow-y-auto">
+
         <DialogHeader>
           <DialogTitle>
             {readOnly ? "Incident Report Details" : "Review Incident Report"}

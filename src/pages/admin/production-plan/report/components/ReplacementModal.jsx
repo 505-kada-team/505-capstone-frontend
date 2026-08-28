@@ -95,7 +95,8 @@ export default function ReplacementModal({ open, report, onClose, onRefresh }) {
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent className="w-[calc(100vw-2rem)] sm:max-w-[425px] max-h-[85vh] overflow-y-auto">
+
         <DialogHeader>
           <DialogTitle>Tarik Stok Pengganti</DialogTitle>
           <DialogDescription>

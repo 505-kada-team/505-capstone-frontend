@@ -1,6 +1,8 @@
 import { useEffect, useState, useMemo } from "react";
 import { toast } from "sonner";
 import { Printer, AlertCircle } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
+
 
 import api from "@/services/api";
 import { getSaleHistory } from "@/services/cashierApi";
@@ -301,11 +303,44 @@ export default function PlanAuditReport({ planId, onExportDataChange }) {
 
   if (isLoading) {
     return (
-      <div className="rounded-lg border border-border bg-card p-12 text-center text-sm text-muted-foreground">
-        Loading financial audit data...
+      <div className="flex flex-col gap-6">
+        {/* Header Skeleton */}
+        <div className="flex flex-col md:flex-row justify-between items-start border-b border-border pb-5 gap-4">
+          <div className="space-y-2">
+            <Skeleton className="h-7 w-48 bg-muted/60" />
+            <Skeleton className="h-4 w-32 bg-muted/60" />
+          </div>
+          <div className="space-y-2 text-left md:text-right">
+            <Skeleton className="h-4 w-24 bg-muted/60 ml-0 md:ml-auto" />
+            <Skeleton className="h-5 w-40 bg-muted/60 ml-0 md:ml-auto" />
+          </div>
+        </div>
+
+        {/* Card Grid Skeleton */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          {Array.from({ length: 4 }).map((_, idx) => (
+            <div key={idx} className="rounded-lg border border-border bg-card p-5 space-y-2">
+              <Skeleton className="h-3 w-16 bg-muted/60" />
+              <Skeleton className="h-6 w-24 bg-muted/60" />
+              <Skeleton className="h-3 w-32 bg-muted/60" />
+            </div>
+          ))}
+        </div>
+
+        {/* Audit Details Card Skeleton */}
+        <div className="rounded-lg border border-border bg-card p-6 space-y-4">
+          <Skeleton className="h-6 w-40 bg-muted/60" />
+          <div className="space-y-2">
+            <Skeleton className="h-8 w-full bg-muted/60" />
+            <Skeleton className="h-8 w-full bg-muted/60" />
+            <Skeleton className="h-8 w-full bg-muted/60" />
+            <Skeleton className="h-8 w-full bg-muted/60" />
+          </div>
+        </div>
       </div>
     );
   }
+
 
   if (error) {
     return (

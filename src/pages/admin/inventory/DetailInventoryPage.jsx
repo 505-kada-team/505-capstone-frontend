@@ -21,6 +21,8 @@ import StatusBadge from "@/components/shared/StatusBadge";
 import ConfirmDialog from "@/components/shared/ConfirmDialog";
 import SearchInput from "@/components/shared/SearchInput";
 import Pagination from "@/components/shared/Pagination";
+import { Skeleton } from "@/components/ui/skeleton";
+
 import AddBatchModal from "./components/AddBatchModal";
 
 import { useInventoryDetail } from "@/hooks/inventory/useInventoryDetail";
@@ -304,10 +306,60 @@ export default function DetailInventoryPage() {
       </div>
 
       {loading && !data ? (
-        <div className="p-12 text-center text-muted-foreground bg-card rounded-lg border border-border">
-          Loading...
+        <div className="bg-card rounded-lg border border-border p-6 shadow-sm animate-pulse">
+          {/* Form Skeleton */}
+          <div className="space-y-6">
+            <div className="grid grid-cols-12 gap-4">
+              <div className="col-span-5 space-y-1.5">
+                <Skeleton className="h-4 w-20" />
+                <Skeleton className="h-10 w-full" />
+              </div>
+              <div className="col-span-3 space-y-1.5">
+                <Skeleton className="h-4 w-20" />
+                <Skeleton className="h-10 w-full" />
+              </div>
+              <div className="col-span-2 space-y-1.5">
+                <Skeleton className="h-4 w-20" />
+                <Skeleton className="h-10 w-full" />
+              </div>
+              <div className="col-span-2 space-y-1.5">
+                <Skeleton className="h-4 w-20" />
+                <Skeleton className="h-10 w-full" />
+              </div>
+            </div>
+            <div className="space-y-1.5">
+              <Skeleton className="h-4 w-20" />
+              <Skeleton className="h-20 w-full" />
+            </div>
+            <div className="flex justify-between items-center pt-2">
+              <Skeleton className="h-10 w-32" />
+              <div className="flex gap-3">
+                <Skeleton className="h-10 w-28" />
+                <Skeleton className="h-10 w-28" />
+              </div>
+            </div>
+          </div>
+
+          {/* Batches Table Skeleton */}
+          <div className="mt-12 space-y-3">
+            <Skeleton className="h-6 w-40" />
+            <div className="flex flex-col md:flex-row md:items-center gap-3">
+              <Skeleton className="h-10 w-64" />
+              <Skeleton className="h-10 w-32 md:ml-auto" />
+            </div>
+            <div className="rounded-lg border border-border shadow-sm overflow-hidden bg-background">
+              <DataTable
+                columns={columns}
+                data={[]}
+                loading={true}
+              />
+            </div>
+          </div>
         </div>
+
       ) : data ? (
+
+
         <div className="bg-card rounded-lg border border-border p-6 shadow-sm">
           <form onSubmit={handleSubmit(handleEditSubmit)} className="space-y-6">
             <div className="grid grid-cols-12 gap-4">

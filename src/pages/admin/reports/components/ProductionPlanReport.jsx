@@ -239,17 +239,13 @@ export default function ProductionPlanReport({
           )}
         </div>
 
-        {isLoading ? (
-          <div className="p-12 text-center text-sm text-muted-foreground">
-            Loading production plan report...
-          </div>
-        ) : (
-          <DataTable
-            columns={columns}
-            data={completedPlans}
-            emptyMessage="No completed production plans found for the selected period."
-          />
-        )}
+        <DataTable
+          columns={columns}
+          data={completedPlans}
+          loading={isLoading}
+          emptyMessage="No completed production plans found for the selected period."
+        />
+
       </section>
     </div>
   );

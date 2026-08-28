@@ -11,7 +11,9 @@ import {
 
 import StatusBadge from "@/components/shared/StatusBadge";
 import ConfirmDialog from "@/components/shared/ConfirmDialog";
+import { Skeleton } from "@/components/ui/skeleton";
 import PlanReportBanner from "@/components/shared/admin/PlanReportBanner";
+
 import { Card, CardContent } from "@/components/ui/card";
 import { formatDate, formatDateTime } from "@/lib/formatDate";
 import {
@@ -365,10 +367,32 @@ export default function ActivePlanPage() {
       <Card className="w-full shadow-sm py-0">
         <CardContent className={hasActive ? "p-0" : "p-3"}>
           {isPageLoading ? (
-            <div className="flex justify-center py-20 text-muted-foreground">
-              Loading data...
+            <div className="flex flex-col">
+              <div className="overflow-x-auto -mx-px">
+                <table className="w-full min-w-[400px] text-left text-sm">
+                  <thead className="text-xs text-muted-foreground border-b border-border sticky top-0 bg-background z-10">
+                    <tr>
+                      <th className="py-3 px-4 sm:px-5">Menu Name</th>
+                      <th className="py-3 px-4 sm:px-5">Sold / Quantity</th>
+                      <th className="py-3 px-4 sm:px-5 hidden sm:table-cell">Profit</th>
+                      <th className="py-3 px-4 sm:px-5 text-center">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {Array.from({ length: 3 }).map((_, idx) => (
+                      <tr key={idx} className="border-b border-border/50">
+                        <td className="py-3.5 px-4 sm:px-5"><Skeleton className="h-4 w-32 bg-muted/60" /></td>
+                        <td className="py-3.5 px-4 sm:px-5"><Skeleton className="h-4 w-40 bg-muted/60" /></td>
+                        <td className="py-3.5 px-4 sm:px-5 hidden sm:table-cell"><Skeleton className="h-4 w-20 bg-muted/60" /></td>
+                        <td className="py-3.5 px-4 sm:px-5 text-center"><Skeleton className="h-4 w-12 mx-auto bg-muted/60" /></td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             </div>
           ) : !hasActive ? (
+
             // EMPTY STATE
             <div className="flex flex-col items-center justify-center py-24 gap-4">
               <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mb-2">
@@ -542,15 +566,16 @@ export default function ActivePlanPage() {
                 </thead>
                 <tbody className="divide-y divide-border/50">
                   {isLoadingList ? (
-                    <tr>
-                      <td
-                        colSpan="4"
-                        className="py-10 text-center text-muted-foreground"
-                      >
-                        Loading data...
-                      </td>
-                    </tr>
-                  ) : paginatedPlans.length === 0 ? (
+                    Array.from({ length: 5 }).map((_, idx) => (
+                      <tr key={idx} className="hover:bg-muted/30">
+                        <td className="py-3.5 px-4 sm:px-5"><Skeleton className="h-4 w-32 bg-muted/60" /></td>
+                        <td className="py-3.5 px-4 sm:px-5 hidden sm:table-cell"><Skeleton className="h-4 w-40 bg-muted/60" /></td>
+                        <td className="py-3.5 px-4 sm:px-5 text-center"><Skeleton className="h-4 w-16 mx-auto bg-muted/60" /></td>
+                        <td className="py-3.5 px-4 sm:px-5 text-center"><Skeleton className="h-4 w-12 mx-auto bg-muted/60" /></td>
+                      </tr>
+                    ))
+                  ) :
+ paginatedPlans.length === 0 ? (
                     <tr>
                       <td
                         colSpan="4"
