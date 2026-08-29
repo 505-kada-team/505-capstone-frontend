@@ -1,49 +1,27 @@
-const API_KEY = import.meta.env.VITE_GEMINI_API_KEY;
-const MODEL = import.meta.env.VITE_GEMINI_MODEL || "gemini-3.6-flash";
-const BASE_URL = "https://generativelanguage.googleapis.com/v1beta/models";
-
 export class GeminiError extends Error {}
 
 async function callGemini(prompt, { jsonMode = false, systemInstruction, temperature } = {}) {
-  if (!API_KEY) {
-    throw new GeminiError(
-      "VITE_GEMINI_API_KEY is missing. Add it to your .env file."
-    );
-  }
-
-  const response = await fetch(
-    `${BASE_URL}/${MODEL}:generateContent?key=${API_KEY}`,
-    {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        contents: [{ parts: [{ text: prompt }] }],
-        ...(systemInstruction
-          ? { system_instruction: { parts: [{ text: systemInstruction }] } }
-          : {}),
-        generationConfig: {
-          ...(jsonMode ? { responseMimeType: "application/json" } : {}),
-          ...(temperature !== undefined ? { temperature } : {}),
-        },
-      }),
-    }
-  );
+  // Memanggil endpoint serverless kita sendiri
+  const response = await fetch("/api/gemini", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      prompt,
+      jsonMode,
+      systemInstruction,
+      temperature,
+    }),
+  });
 
   if (!response.ok) {
-    const errBody = await response.text().catch(() => "");
+    const errData = await response.json().catch(() => ({}));
     throw new GeminiError(
-      `Gemini request failed (${response.status}): ${errBody}`
+      `Gemini request failed (${response.status}): ${errData.error || 'Unknown error'}`
     );
   }
 
   const data = await response.json();
-  const text = data?.candidates?.[0]?.content?.parts?.[0]?.text;
-
-  if (typeof text !== "string") {
-    throw new GeminiError(`Unexpected Gemini response shape: ${JSON.stringify(data)}`);
-  }
-
-  return text;
+  return data.text;
 }
 
 export async function generateJSON(prompt, { maxRetries = 1, systemInstruction, temperature } = {}) {
