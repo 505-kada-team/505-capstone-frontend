@@ -1,8 +1,13 @@
 {
   "rewrites": [
     {
-      "source": "/((?!api/|assets/|src/|node_modules/|@vite/|@fs/|favicon.svg|icons.svg|.*\\.[a-zA-Z0-9]+$).*)",
+      "source": "/api/(.*)",
+      "destination": "/api/$1"
+    },
+    {
+      "source": "/(.*)",
       "destination": "/index.html"
     }
   ]
-}
+}
+
