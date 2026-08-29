@@ -1,5 +1,5 @@
 import { TrendingUp, AlertTriangle, Trophy, Sparkles } from 'lucide-react';
-import {Card} from '@/components/ui/Card';
+import { Card } from '@/components/ui/card';
 
 /**
  * Decorative product-dashboard preview shown beside the hero copy.
@@ -18,14 +18,10 @@ export default function HeroDashboardMockup({ stats, lowStock, topMenu, insight 
 
       <div className="grid grid-cols-[1.08fr_0.92fr] gap-3">
         <div className="rounded-lg bg-secondary/40 p-3">
-          <p className="text-xs text-muted-foreground">
-            {stats.totalRevenue.label}
-          </p>
+          <p className="text-xs text-muted-foreground">{stats.totalRevenue.label}</p>
 
           <div className="mt-1 flex items-center justify-between gap-2">
-            <span className="whitespace-nowrap font-mono text-base font-semibold text-foreground sm:text-lg">
-              {stats.totalRevenue.value}
-            </span>
+            <span className="whitespace-nowrap font-mono text-base font-semibold text-foreground sm:text-lg">{stats.totalRevenue.value}</span>
 
             <span className="flex shrink-0 items-center gap-0.5 font-mono text-xs font-medium text-success">
               <TrendingUp size={12} strokeWidth={2} />
@@ -42,14 +38,7 @@ export default function HeroDashboardMockup({ stats, lowStock, topMenu, insight 
       <div className="rounded-md bg-secondary/40 p-3">
         <p className="mb-2 font-body text-xs text-foreground/60">Sales Trend</p>
         <svg viewBox="0 0 200 56" className="h-14 w-full" preserveAspectRatio="none">
-          <polyline
-            points="0,44 30,38 60,40 90,26 120,30 150,14 180,18 200,6"
-            fill="none"
-            stroke="var(--accent)"
-            strokeWidth="2.5"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
+          <polyline points="0,44 30,38 60,40 90,26 120,30 150,14 180,18 200,6" fill="none" stroke="var(--accent)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
         </svg>
       </div>
 
@@ -76,7 +65,9 @@ export default function HeroDashboardMockup({ stats, lowStock, topMenu, insight 
           <ul className="space-y-1">
             {topMenu.map((row) => (
               <li key={row.name} className="flex items-center justify-between font-body text-xs text-foreground">
-                <span>{row.rank}. {row.name}</span>
+                <span>
+                  {row.rank}. {row.name}
+                </span>
                 <span className="font-mono text-foreground/50">{row.detail}</span>
               </li>
             ))}

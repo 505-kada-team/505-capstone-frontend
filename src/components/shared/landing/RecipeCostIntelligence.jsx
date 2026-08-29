@@ -1,22 +1,14 @@
 import { ChefHat } from 'lucide-react';
 import SectionHeading from '@/components/shared/SectionHeading';
-import {Card} from '@/components/ui/Card';
+import { Card } from '@/components/ui/card';
 
 export default function RecipeCostIntelligence({ recipe }) {
   return (
     <section className="mx-auto max-w-content px-8 py-20 bg-muted/20">
       <div className="grid items-center gap-14 lg:grid-cols-2">
         <div>
-          <SectionHeading
-            align="left"
-            eyebrow="Recipe & Cost"
-            title="Recipe & Cost Intelligence"
-            description="Every ingredient is connected to a menu recipe, so cost, margin, and expected consumption are always known — not estimated."
-          />
-          <p className="mt-6 font-body text-sm leading-relaxed text-foreground/70">
-            Recipe-based consumption creates expected inventory usage automatically,
-            which keeps portions consistent and stock counts accurate after every sale.
-          </p>
+          <SectionHeading align="left" eyebrow="Recipe & Cost" title="Recipe & Cost Intelligence" description="Every ingredient is connected to a menu recipe, so cost, margin, and expected consumption are always known — not estimated." />
+          <p className="mt-6 font-body text-sm leading-relaxed text-foreground/70">Recipe-based consumption creates expected inventory usage automatically, which keeps portions consistent and stock counts accurate after every sale.</p>
         </div>
 
         <Card className="p-6">
@@ -43,9 +35,7 @@ export default function RecipeCostIntelligence({ recipe }) {
           </div>
 
           <div className="border-t border-border pt-4">
-            <p className="mb-2 font-body text-xs font-medium uppercase tracking-wide text-foreground/60">
-              Ingredient Requirements
-            </p>
+            <p className="mb-2 font-body text-xs font-medium uppercase tracking-wide text-foreground/60">Ingredient Requirements</p>
             <ul className="space-y-2">
               {recipe.ingredients.map((ing) => (
                 <li key={ing.name} className="flex items-center justify-between font-body text-sm">

@@ -1,6 +1,6 @@
 import { TrendingUp, TrendingDown, Cpu } from 'lucide-react';
 import SectionHeading from '@/components/shared/SectionHeading';
-import {Card} from '@/components/ui/Card';
+import { Card } from '@/components/ui/card';
 
 export default function Forecasting({ inputs, recommendation }) {
   return (
@@ -18,10 +18,7 @@ export default function Forecasting({ inputs, recommendation }) {
             {inputs.map((input) => {
               const Icon = input.icon;
               return (
-                <div
-                  key={input.label}
-                  className="flex items-center gap-3 rounded-md border border-background/15 bg-background/5 px-4 py-3"
-                >
+                <div key={input.label} className="flex items-center gap-3 rounded-md border border-background/15 bg-background/5 px-4 py-3">
                   <Icon size={16} strokeWidth={2} className="text-background/70" />
                   <span className="font-body text-sm text-background/90">{input.label}</span>
                 </div>
@@ -34,24 +31,14 @@ export default function Forecasting({ inputs, recommendation }) {
           </div>
 
           <Card className="border-background/15 bg-background p-6">
-            <p className="font-body text-xs font-medium uppercase tracking-wide text-foreground/50">
-              Next-Plan Recommendation
-            </p>
+            <p className="font-body text-xs font-medium uppercase tracking-wide text-foreground/50">Next-Plan Recommendation</p>
             <ul className="mt-3 divide-y divide-border">
               {recommendation.items.map((item) => (
                 <li key={item.name} className="flex items-center justify-between py-2.5">
                   <span className="font-body text-sm text-foreground">{item.name}</span>
                   <span className="font-mono text-sm text-foreground/70">{item.quantity}</span>
-                  <span
-                    className={`flex items-center gap-1 font-mono text-sm font-medium ${
-                      item.trend === 'up' ? 'text-success' : 'text-destructive'
-                    }`}
-                  >
-                    {item.trend === 'up' ? (
-                      <TrendingUp size={14} strokeWidth={2} />
-                    ) : (
-                      <TrendingDown size={14} strokeWidth={2} />
-                    )}
+                  <span className={`flex items-center gap-1 font-mono text-sm font-medium ${item.trend === 'up' ? 'text-success' : 'text-destructive'}`}>
+                    {item.trend === 'up' ? <TrendingUp size={14} strokeWidth={2} /> : <TrendingDown size={14} strokeWidth={2} />}
                     {item.change}
                   </span>
                 </li>
@@ -64,9 +51,7 @@ export default function Forecasting({ inputs, recommendation }) {
             </div>
 
             <div className="mt-3">
-              <p className="font-body text-xs font-medium uppercase tracking-wide text-foreground/50">
-                Suggested Restocking
-              </p>
+              <p className="font-body text-xs font-medium uppercase tracking-wide text-foreground/50">Suggested Restocking</p>
               <ul className="mt-2 space-y-1">
                 {recommendation.suggestedRestock.map((row) => (
                   <li key={row.item} className="flex items-center justify-between font-body text-sm">

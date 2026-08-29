@@ -1,6 +1,6 @@
 import SectionHeading from '@/components/shared/SectionHeading';
 import IconTile from '@/components/shared/IconTile';
-import {Card} from '@/components/ui/Card';
+import { Card } from '@/components/ui/card';
 
 export default function Benefits({ benefits }) {
   return (
