@@ -1,6 +1,6 @@
 import SectionHeading from '@/components/shared/SectionHeading';
 import IconTile from '@/components/shared/IconTile';
-import {Card }from '@/components/ui/Card';
+import { Card } from '@/components/ui/card';
 
 export default function ProblemSection({ problems }) {
   return (
@@ -17,10 +17,7 @@ export default function ProblemSection({ problems }) {
         ))}
       </div>
 
-      <p className="mx-auto mt-14 max-w-2xl text-center font-display text-xl font-semibold leading-snug text-foreground">
-        The problem isn&apos;t lack of data. It&apos;s that inventory, production,
-        and sales data rarely work together.
-      </p>
+      <p className="mx-auto mt-14 max-w-2xl text-center font-display text-xl font-semibold leading-snug text-foreground">The problem isn&apos;t lack of data. It&apos;s that inventory, production, and sales data rarely work together.</p>
     </section>
   );
 }

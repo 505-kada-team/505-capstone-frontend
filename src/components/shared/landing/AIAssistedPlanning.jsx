@@ -1,7 +1,7 @@
 import { Sparkles } from 'lucide-react';
 import SectionHeading from '@/components/shared/SectionHeading';
-import {Card} from '@/components/ui/Card';
-import {Button} from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 
 export default function AIAssistedPlanning({ recommendation }) {
   return (
@@ -10,14 +10,10 @@ export default function AIAssistedPlanning({ recommendation }) {
         <div>
           <SectionHeading align="left" eyebrow="AI Planning" title="AI That Recommends. You Decide." />
           <p className="mt-6 font-body text-sm leading-relaxed text-foreground/70">
-            AI generates an explainable draft production plan based on structured
-            operational data — inventory, recipes, and forecasted demand. It never
-            activates a plan automatically. The business owner reviews, edits, and
-            approves every recommendation.
+            AI generates an explainable draft production plan based on structured operational data — inventory, recipes, and forecasted demand. It never activates a plan automatically. The business owner reviews, edits, and approves every
+            recommendation.
           </p>
-          <p className="mt-6 font-display text-lg font-semibold text-foreground">
-            AI assists the decision. Humans remain in control.
-          </p>
+          <p className="mt-6 font-display text-lg font-semibold text-foreground">AI assists the decision. Humans remain in control.</p>
         </div>
 
         <Card className="p-6">
@@ -30,13 +26,13 @@ export default function AIAssistedPlanning({ recommendation }) {
             {recommendation.menu} — {recommendation.quantity}
           </p>
 
-          <p className="mt-3 font-body text-sm leading-relaxed text-foreground/70">
-            {recommendation.reasoning}
-          </p>
+          <p className="mt-3 font-body text-sm leading-relaxed text-foreground/70">{recommendation.reasoning}</p>
 
           <div className="mt-6 flex gap-3">
             <Button size="sm">Review Draft</Button>
-            <Button size="sm" variant="outline">Edit Recommendation</Button>
+            <Button size="sm" variant="outline">
+              Edit Recommendation
+            </Button>
           </div>
         </Card>
       </div>

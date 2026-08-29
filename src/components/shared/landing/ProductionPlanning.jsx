@@ -1,7 +1,7 @@
 import { CheckCircle2, XCircle } from 'lucide-react';
 import SectionHeading from '@/components/shared/SectionHeading';
-import {Card} from '@/components/ui/Card';
-import {Button} from '@/components/ui/Button';
+import {Card} from '@/components/ui/card';
+import {Button} from '@/components/ui/button';
 
 export default function ProductionPlanning({ simulation }) {
   const hasShortfall = simulation.requiredIngredients.some((i) => !i.sufficient);
