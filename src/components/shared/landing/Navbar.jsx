@@ -28,9 +28,11 @@ export default function Navbar() {
           onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
           className="flex items-center gap-3"
         >
-          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary text-sm font-semibold text-primary-foreground">
-            AI
-          </div>
+          <img 
+            src="/favicon.svg" 
+            alt="Artisan Brew Logo" 
+            className="h-10 w-10 drop-shadow-sm transition-transform hover:scale-105"
+          />
 
           <div className="text-left">
             <p className="text-sm font-semibold leading-none">

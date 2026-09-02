@@ -1,5 +1,5 @@
 import { NavLink, Outlet } from 'react-router-dom';
-import { Coffee, LogOut } from 'lucide-react';
+import { LogOut } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 
 const NAV_ITEMS = [
@@ -19,7 +19,11 @@ export default function CashierLayout() {
     <div className="flex h-screen min-w-[1280px] flex-col overflow-hidden bg-background">
       <header className="flex shrink-0 items-center justify-between border-b border-neutral-200 px-6 py-4">
         <div className="flex items-center gap-2 text-primary">
-          <Coffee size={20} strokeWidth={2} />
+          <img 
+            src="/favicon.svg" 
+            alt="Artisan Brew Logo" 
+            className="size-6 shrink-0 drop-shadow-sm transition-transform hover:scale-105"
+          />
           <span className="text-lg font-semibold">Artisan Brew</span>
         </div>
 
