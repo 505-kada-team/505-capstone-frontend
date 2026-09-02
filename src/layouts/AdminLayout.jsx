@@ -105,7 +105,11 @@ export default function AdminLayout() {
         {/* Brand Header */}
         <div className={`h-16 flex items-center border-b border-sidebar-border transition-[padding] duration-300 ease-in-out ${isSidebarOpen ? 'px-6 justify-between' : 'justify-center'}`}>
           <div className="flex items-center gap-3">
-            <div className="flex size-8 shrink-0 items-center justify-center rounded-md bg-primary text-primary-foreground font-bold text-sm">AI</div>
+            <img 
+              src="/favicon.svg" 
+              alt="Artisan Brew Logo" 
+              className="size-8 shrink-0 drop-shadow-sm transition-transform hover:scale-105"
+            />
             {/* Menggunakan opacity dan w-full transition untuk teks agar smooth */}
             <div className={`flex-1 whitespace-nowrap transition-all duration-300 ease-in-out ${isSidebarOpen ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-4 hidden'}`}>
               <h1 className="font-bold text-base leading-tight tracking-tight">Artisan Inventory</h1>
