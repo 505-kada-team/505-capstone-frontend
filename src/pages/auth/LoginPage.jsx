@@ -48,9 +48,11 @@ export default function LoginPage() {
             <div>
               {/* Brand */}
               <div className="flex items-center gap-3">
-                <div className="flex size-10 items-center justify-center rounded-lg bg-accent text-sm font-bold text-white">
-                  AI
-                </div>
+                <img 
+                  src="/favicon.svg" 
+                  alt="Artisan Brew Logo" 
+                  className="size-10 shrink-0 drop-shadow-sm transition-transform hover:scale-105"
+                />
 
                 <div>
                   <p className="text-sm font-semibold leading-none">
